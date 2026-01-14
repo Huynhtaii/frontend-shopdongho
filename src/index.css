@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #de0d0f;
+  /* Màu chủ đạo */
+  --secondary-color: #292929;
+  /* Màu phụ */
+  --background-color: #ffffff;
+  /* Màu nền */
+  --font-color: #282828;
+  /* Màu chữ chính */
+  --footer-bg: #292929;
+  /* Màu nền footer */
+  --button-padding: 10px 20px;
+  /* Padding cho button */
+  --button-radius: 4px;
+  /* Border radius cho button */
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.layout-container {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 0 10px;
+}
+
+.item-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* menu */
+.container-menu {
+  z-index: 99;
+}
+
+.menu-item {
+  position: relative;
+}
+
+.menu-item:hover {
+  color: var(--primary-color);
+}
+
+.menu-item::before {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  content: "";
+  width: 0;
+  height: 1px;
+  transition: width 0.4s;
+  background-color: var(--font-color);
+}
+
+.menu-item:hover::before {
+  width: 100%;
+  background-color: var(--primary-color);
+}
+
+.account-menu-popup::after {
+  position: absolute;
+  content: "";
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background-color: #363636;
+  z-index: -1;
+}
+
+.account-menu-popup {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.account:hover .account-menu-popup {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* menu */
+
+
+/* navigation banner */
+.swiper-button-prev,
+.swiper-button-next {
+  position: relative;
+  width: 35px !important;
+  height: 35px !important;
+  background-color: #fff;
+  opacity: 0.6;
+  border-radius: 5px;
+}
+
+.swiper-button-prev::after,
+.swiper-button-next::after {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  color: black;
+}
+
+.swiper-pagination-bullet {
+  width: 15px !important;
+  height: 4px !important;
+  border-radius: 3px !important;
+  background-color: var(--primary-color) !important;
+}
+
+/* navigation banner */
+
+
+/*benefits*/
+.benefits-icon {
+  position: relative;
+}
+
+.benefits-icon::after {
+  position: absolute;
+  content: "";
+  top: 0;
+  right: -12px;
+  width: 12px;
+  height: 100%;
+  background-color: #fdaf17;
+  border-radius: 100% / 50%;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/*benefits*/
