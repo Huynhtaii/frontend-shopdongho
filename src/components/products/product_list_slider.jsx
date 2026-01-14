@@ -2,7 +2,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 
 import { Navigation } from 'swiper/modules';
 
-import ProductCard from "./product_card";
+import ProductCard from "./card/product_card";
 import { Link } from 'react-router-dom';
 
 import { MdNavigateNext } from "react-icons/md";
