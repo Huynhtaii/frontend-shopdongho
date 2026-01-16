@@ -9,6 +9,8 @@ import PublicRouter from "./public_router";
 import NotFound from "../pages/common/not_found";
 import UserFooter from "../components/layout/user_footer";
 import UserHeader from "../components/layout/header/user_header";
+
+import ProductDetail from "../components/productdetail/productdetail";
 import Category from "../pages/client/category";
 import Order from "../pages/client/order";
 import FloatingButtons from "../components/floating_buttons";
@@ -36,6 +38,7 @@ const ClientRoutes = () => {
             <Route path="/" element={<ClientLayout><Home /></ClientLayout>} />
             <Route path="/cart" element={<CartLayout><Cart /></CartLayout>} />
             <Route path="/favorite" element={<ClientLayout><Favorite /></ClientLayout>} />
+            <Route path="/product/:id" element={<ClientLayout><ProductDetail /></ClientLayout>} />
             <Route path="/category/:category" element={<ClientLayout><Category /></ClientLayout>} />
             <Route path="/order" element={<ClientLayout><Order /></ClientLayout>} />
             <Route path="*" element={<NotFound />} />
