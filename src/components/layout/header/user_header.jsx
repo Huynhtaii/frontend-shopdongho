@@ -6,10 +6,11 @@ import { LuShoppingCart } from "react-icons/lu";
 import { MdFavoriteBorder } from "react-icons/md";
 
 import UserMenu from "./user_menu";
+import SearchResult from "./search_result";
 
 const UserHeader = () => {
     return (
-        <div className="bg-[#f1f3f4]">
+        <div className="bg-[#f1f3f4] relative z-[1000]">
             <div className="layout-container flex items-center gap-3">
                 <Link to={'/'} className="hidden lg:flex"><img src="/logo-watchstore.webp" alt="" className="w-[200px] h-auto" /></Link>
                 <UserMenu />
@@ -17,6 +18,7 @@ const UserHeader = () => {
                     <div className="relative hidden md:flex">
                         <IoSearchOutline size={22} className="text-[#494949] absolute top-1/2 left-1 -translate-y-1/2 cursor-pointer" />
                         <input type="text" placeholder="Tìm là thấy" className="w-[200px] text-sm p-2 outline-none rounded-md pr-3 pl-7" />
+                        {/* <SearchResult /> */}
                     </div>
                     <div className="relative account">
                         <AiOutlineUser size={28} className="text-[#494949] cursor-pointer" />

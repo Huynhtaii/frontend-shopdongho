@@ -1,9 +1,8 @@
-import axios from '../utils/axios_config';
+import axios from "../utils/axios_config";
 
-export const getProducts = async (limit = null) => {
-    const response = await axios.get('/products', { params: { limit } });
-    return response.data;
+const getProductById = async (id) => {
+  const urlAPI = `api/v1/product/${id}`;
+  return await axios.get(urlAPI);
 };
 
-
-
+export default getProductById;
