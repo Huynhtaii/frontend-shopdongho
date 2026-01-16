@@ -39,4 +39,4 @@ const HomeBanner = () => {
             </Swiper>
     );
 }
-export default HomeBanner
+export default HomeBanner;
