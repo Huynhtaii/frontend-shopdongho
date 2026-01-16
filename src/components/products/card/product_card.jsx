@@ -7,7 +7,8 @@ const ProductCard = () => {
     return (
         <div className="bg-white px-3 pt-3 rounded-md border-[1px] border-[#e7e7e7]">
             <div className="relative">
-                <Link to={'#'}>
+            {/* `/product/${productId}` */}
+                <Link to={`#`}>
                     <img src="https://www.watchstore.vn/images/products/2024/08/22/resized/8131g-ch-n-1_1724295651.webp"
                         alt=""
                         className="w-full object-cover" />
