@@ -10,7 +10,7 @@ import NotFound from "../pages/common/not_found";
 import UserFooter from "../components/layout/user_footer";
 import UserHeader from "../components/layout/header/user_header";
 
-import ProductDetail from "../components/productdetail/productdetail";
+import ProductDetail from "../pages/client/productdetail";
 import Category from "../pages/client/category";
 import Order from "../pages/client/order";
 import FloatingButtons from "../components/floating_buttons";
