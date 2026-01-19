@@ -12,7 +12,7 @@ const ProductService = {
         return response;
     },
     getRecentProducts: async (recentProduct) => {
-        const url = 'v1/recent-products'
+        const url = '/v1/recent-products'
         const response = await axios.get(url, { params: { arrId: recentProduct } });
         return response;
     },

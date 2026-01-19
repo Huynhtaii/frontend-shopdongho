@@ -4,6 +4,9 @@ import PrivateRoute from "./private_route";
 import NotFound from "../pages/common/not_found";
 import AdminLayout from "../components/layout/admin/admin_layout";
 import Chat from "../pages/admin/chat";
+import UserAdmin from "../pages/admin/user";
+import OrderAdmin from "../pages/admin/order";
+import ProductAdmin from "../pages/admin/product";
 
 const AdminRoutes = () => {
   return (
@@ -29,7 +32,7 @@ const AdminRoutes = () => {
           path="products"
           element={
             <AdminLayout>
-              <h1>Products Management</h1>
+              <ProductAdmin />
             </AdminLayout>
           }
         />
@@ -37,7 +40,7 @@ const AdminRoutes = () => {
           path="orders"
           element={
             <AdminLayout>
-              <h1>Orders Management</h1>
+              <OrderAdmin />
             </AdminLayout>
           }
         />
@@ -45,7 +48,7 @@ const AdminRoutes = () => {
           path="users"
           element={
             <AdminLayout>
-              <h1>Users Management</h1>
+              <UserAdmin />
             </AdminLayout>
           }
         />
