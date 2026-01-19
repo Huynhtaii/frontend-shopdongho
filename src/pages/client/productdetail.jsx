@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { RiShoppingCart2Line, RiHeartLine } from "react-icons/ri";
 import { useParams } from "react-router-dom";
-import getProductById from "../../services/product_service";
 import { FaStar } from "react-icons/fa";
+import ProductService from "../../services/product_service";
 
 function ProductDetail() {
   const [product, setProduct] = useState(null);
@@ -34,7 +34,7 @@ function ProductDetail() {
   const fetchProductById = async () => {
     try {
       setLoading(true);
-      const response = await getProductById(id);
+      const response = await ProductService.getProductById(id);
       if (response.EC === "0") {
         setProduct(response.DT);
       }
@@ -78,7 +78,7 @@ function ProductDetail() {
   };
 
   return (
-    <div className="layout-container mx-auto px-4 py-8">
+    <div className="layout-container mx-auto px-4 !py-8">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Ảnh sản phẩm */}
         <div className="md:w-1/2">
