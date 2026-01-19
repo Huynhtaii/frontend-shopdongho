@@ -6,11 +6,13 @@ import IconChat from "./components/iconchat/iconchat";
 import "./App.css";
 import "swiper/css";
 import "swiper/css/pagination";
+import ScrollToTop from './components/scroolltotop/ScrollToTop'; // Import component mới
 
 function App() {
   return (
     <>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/*" element={<ClientRoutes />} />
           <Route path="/admin/*" element={<AdminRoutes />} />
