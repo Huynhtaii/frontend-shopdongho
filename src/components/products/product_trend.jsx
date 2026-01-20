@@ -12,7 +12,7 @@ export default function ProductListTrend() {
                 <div className='w-full p-3'>
                     <ProductListSlider products={products} />
                 </div>
-                <Link to={'/category/kham-pha-xu-huong-2025'} className='rounded-md bg-white text-[#418fde] text-[14px] px-8 py-2 font-[500] mb-4 mt-1'>Khám phá xu hướng 2025</Link>
+                <Link to={'/category/Xu hướng 2025'} className='rounded-md bg-white text-[#418fde] text-[14px] px-8 py-2 font-[500] mb-4 mt-1'>Khám phá xu hướng 2025</Link>
             </div>
         </div>
     )

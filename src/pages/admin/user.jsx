@@ -1,75 +1,49 @@
-import React, { useState } from 'react';
-import { FaUserPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import React, { useEffect, useState } from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 import ModalAddUpdateUser from '../../components/modals/modal_add_update_user';
 import { toast } from 'react-toastify';
 import { FiPlus } from 'react-icons/fi';
-
-
-const MOCK_USERS = [
-    {
-        user_id: 1,
-        name: "admin",
-        email: "admin@example.com",
-        password: "123",
-        phone: "0909090909",
-        address: "Hà Nội",
-        role: "Admin"
-    },
-    {
-        user_id: 2,
-        name: "johndoe",
-        email: "john.doe@example.com",
-        password: "123",
-        phone: "0909090909",
-        address: "Hà Nội",
-        role: "User"
-    },
-    {
-        user_id: 3,
-        name: "janesmith",
-        email: "jane.smith@example.com",
-        password: "123",
-        phone: "0909090909",
-        address: "Hà Nội",
-        role: "Editor"
-    },
-    {
-        user_id: 4,
-        name: "robertjohnson",
-        email: "robert.j@example.com",
-        password: "123",
-        phone: "0909090909",
-        address: "Hà Nội",
-        role: "User"
-    },
-    {
-        user_id: 5,
-        name: "sarahwilliams",
-        email: "sarah.w@example.com",
-        password: "123",
-        phone: "0909090909",
-        address: "Hà Nội",
-        role: "Manager"
-    }
-];
-
+import UserService from '../../services/user_service';
+import RoleService from '../../services/role_service';
 
 const UserAdmin = () => {
-    const [users, setUsers] = useState(MOCK_USERS);
+    const [users, setUsers] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [roles, setRoles] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
         phone: '',
         address: '',
-        role: ''
+        role_id: ''
     });
+
+    const fetchData = async () => {
+        try {
+            const usersData = await UserService.getAllUsers();
+            setUsers(usersData.DT);
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi tải dữ liệu người dùng');
+        }
+    };
+
+    useEffect(() => {
+        const fetchRoles = async () => {
+            const rolesData = await RoleService.getAllRoles();
+            setRoles(rolesData.DT);
+        }
+        fetchRoles();
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     const handleAdd = () => {
         setEditingUser(null);
-        setFormData({ name: '', email: '', password: '', phone: '', address: '', role: '' });
+        setFormData({ name: '', email: '', password: '', phone: '', address: '', role_id: '' });
         setIsModalVisible(true);
     };
 
@@ -82,7 +56,9 @@ const UserAdmin = () => {
     const handleDelete = async (userId) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
             try {
-                // Thêm logic xóa người dùng
+                const res = await UserService.deleteUser(userId)
+                console.log(res);
+                fetchData()
                 toast.success('Xóa người dùng thành công');
             } catch (error) {
                 toast.error('Có lỗi xảy ra khi xóa người dùng');
@@ -94,10 +70,12 @@ const UserAdmin = () => {
         e.preventDefault();
         try {
             if (editingUser) {
-                // Thêm logic cập nhật người dùng
+                await UserService.updateUser(editingUser.user_id, formData)
             } else {
-                // Thêm logic tạo người dùng mới
+                const newFromData = { ...formData, created_at: new Date().toISOString() }
+                await UserService.addUser(newFromData)
             }
+            fetchData()
             setIsModalVisible(false);
             toast.success(`${editingUser ? 'Cập nhật' : 'Thêm'} người dùng thành công`);
         } catch (error) {
@@ -139,14 +117,14 @@ const UserAdmin = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {users.map(user => (
+                        {users?.map(user => (
                             <tr key={user.user_id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap">{user.user_id}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">{user.address}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
+                                <td className="px-6 py-4 whitespace-nowrap">{roles?.find(role => role.role_id === user.role_id)?.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex gap-2">
                                         <button
@@ -157,7 +135,7 @@ const UserAdmin = () => {
                                         </button>
                                         <button
                                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
-                                            onClick={() => handleDelete(user.id)}
+                                            onClick={() => handleDelete(user.user_id)}
                                         >
                                             <FaTrash /> Xóa
                                         </button>
@@ -175,7 +153,8 @@ const UserAdmin = () => {
                     formData={formData}
                     handleInputChange={handleInputChange}
                     handleSubmit={handleSubmit}
-                    setIsModalVisible={setIsModalVisible} />
+                    setIsModalVisible={setIsModalVisible}
+                    roles={roles} />
             )}
         </div>
     );

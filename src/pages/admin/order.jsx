@@ -1,66 +1,28 @@
-import React, { useState } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import React, { useEffect, useState } from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import ModalUpdateOrder from '../../components/modals/modal_update_order';
-
-// Mock data matching your database structure
-const MOCK_ORDERS = [
-    {
-        order_id: 1001,
-        order_date: "2025-02-24 12:10:32",
-        status: "Completed",
-        total_amount: 280.00,
-        user_id: 1,
-        discount_id: null,
-        order_items: [
-            {
-                order_item_id: 1,
-                quantity: 1,
-                price: 280.00,
-                order_id: 1001,
-                product_id: 101
-            },
-            {
-                order_item_id: 2,
-                quantity: 1,
-                price: 280.00,
-                order_id: 1001,
-                product_id: 101
-            }
-        ]
-    },
-    {
-        order_id: 1002,
-        order_date: "2025-02-24 12:10:32",
-        status: "Pending",
-        total_amount: 250.00,
-        user_id: 2,
-        discount_id: null,
-        order_items: [
-            {
-                order_item_id: 2,
-                quantity: 1,
-                price: 250.00,
-                order_id: 1002,
-                product_id: 103
-            }
-        ]
-    }
-];
+import OrderService from '../../services/order_service';
 
 const OrderAdmin = () => {
-    const [orders, setOrders] = useState(MOCK_ORDERS);
+    const [orders, setOrders] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(0);
     const [selectedOrder, setSelectedOrder] = useState(null);
-    const [formData, setFormData] = useState({
-        order_date: '',
-        status: '',
-        total_amount: '',
-        user_id: '',
-        discount_id: null,
-        order_items: []
-    });
+
+    const fetchData = async () => {
+        try {
+            const ordersData = await OrderService.getAllOrders();
+            setOrders(ordersData.DT);
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi tải dữ liệu hoá đơn');
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
 
     const handleViewDetails = (order) => {
         setSelectedOrder(order);
@@ -71,16 +33,18 @@ const OrderAdmin = () => {
         }
     };
 
-    const handleEdit = (order) => {
+    const handleEdit = (e, order) => {
+        e.stopPropagation();
         setSelectedOrder(order);
-        setFormData(order);
         setIsModalVisible(true);
     };
 
-    const handleDelete = async (orderId) => {
+    const handleDelete = async (e, orderId) => {
+        e.stopPropagation();
         if (window.confirm('Bạn có chắc chắn muốn xóa đơn hàng này?')) {
             try {
-                // API call to delete order
+                await OrderService.deleteOrder(orderId);
+                fetchData();
                 toast.success('Xóa đơn hàng thành công');
             } catch (error) {
                 toast.error('Có lỗi xảy ra khi xóa đơn hàng');
@@ -98,15 +62,23 @@ const OrderAdmin = () => {
                 return 'bg-green-100 text-green-800';
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800';
-            case 'cancelled':
+            case 'shipped':
+                return 'bg-red-100 text-red-800';
+            case 'canceled':
                 return 'bg-red-100 text-red-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
     };
 
-    const handleUpdateStatus = (orderId, status) => {
-        console.log(orderId, status);
+    const handleUpdateStatus = async (orderId, status) => {
+        try {
+            await OrderService.updateOrderStatus(orderId, status);
+            toast.success('Cập nhật trạng thái đơn hàng thành công');
+            fetchData();
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi tải dữ liệu hoá đơn' + error);
+        }
     };
 
     return (
@@ -129,8 +101,8 @@ const OrderAdmin = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {orders.map(order => (
-                            <>
-                                <tr key={order.order_id} className="hover:bg-gray-50" onClick={() => handleViewDetails(order)}>
+                            <React.Fragment key={order.order_id}>
+                                <tr className="hover:bg-gray-50" onClick={() => handleViewDetails(order)}>
                                     <td className="px-6 py-4 whitespace-nowrap">{order.order_id}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">{order.order_date}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -145,13 +117,13 @@ const OrderAdmin = () => {
                                         <div className="flex gap-2">
                                             <button
                                                 className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
-                                                onClick={() => handleEdit(order)}
+                                                onClick={(e) => handleEdit(e, order)}
                                             >
                                                 <FaEdit /> Cập nhật trạng thái
                                             </button>
                                             <button
                                                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
-                                                onClick={() => handleDelete(order.order_id)}
+                                                onClick={(e) => handleDelete(e, order.order_id)}
                                             >
                                                 <FaTrash /> Xóa
                                             </button>
@@ -173,7 +145,7 @@ const OrderAdmin = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {order.order_items.map(item => (
+                                                        {order.OrderItems.map(item => (
                                                             <tr key={item.order_item_id}>
                                                                 <td className="py-2">{item.product_id}</td>
                                                                 <td className="py-2">{item.quantity}</td>
@@ -187,7 +159,7 @@ const OrderAdmin = () => {
                                         </td>
                                     </tr>
                                 )}
-                            </>
+                            </React.Fragment >
                         ))}
                     </tbody>
                 </table>

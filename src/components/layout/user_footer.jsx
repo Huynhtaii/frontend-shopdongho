@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 const UserFooter = () => {
     return (
         <div className="bg-footer py-14">
-            <div className="layout-container text-white flex gap-10 text-[15px] flex-col sm:flex-col md:flex-col lg:flex-row xl:flex-row 2xl:flex-row">
+            <div className="layout-container text-white flex gap-10 text-[15px] flex-col sm:flex-col md:flex-col lg:flex-row xl:flex-row">
                 <div className="flex flex-col gap-3 w-full sm:w-full md:w-full lg:w-[23%] xl:w-[23%] 2xl:w-[23%]">
                     <img src="/logo-watchstore.webp" alt="" className="w-[280px] h-auto" />
                     <h1 className="text-2xl mt-1">Cửa hàng WatchStore</h1>
@@ -20,7 +20,7 @@ const UserFooter = () => {
                     <p>© Bản quyền thuộc về Demo | Cung cấp bởi Demo</p>
                 </div>
                 <div className="flex-1">
-                    <div className="flex justify-between flex-col sm:flex-col md:flex-row lg:flex-row xl:flex-row 2xl:flex-row">
+                    <div className="flex justify-between flex-col sm:flex-col md:flex-row lg:flex-row xl:flex-row">
                         <div>
                             <h2 className="text-base font-[600] uppercase">Cửa hàng WatchStore</h2>
                             <ul className="flex flex-col gap-3 mt-3">

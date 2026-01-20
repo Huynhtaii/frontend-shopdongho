@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Link } from 'react-router-dom';
+import { memo } from 'react';
 
 const HomeBannerCollection = () => {
     const banners = [
@@ -44,4 +45,4 @@ const HomeBannerCollection = () => {
         </div>
     )
 }
-export default HomeBannerCollection;
+export default memo(HomeBannerCollection);
