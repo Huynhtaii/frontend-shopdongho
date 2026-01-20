@@ -1,54 +1,59 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ModalAddUpdateProduct from '../../components/modals/modal_add_update_product';
-
-// Mock data để test
-const MOCK_PRODUCTS = [{
-    product_id: 201,
-    name: "Đồng hồ Xu hướng 2025 - A",
-    description: "Thiết kế độc đáo, bắt kịp xu hướng năm 2025",
-    price: "600.00",
-    discount_price: "580.00",
-    rating: 5,
-    created_at: "2025-02-24T12:10:32.000Z",
-    brand_id: 4,
-    sku: "XTD-201",
-    ProductImages: [
-        {
-            product_image_id: 4,
-            url: "https://www.watchstore.vn/images/products/2024/06/04/resized/caw211r-fc6401-1_tag-heuer_1717491547.webp",
-            product_id: 201
-        },
-    ]
-}];
+import ProductService from '../../services/product_service';
 
 const ProductAdmin = () => {
-    const [products, setProducts] = useState(MOCK_PRODUCTS);
+    const [products, setProducts] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
-        sku: '',
-        price: '',
-        discount_price: '',
         description: '',
-        brand_id: '',
-        ProductImages: []
+        price: '',
+        discount_price: 0,
+        rating: 1,
+        created_at: new Date().toISOString(),
+        brand_id: 1,
+        sku: '',
+        category_id: 0,
+        images: ''
     });
+
+    const autoSku = () => {
+        const randomNumber = Math.floor(1000 + Math.random() * 9000);
+        return `SP${randomNumber}`
+    }
     const [previewImages, setPreviewImages] = useState([]);
+
+    const fetchData = async () => {
+        try {
+            const productsData = await ProductService.getAllProducts();
+            setProducts(productsData.DT);
+        } catch (error) {
+            toast.error('Có lỗi xảy ra khi tải dữ liệu hoá đơn');
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     const handleAdd = () => {
         setSelectedProduct(null);
         setFormData({
             name: '',
-            sku: '',
-            price: '',
-            discount_price: '',
             description: '',
-            brand_id: '',
-            ProductImages: []
+            price: '',
+            discount_price: 0,
+            rating: 1,
+            created_at: new Date().toISOString(),
+            brand_id: 1,
+            sku: autoSku(),
+            category_id: 0,
+            images: ''
         });
         setPreviewImages([]);
         setShowModal(true);
@@ -68,24 +73,46 @@ const ProductAdmin = () => {
     const handleDelete = async (productId) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
             try {
-                // Thêm logic xóa sản phẩm ở đây
+                await ProductService.deleteProduct(productId);
                 toast.success('Xóa sản phẩm thành công');
+                fetchData();
             } catch (error) {
                 toast.error('Có lỗi xảy ra khi xóa sản phẩm');
             }
         }
     };
 
+    const validateForm = () => {
+        if (formData.name === ''
+            || formData.price === 0
+            || formData.description === ''
+            || formData.category_id === 0
+            || formData.images === '') {
+            toast.error('Vui lòng điền đầy đủ thông tin');
+            return false;
+        }
+        if (formData.discount_price > formData.price) {
+            toast.error('Giá khuyến mãi phải nhỏ hơn giá gốc');
+            return false;
+        }
+        return true;
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            console.log(formData);
-
-            // logic thêm sản phẩm mới
-            setShowModal(false);
-            toast.success(`${selectedProduct ? 'Cập nhật' : 'Thêm'} sản phẩm thành công`);
-        } catch (error) {
-            toast.error('Có lỗi xảy ra');
+        if (validateForm()) {
+            try {
+                if (selectedProduct) {
+                    await ProductService.updateProduct(selectedProduct.product_id, formData)
+                } else {
+                    await ProductService.createProduct({ ...formData, images: formData.images[0] });
+                }
+                setShowModal(false);
+                fetchData();
+                toast.success(`${selectedProduct ? 'Cập nhật' : 'Thêm'} sản phẩm thành công`);
+            } catch (error) {
+                toast.error('Có lỗi xảy ra');
+            }
         }
     };
 
@@ -108,7 +135,7 @@ const ProductAdmin = () => {
 
         setFormData(prev => ({
             ...prev,
-            ProductImages: files
+            images: files
         }));
     };
 
@@ -128,22 +155,24 @@ const ProductAdmin = () => {
                 <table className="min-w-full bg-white border border-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ảnh</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã SP</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên sản phẩm</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá KM</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thương hiệu</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                         {products.map((product) => (
                             <tr key={product.product_id} className="hover:bg-gray-50">
+                                <td className="px-6 py-4">
+                                    <img src={product.ProductImages[0].url} alt="thumbnail" className='max-w-[50px] object-cover' />
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap">{product.sku}</td>
                                 <td className="px-6 py-4">{product.name}</td>
                                 <td className="px-6 py-4">{product.price}</td>
                                 <td className="px-6 py-4">{product.discount_price}</td>
-                                <td className="px-6 py-4">{product.brand_id}</td>
                                 <td className="px-6 py-4">
                                     <div className="flex gap-2">
                                         <button

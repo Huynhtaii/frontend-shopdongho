@@ -1,3 +1,7 @@
+import { useEffect, useState } from "react";
+import CategoryService from "../../services/category_service";
+import { toast } from "react-toastify";
+
 const ModalAddUpdateProduct = ({
     setShowModal,
     selectedProduct,
@@ -7,6 +11,20 @@ const ModalAddUpdateProduct = ({
     handleSubmit,
     previewImages
 }) => {
+    const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const categoriesData = await CategoryService.getAllCategories()
+                setCategories(categoriesData.DT)
+            } catch (error) {
+                toast.error('Có lỗi xảy ra khi tải dữ loại sản phẩm');
+            }
+        }
+        fetchData()
+    }, [])
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
@@ -17,14 +35,11 @@ const ModalAddUpdateProduct = ({
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Mã sản phẩm</label>
-                            <input
-                                type="text"
-                                name="sku"
-                                value={formData.sku}
-                                onChange={handleInputChange}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                placeholder="Nhập mã sản phẩm"
-                            />
+                            <span
+                                className="mt-1 block w-full text-[#b3b3b3] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            >
+                                {formData.sku}
+                            </span>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Tên sản phẩm</label>
@@ -42,7 +57,7 @@ const ModalAddUpdateProduct = ({
                             <input
                                 type="number"
                                 name="price"
-                                value={formData.price}
+                                value={formData.price || 0}
                                 onChange={handleInputChange}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 placeholder="Nhập giá"
@@ -53,7 +68,7 @@ const ModalAddUpdateProduct = ({
                             <input
                                 type="number"
                                 name="discount_price"
-                                value={formData.discount_price}
+                                value={formData.discount_price || 0}
                                 onChange={handleInputChange}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 placeholder="Nhập giá khuyến mãi"
@@ -63,33 +78,39 @@ const ModalAddUpdateProduct = ({
                             <label className="block text-sm font-medium text-gray-700">Danh mục</label>
                             <select
                                 name="category_id"
-                                value={formData.category_id}
+                                value={formData.Categories?.[0]?.category_id}
                                 onChange={handleInputChange}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             >
-                                <option value="">Chọn danh mục</option>
-                                <option value="1">Áo</option>
-                                <option value="2">Quần</option>
-                                <option value="3">Giày</option>
-                                <option value="4">Phụ kiện</option>
+                                <option value={0}>Chọn danh mục</option>
+                                {categories?.map(category => (
+                                    <option
+                                        key={category.category_id}
+                                        value={category.category_id}>
+                                        {category.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Hình ảnh sản phẩm</label>
-                            <input
-                                type="file"
-                                name="images"
-                                multiple
-                                onChange={handleImageChange}
-                                className="mt-1 block w-full text-sm text-gray-500
+                        {!selectedProduct && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Hình ảnh sản phẩm</label>
+                                <span className="text-xs text-[#b0b0b0]">Chỉ hổ trợ file (jpeg, jpg, png, webp)</span>
+                                <input
+                                    type="file"
+                                    name="images"
+                                    multiple
+                                    onChange={handleImageChange}
+                                    className="mt-1 block w-full text-sm text-gray-500
                                         file:mr-4 file:py-2 file:px-4
                                         file:rounded-md file:border-0
                                         file:text-sm file:font-semibold
                                         file:bg-blue-50 file:text-blue-700
                                         hover:file:bg-blue-100"
-                                accept="image/*"
-                            />
-                        </div>
+                                    accept="image/*"
+                                />
+                            </div>
+                        )}
                         <div className="col-span-2">
                             <label className="block text-sm font-medium text-gray-700">Mô tả</label>
                             <textarea
@@ -101,21 +122,19 @@ const ModalAddUpdateProduct = ({
                                 placeholder="Nhập mô tả sản phẩm"
                             ></textarea>
                         </div>
-                        {previewImages.length > 0 && (
+                        {(previewImages?.length > 0 && !selectedProduct) && (
                             <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Xem trước hình ảnh
                                 </label>
                                 <div className="grid grid-cols-4 gap-4">
-                                    {previewImages.map((image, index) => (
-                                        <div key={index} className="relative">
-                                            <img
-                                                src={image.url}
-                                                alt={`Preview ${index + 1}`}
-                                                className="w-full h-24 object-cover rounded-lg"
-                                            />
-                                        </div>
-                                    ))}
+                                    <div key={previewImages[0].product_image_id} className="relative">
+                                        <img
+                                            src={previewImages[0].url}
+                                            alt={`Preview ${previewImages[0].product_image_id}`}
+                                            className="w-full h-24 object-cover rounded-lg"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}

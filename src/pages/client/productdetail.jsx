@@ -1,13 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { RiShoppingCart2Line, RiHeartLine } from "react-icons/ri";
 import { useParams } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 import ProductService from "../../services/product_service";
-
+import { useFavorite } from "../../context/favorite_context";
+import { useCart } from "../../context/cart_context";
 function ProductDetail() {
+  const { addAndRemoveToFavorite, findFavorite } = useFavorite();
+  const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(findFavorite(product?.product_id));
   const { id } = useParams();
+
+  useEffect(() => {
+    setIsFavorite(findFavorite(product?.product_id));
+  }, [product?.product_id, findFavorite]);
 
   // Định nghĩa hàm addRecentProduct trước khi sử dụng
   const addRecentProduct = (productId) => {
@@ -28,10 +36,9 @@ function ProductDetail() {
 
     // Lưu lại vào localStorage
     localStorage.setItem("recentProduct", JSON.stringify(recentProducts));
-    console.log(JSON.parse(localStorage.getItem("recentProduct")));
   };
 
-  const fetchProductById = async () => {
+  const fetchProductById = useCallback(async () => {
     try {
       setLoading(true);
       const response = await ProductService.getProductById(id);
@@ -43,12 +50,12 @@ function ProductDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id])
 
   useEffect(() => {
     fetchProductById();
     addRecentProduct(id);
-  }, [id]);
+  }, [id, fetchProductById]);
 
   if (loading) {
     return (
@@ -76,6 +83,15 @@ function ProductDetail() {
     const discountPrice = parseFloat(discounted);
     return Math.round(((originalPrice - discountPrice) / originalPrice) * 100);
   };
+
+  const handleAddToCart = async () => {
+    const cart_item = {
+      product_id: product.product_id,
+      quantity: 1,
+      created_at: new Date().toISOString()
+    }
+    addToCart(cart_item);
+  }
 
   return (
     <div className="layout-container mx-auto px-4 !py-8">
@@ -106,14 +122,18 @@ function ProductDetail() {
           <div className="bg-gray-50 p-4 rounded-lg mb-6">
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-red-600">
-                {parseFloat(product.discount_price).toLocaleString()}đ
+                {product.discount_price ? parseFloat(product.discount_price).toLocaleString() : parseFloat(product.price).toLocaleString()}đ
               </span>
-              <span className="text-gray-500 line-through">
-                {parseFloat(product.price).toLocaleString()}đ
-              </span>
-              <span className="text-red-600 bg-red-50 px-2 py-1 rounded">
-                -{calculateDiscount(product.price, product.discount_price)}%
-              </span>
+              {product.discount_price && (
+                <>
+                  <span className="text-gray-500 line-through">
+                    {parseFloat(product.price).toLocaleString()}đ
+                  </span>
+                  <span className="text-red-600 bg-red-50 px-2 py-1 rounded">
+                    -{calculateDiscount(product.price, product.discount_price)}%
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
@@ -130,11 +150,20 @@ function ProductDetail() {
 
           {/* Buttons */}
           <div className="flex gap-4">
-            <button className="flex-1 bg-red-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-red-700 transition-colors">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 bg-red-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-red-700 transition-colors">
               <RiShoppingCart2Line size={20} />
               Thêm vào giỏ hàng
             </button>
-            <button className="w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
+            <button
+              onClick={() => {
+                addAndRemoveToFavorite(product);
+                setIsFavorite(!isFavorite);
+              }}
+              className={`w-12 h-12 border border-gray-300 
+              rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors 
+              ${isFavorite ? 'bg-red-600 text-white' : ''}`}>
               <RiHeartLine size={20} />
             </button>
           </div>

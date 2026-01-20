@@ -1,10 +1,12 @@
+import { memo } from "react";
+
 const BottomBanner = () => {
     return (
         <div className="bg-black mt-10">
             <div className="layout-container">
-                <div className="py-5 flex gap-6 items-center">
-                    <img src="/gioithieu-home-desktop.webp" alt="" className="w-[550px] rounded-md object-cover" />
-                    <div className="text-white flex flex-col gap-5 items-center justify-center font-[500]">
+                <div className="py-5 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-6">
+                    <img src="/gioithieu-home-desktop.webp" alt="" className="w-full h-full rounded-md object-cover col-span-1" />
+                    <div className="text-white flex flex-col gap-5 items-center justify-center font-[500] col-span-1">
                         <img src="/logo-w2.webp" alt="" className="w-[150px] h-auto" />
                         <h1 className="text-[32px] text-[#fdaf17]">Cửa hàng đồng hồ đeo tay chính hãng</h1>
                         <p className="text-center text-sm">Được thành lập vào năm 2020, trải qua 4 năm hoạt động và phát triển, chuỗi cửa hàng đồng hồ WatchStore trở thành đại lý ủy quyền cho rất nhiều thương hiệu đến từ Nhật Bản và Thụy Sỹ chuyên bán đồng hồ đeo tay chính hãng.</p>
@@ -17,4 +19,4 @@ const BottomBanner = () => {
     )
 }
 
-export default BottomBanner;    
+export default memo(BottomBanner);    

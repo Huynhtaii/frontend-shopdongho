@@ -27,6 +27,10 @@ const UserMenu = () => {
 
         checkVisibility();
 
+        const timeout = setTimeout(() => {
+            checkVisibility()
+        }, 50)
+
         const observer = new ResizeObserver(() => {
             checkVisibility();
         });
@@ -35,7 +39,10 @@ const UserMenu = () => {
             observer.observe(menuRef.current);
         }
 
-        return () => observer.disconnect();
+        return () => {
+            clearTimeout(timeout)
+            observer.disconnect();
+        }
 
     }, [itemCurrent, menuRef]);
 

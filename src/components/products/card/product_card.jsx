@@ -1,10 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 
 import { MdFavoriteBorder } from "react-icons/md";
+import { useFavorite } from "../../../context/favorite_context";
 
 const ProductCard = ({ data }) => {
+  const { addAndRemoveToFavorite, findFavorite } = useFavorite();
+  const [isFavorite, setIsFavorite] = useState(findFavorite(data?.product_id));
+  useEffect(() => {
+    setIsFavorite(findFavorite(data?.product_id));
+  }, [data?.product_id, findFavorite]);
+
   return (
     <div className="bg-white px-3 pt-3 rounded-md border-[1px] border-[#e7e7e7]">
       <div className="relative">
@@ -13,8 +20,13 @@ const ProductCard = ({ data }) => {
             alt=""
             className="w-full object-cover" />
         </Link>
-        <div className="absolute top-0 left-0 p-[5px] hover:bg-white hover:shadow-md rounded-full cursor-pointer text-[#626262]" >
-          <MdFavoriteBorder size={20} />
+        <div className="absolute top-0 left-0 p-[5px] hover:bg-white hover:shadow-md rounded-full cursor-pointer text-[#626262]"
+          onClick={() => {
+            addAndRemoveToFavorite(data);
+            setIsFavorite(!isFavorite);
+          }}
+        >
+          <MdFavoriteBorder size={20} className={`${isFavorite ? 'text-red-600' : ''}`} />
         </div>
       </div>
       <div className="mt-3">

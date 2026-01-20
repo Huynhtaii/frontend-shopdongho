@@ -44,10 +44,10 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, onUpdateS
                             onChange={(e) => setStatus(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="PENDING">Chờ xác nhận</option>
-                            <option value="SHIPPING">Đang giao hàng</option>
-                            <option value="COMPLETED">Đã hoàn thành</option>
-                            <option value="CANCELLED">Đã hủy</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Canceled">Canceled</option>
                         </select>
                     </div>
 

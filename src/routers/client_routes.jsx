@@ -14,6 +14,7 @@ import ProductDetail from "../pages/client/productdetail";
 import Category from "../pages/client/category";
 import Order from "../pages/client/order";
 import FloatingButtons from "../components/floating_buttons";
+import Account from "../pages/client/account";
 
 const ClientLayout = ({ children }) => (
     <>
@@ -41,6 +42,7 @@ const ClientRoutes = () => {
             <Route path="/product/:id" element={<ClientLayout><ProductDetail /></ClientLayout>} />
             <Route path="/category/:category" element={<ClientLayout><Category /></ClientLayout>} />
             <Route path="/order" element={<ClientLayout><Order /></ClientLayout>} />
+            <Route path="/account" element={<ClientLayout><Account /></ClientLayout>} />
             <Route path="*" element={<NotFound />} />
 
             <Route element={<PublicRouter />}>

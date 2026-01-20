@@ -2,11 +2,11 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { Swiper, SwiperSlide } from "swiper/react"
 import CategoryService from "../services/category_service";
+import { toast } from "react-toastify";
 
 const Categories = () => {
     const [categories, setCategories] = useState([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
 
     useEffect(() => {
         const fetchAllCategories = async () => {
@@ -14,9 +14,8 @@ const Categories = () => {
                 setLoading(true);
                 const data = await CategoryService.getAllCategories()
                 setCategories(data.DT);
-                setError(null);
             } catch (err) {
-                setError(err.message || "Có lỗi xảy ra khi tải sản phẩm")
+                toast.error(err.message || "Có lỗi xảy ra khi tải sản phẩm");
             } finally {
                 setLoading(false);
             }
@@ -42,10 +41,10 @@ const Categories = () => {
                     }}
                 >
                     {Array.from({ length: Math.ceil(categories.length / 2) }, (_, i) => i * 2).map(i => (
-                        <SwiperSlide key={categories[i].id}>
+                        <SwiperSlide key={i}>
                             <div>
                                 <div className="mt-5">
-                                    <Link to={''} >
+                                    <Link to={`/category/${categories[i].name}`} >
                                         <img src={categories[i].image}
                                             className="w-full h-[100px] rounded-lg hover:shadow-lg shadow-black duration-100 object-cover"
                                             alt={categories[i].name} />
@@ -54,7 +53,7 @@ const Categories = () => {
                                 </div>
                                 {categories[i + 1] && (
                                     <div className="mt-5">
-                                        <Link to={''} >
+                                        <Link to={`/category/${categories[i + 1].name}`} >
                                             <img src={categories[i + 1].image}
                                                 className="w-full h-[100px] rounded-lg hover:shadow-lg shadow-black duration-100 object-cover"
                                                 alt={categories[i + 1].name} />
