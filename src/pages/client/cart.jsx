@@ -5,7 +5,7 @@ import ProductListCart from "../../components/cart/product_list_cart";
 import Payment from "../../components/cart/payment";
 import { useCart } from "../../context/cart_context";
 const Cart = () => {
-    const { cartItem } = useCart();
+    const { cartItem, totalPrice, savingsPrice } = useCart();
     return (
         //  <Empty />
         <div className="bg-[#f8f8f8] py-5">
@@ -21,12 +21,12 @@ const Cart = () => {
                         <div className="flex justify-between mt-8">
                             <h3 className="text-[14px] font-[600]">Tổng tiền tạm tính:</h3>
                             <div className="flex flex-col items-end">
-                                <p className="text-[#ed1c24] font-[600] text-[15px]">2.800.000đ</p>
-                                <span className="text-green-700 text-[12px]">Tiết kiệm: 1.000.000đ</span>
+                                <p className="text-[#ed1c24] font-[600] text-[15px]">{totalPrice.toLocaleString()}đ</p>
+                                <span className="text-green-700 text-[12px]">Tiết kiệm: {savingsPrice.toLocaleString()}đ</span>
                             </div>
                         </div>
                     </div>
-                    <Payment />
+                    <Payment totalPrice={totalPrice}/>
                 </div>
             </div>
         </div>
