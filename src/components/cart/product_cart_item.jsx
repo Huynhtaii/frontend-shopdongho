@@ -1,8 +1,27 @@
 import { IoAddOutline, IoRemoveOutline } from "react-icons/io5";
 import { IoIosCloseCircle } from "react-icons/io";
 import { useCart } from "../../context/cart_context";
+import { useEffect, useState } from "react";
 const ProductCartItem = ({ item }) => {
-    const { deleteCartItem } = useCart();
+    const { deleteCartItem, updateQuantityCartItem } = useCart();
+    const [quantity, setQuantity] = useState(item.quantity);
+
+    useEffect(() => {
+        setQuantity(item.quantity);
+    }, [item.quantity]);
+
+    const increaseQuantity = () => {
+        setQuantity(quantity + 1);
+        updateQuantityCartItem(item.cart_item_id, quantity + 1);
+    }
+
+    const decreaseQuantity = () => {
+        if (quantity > 1) {
+            setQuantity(quantity - 1);
+            updateQuantityCartItem(item.cart_item_id, quantity - 1);
+        }
+    }
+
     return (
         <div className="relative bg-[#f8f8f8] flex justify-between border rounded-md truncate mt-2">
             <div className="flex gap-2">
@@ -11,17 +30,17 @@ const ProductCartItem = ({ item }) => {
             </div>
             <div className="flex flex-col items-end pr-5 py-2">
                 <p className="text-[#ed1c24] font-[600] text-[15px]">
-                    {(item.Product.discount_price ? item.Product.discount_price : item.Product.price) * item.quantity}đ
+                    {((item.Product.discount_price ? item.Product.discount_price : item.Product.price) * item.quantity).toLocaleString()}đ
                 </p>
                 {item.Product.discount_price && (
                     <p className="text-[13px] font-[500] line-through text-[#939393]">
-                        {item.Product.price * item.quantity}đ
+                        {(item.Product.price * item.quantity).toLocaleString()}đ
                     </p>
                 )}
                 <div className="flex items-center mt-1">
-                    <button className="bg-white border border-[#e7e7e7] rounded-full p-1"><IoRemoveOutline size={15} /></button>
-                    <p className="text-sm min-w-8 text-center">{item.quantity}</p>
-                    <button className="bg-white border border-[#e7e7e7] rounded-full p-1"><IoAddOutline size={15} /></button>
+                    <button className="bg-white border border-[#e7e7e7] rounded-full p-1" onClick={() => decreaseQuantity()}><IoRemoveOutline size={15} /></button>
+                    <p className="text-sm min-w-8 text-center">{quantity}</p>
+                    <button className="bg-white border border-[#e7e7e7] rounded-full p-1" onClick={() => increaseQuantity()}><IoAddOutline size={15} /></button>
                 </div>
             </div>
             <IoIosCloseCircle size={18} className="absolute top-1 left-1 text-gray-300 cursor-pointer"

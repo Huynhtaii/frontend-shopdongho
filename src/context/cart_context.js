@@ -8,6 +8,8 @@ export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState([]);
     const [cartItem, setCartItem] = useState([]);
     const [countItem, setCountItem] = useState(0);
+    const [totalPrice, setTotalPrice] = useState(0);
+    const [savingsPrice, setSavingsPrice] = useState(0);//số tiền tiết kiệm được
     const user_id_fake = 1 // thay đổi khi đã có id người dùng
 
     const fetchCart = async () => {
@@ -19,6 +21,10 @@ export const CartProvider = ({ children }) => {
 
             const total = response.DT[0].CartItems.reduce((acc, item) => acc + item.quantity, 0);
             setCountItem(total);
+            setTotalPrice(response.totalPrice);
+            setSavingsPrice(response.totalSavings >= response.totalPrice
+                ? response.totalSavings - response.totalPrice
+                : response.totalPrice - response.totalSavings);
         }
     }
 
@@ -46,8 +52,26 @@ export const CartProvider = ({ children }) => {
         }
     }
 
+    const updateQuantityCartItem = async (cart_item_id, quantity) => {
+        const response = await CartService.updateQuantityCartItem(cart_item_id, quantity);
+        if (response.EC === "0") {
+            fetchCart();
+        } else {
+            console.log(response);
+        }
+    }
+
     return (
-        <CartContext.Provider value={{ cart, cartItem, countItem, addToCart, deleteCartItem }}>
+        <CartContext.Provider value={{
+            cart,
+            cartItem,
+            countItem,
+            addToCart,
+            deleteCartItem,
+            updateQuantityCartItem,
+            totalPrice,
+            savingsPrice
+        }}>
             {children}
         </CartContext.Provider>
     )
