@@ -6,20 +6,22 @@ const instance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
+
 
 // Add a request interceptor
 instance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+  function (config) {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  function (error) {
+      return Promise.reject(error);
+  },
 );
 
 // Add a response interceptor

@@ -11,7 +11,7 @@ function Account() {
     address: "Chưa có thông tin",
     orders: [],
   });
-  const [id, setId] = useState(2);
+  const [id, setId] = useState(localStorage.getItem("userId"));
 
   useEffect(() => {
     fetchData();
@@ -180,7 +180,7 @@ function Account() {
               ))
             ) : (
               <div className="text-center py-8 text-gray-500">
-                <p>Chưa có đơn hàng nào.</p>
+                <p>Bạn chưa có đơn hàng nào.</p>
               </div>
             )}
           </div>

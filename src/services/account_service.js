@@ -9,6 +9,11 @@ const AccountService = {
     const url = `/v1/update/account-user/${id}`
     const response = axios.put(url, data)
     return response
+  },
+  getAccount: () => {
+    const url = `/v1/account`
+    const response = axios.get(url)
+    return response
   }
 }
 

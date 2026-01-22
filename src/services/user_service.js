@@ -19,6 +19,21 @@ const UserService = {
         const url = `/v1/delete/user/${id}`
         const response = axios.delete(url)
         return response
+    },
+    loginUser: (data) => {
+        const url = `/v1/login/user`
+        const response = axios.post(url, data)
+        return response
+    },
+    logOutUser: () => {
+        const url = `/v1/logout/user`
+        const response = axios.post(url)
+        return response
+    },
+    registerUser: (data) => {
+        const url = `/v1/register/user`
+        const response = axios.post(url, data)
+        return response
     }
 }
 

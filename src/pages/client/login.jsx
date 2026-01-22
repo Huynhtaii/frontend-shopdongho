@@ -1,9 +1,14 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useState ,useContext} from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { IoArrowBack } from "react-icons/io5";
+import UserService from "../../services/user_service";
+import { toast } from "react-toastify";
+import AuthContext from "../../context/auth.context";
 
 const Login = () => {
+    const {auth,setAuth} = useContext(AuthContext);
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [formData, setFormData] = useState({
@@ -12,17 +17,38 @@ const Login = () => {
     });
 
     const handleChange = (e) => {
+        setError("");
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (formData.email === "" || formData.password === "") {
-            setError("Vui lòng nhập đầy đủ thông tin để đăng nhập!");
-        } else {
-            setError("");
-            console.log(formData);
+        if (!formData.email || !formData.password) {
+            setError("Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
+        try {
+            const response = await UserService.loginUser(formData);
+            if (response && response.EC === "0") {
+                localStorage.setItem("access_token", response.DT.access_token);
+                localStorage.setItem("userId", response.DT.user_id);
+                setAuth({
+                    isAuthenticated: true,
+                    user: {
+                        email: response.DT.email,
+                        name: response.DT.name,
+                    },
+                });
+                navigate("/");
+                toast.success("Đăng nhập thành công!");
+            } else if (response && response.EC === "1") {
+                toast.error(response.EM);
+            } else {
+                setError(response.EM);
+            }
+        } catch (error) {
+            setError(error?.response?.data?.message || "Đăng nhập thất bại!");
         }
     };
 
@@ -51,7 +77,7 @@ const Login = () => {
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                                 Email
@@ -118,11 +144,11 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <p className="text-red-500 text-[12px]">{error}</p>
+                        {error && <p className="text-red-500 text-[12px]">{error}</p>}
 
                         <div>
                             <button
-                                onClick={handleSubmit}
+                                type="submit"
                                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                             >
                                 Đăng nhập

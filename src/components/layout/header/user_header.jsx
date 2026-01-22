@@ -7,6 +7,11 @@ import UserMenu from "./user_menu";
 import SearchResult from "./search_result";
 import { useState } from "react";
 import { useFavorite } from "../../../context/favorite_context";
+import UserService from "../../../services/user_service";
+import AuthContext from "../../../context/auth.context";
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+
 import { useCart } from "../../../context/cart_context";
 
 const UserHeader = () => {
@@ -14,12 +19,23 @@ const UserHeader = () => {
     const { countItem: countCartItem } = useCart();
     const [keyword, setKeyword] = useState("");
     const [showSearchResult, setShowSearchResult] = useState(false);
-
+    const { auth, setAuth } = useContext(AuthContext);
+    const navigate = useNavigate();
     const handleSearch = (e) => {
         setKeyword(e.target.value);
         setShowSearchResult(true);
     };
-
+    const handleLogout = async () => {
+        const response = await UserService.logOutUser();
+        if (response && response.EC === "0") {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("userId");
+            localStorage.removeItem("userEmail");
+            localStorage.removeItem("userName");
+            setAuth({ isAuthenticated: false });
+            navigate("/");
+        }
+    };
     return (
         <div className="bg-[#f1f3f4] relative z-[1000]">
             <div className="layout-container flex items-center gap-3">
@@ -40,16 +56,28 @@ const UserHeader = () => {
                         />
                         {showSearchResult && <SearchResult keyword={keyword} setShowSearchResult={setShowSearchResult} setKeyword={setKeyword} />}
                     </div>
+                    {auth.isAuthenticated && (
+                        <div className="hidden md:flex">Xin Chào {auth.user.name}</div> 
+                    )}
                     <div className="relative account">
                         <AiOutlineUser size={28} className="text-[#494949] cursor-pointer" />
                         {/* <div className="account-menu-popup absolute -bottom-16 left-1/2 -translate-x-1/2 bg-[#363636] rounded-md text-white text-sm flex flex-col w-[90px] z-[999]">
                             <Link to={'/login'} className="hover:bg-[#666] duration-100 p-2 py-1 rounded-t-md">Đăng nhập</Link>
                             <Link to={'/register'} className="hover:bg-[#666] duration-100 p-2 py-1 rounded-b-md">Đăng ký</Link>
                         </div> */}
+                        {auth.isAuthenticated ? (
                         <div className="account-menu-popup absolute -bottom-16 left-1/2 -translate-x-1/2 bg-[#363636] rounded-md text-white text-sm flex flex-col w-[90px] z-[999]">
                         <Link to={'/account'} className="hover:bg-[#666] duration-100 p-2 py-1 rounded-t-md">Tài khoản</Link>
-                        <Link to={'/logout'} className="hover:bg-[#666] duration-100 p-2 py-1 rounded-b-md">Đăng xuất</Link>
+                        <Link to={'/'} className="hover:bg-[#666] duration-100 p-2 py-1 rounded-b-md"
+                        onClick={handleLogout}
+                        >Đăng xuất</Link>
                         </div>
+                        ) : (   
+                            <div className="account-menu-popup absolute -bottom-16 left-1/2 -translate-x-1/2 bg-[#363636] rounded-md text-white text-sm flex flex-col w-[90px] z-[999]">
+                                <Link to={'/login'} className="hover:bg-[#666] duration-100 p-2 py-1 rounded-t-md">Đăng nhập</Link>
+                                <Link to={'/register'} className="hover:bg-[#666] duration-100 p-2 py-1 rounded-b-md">Đăng ký</Link>
+                            </div>
+                        )} 
                     </div>
                     <Link to={'/cart'} className="relative hidden sm:flex">
                         <LuShoppingCart size={28} className="text-[#494949] cursor-pointer" />
