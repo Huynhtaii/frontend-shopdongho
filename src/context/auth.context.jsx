@@ -5,6 +5,7 @@ const AuthContext = createContext({
       isLoading: true,
       isAuthenticated: false,
       user: {
+         id: '',
          email: '',
          name: '',
          role: '',
@@ -18,9 +19,10 @@ export const AuthWrapper = ({ children }) => {
       isLoading: true,
       isAuthenticated: false,
       user: {
+         id: '',
          email: '',
          name: '',
-         role: null,
+         role: '',   
       },
    });
 
