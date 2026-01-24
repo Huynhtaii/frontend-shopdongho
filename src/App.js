@@ -5,12 +5,13 @@ import { Bounce, toast, ToastContainer } from 'react-toastify';
 import './App.css';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import ScrollToTop from './components/scroolltotop/ScrollToTop'; // Import component mới
-<<<<<<< HEAD
+import ScrollToTop from './components/scroolltotop/ScrollToTop';
 import { FavoriteProvider } from './context/favorite_context';
+import { CartProvider } from './context/cart_context';
 import AuthContext from './context/auth.context';
 import { useContext, useEffect } from 'react';
 import AccountService from './services/account_service';
+
 function App() {
    const { auth, setAuth } = useContext(AuthContext);
 
@@ -24,7 +25,7 @@ function App() {
             user: {
                email: response.DT.email,
                name: response.DT.username,
-               role: response.DT.role,
+               role: response.DT.role_id ? response.DT.role_id.toString() : '',
             },
          });
       }
@@ -44,9 +45,11 @@ function App() {
          });
       }
    }, []);
+
    useEffect(() => {
       console.log('Auth state changed:', auth);
    }, [auth]);
+
    return (
       <>
          {auth.isLoading && (
@@ -55,65 +58,33 @@ function App() {
             </div>
          )}
          {!auth.isLoading && (
-            <FavoriteProvider>
-               <BrowserRouter>
-                  <ScrollToTop />
-                  <Routes>
-                     <Route path="/*" element={<ClientRoutes />} />
-                     <Route path="/admin/*" element={<AdminRoutes />} />
-                  </Routes>
-                  <ToastContainer
-                     position="top-right"
-                     autoClose={5000}
-                     hideProgressBar={false}
-                     newestOnTop={false}
-                     closeOnClick={false}
-                     rtl={false}
-                     pauseOnFocusLoss
-                     draggable
-                     pauseOnHover
-                     theme="colored"
-                     transition={Bounce}
-                  />
-               </BrowserRouter>
-            </FavoriteProvider>
+            <CartProvider>
+               <FavoriteProvider>
+                  <BrowserRouter>
+                     <ScrollToTop />
+                     <Routes>
+                        <Route path="/*" element={<ClientRoutes />} />
+                        <Route path="/admin/*" element={<AdminRoutes />} />
+                     </Routes>
+                     <ToastContainer
+                        position="top-right"
+                        autoClose={5000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick={false}
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        theme="colored"
+                        transition={Bounce}
+                     />
+                  </BrowserRouter>
+               </FavoriteProvider>
+            </CartProvider>
          )}
       </>
    );
-=======
-import { FavoriteProvider } from "./context/favorite_context";
-import { CartProvider } from "./context/cart_context";
-
-function App() {
-  return (
-    <>
-      <CartProvider>
-        <FavoriteProvider>
-          <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
-              <Route path="/*" element={<ClientRoutes />} />
-              <Route path="/admin/*" element={<AdminRoutes />} />
-            </Routes>
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick={false}
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="light"
-              transition={Bounce}
-            />
-          </BrowserRouter>
-        </FavoriteProvider>
-      </CartProvider>
-    </>
-  );
->>>>>>> a973e28bc0d0015ccc98e873b7e358e1d260c263
 }
 
 export default App;
