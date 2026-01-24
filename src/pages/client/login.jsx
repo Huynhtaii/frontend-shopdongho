@@ -32,7 +32,8 @@ const Login = () => {
          const response = await UserService.loginUser(formData);
          if (response && response.EC === '0') {
             localStorage.setItem('access_token', response.DT.access_token);
-            localStorage.setItem('userId', response.DT.user_id);
+            localStorage.setItem('userId', response.DT.id);
+            const id = response.DT.id;
             const email = response.DT.email;
             const name = response.DT.name;
             const role = response.DT.role_id ? response.DT.role_id.toString() : '';
@@ -40,6 +41,7 @@ const Login = () => {
                isAuthenticated: true,
                isLoading: false,
                user: {
+                  id,
                   email,
                   name,
                   role,

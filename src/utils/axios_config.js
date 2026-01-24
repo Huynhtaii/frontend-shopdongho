@@ -9,7 +9,9 @@ const instance = axios.create({
    },
    withCredentials: true,
 });
-
+// Biến để kiểm soát việc hiển thị toast
+let isShowingUnauthorizedToast = false;
+let isShowingForbiddenToast = false;
 // Add a request interceptor
 instance.interceptors.request.use(
    function (config) {
@@ -37,49 +39,67 @@ instance.interceptors.response.use(
       switch (status) {
          // xác thực (token related issues)
          case 401: {
-            // Nếu người dùng đang ở trang khác ngoài /login, /register, hiển thị thông báo lỗi yêu cầu đăng nhập lại.
+            const errorData = error.response?.data;
+
+            // Xóa token
+            localStorage.clear(); // Xóa tất cả localStorage để đảm bảo
+
+            // Kiểm tra nếu đang ở trang public thì không cần redirect
             if (
+               window.location.pathname !== '/' &&
                window.location.pathname !== '/login' &&
                window.location.pathname !== '/register'
             ) {
-               toast.error('Unauthorized users. Please log in ...');
+               isShowingUnauthorizedToast = true;
                localStorage.removeItem('access_token');
                setTimeout(() => {
-                  window.location.href = '/';
+                  window.location.href = '/login';
                }, 3000);
+               toast.error('Session expired. Please log in again!', {
+                  onClose: () => {
+                     isShowingUnauthorizedToast = false;
+                  },
+               });
+               // window.location.reload();
             }
-            return Promise.reject(error.response.data);
+            return Promise.resolve({ data: null, status: 401 });
          }
 
          // bị cấm (vấn đề liên quan đến quyền)
          case 403: {
-            toast.error(`You don't have permisssion access this resource...`);
-            return Promise.reject(error);
+            const errorData = error.response?.data;
+            toast.error(errorData?.EM || `You don't have permission to access this resource...`);
+            return Promise.reject(errorData || error);
          }
 
          // bad request
          case 400: {
-            return Promise.reject(error);
+            const errorData = error.response?.data;
+            return Promise.reject(errorData || error);
          }
 
          // k tìm thấy
          case 404: {
-            return Promise.reject(error);
+            const errorData = error.response?.data;
+            return Promise.reject(errorData || error);
          }
 
          // xung đột
          case 409: {
-            return Promise.reject(error);
+            const errorData = error.response?.data;
+            return Promise.reject(errorData || error);
          }
 
          // không thể xử lý được
          case 422: {
-            return Promise.reject(error);
+            const errorData = error.response?.data;
+            return Promise.reject(errorData || error);
          }
 
          // lỗi api chung (liên quan đến máy chủ) không mong muốn
          default: {
-            return Promise.reject(error);
+            const errorData = error.response?.data;
+            return Promise.reject(errorData || error);
          }
       }
    },
