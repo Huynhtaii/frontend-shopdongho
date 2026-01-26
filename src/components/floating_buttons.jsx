@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaUser } from 'react-icons/fa';
 import { IoChevronUp, IoSend } from 'react-icons/io5';
 import { MdOutlineSupportAgent } from 'react-icons/md';
-import socket from '../utils/socket';
+import socket, { connectSocket } from '../utils/socket';
 import MessageService from '../services/message_service';
 import AuthContext from '../context/auth.context';
 import { toast } from 'react-toastify';
@@ -99,19 +99,35 @@ const Chat = () => {
             isAuthenticated: auth.isAuthenticated,
             userId: auth.user?.id,
          });
-         loadChatHistory();
+         try {
+            connectSocket();
+            socket.emit('joinRoom', auth.user.id);
+            loadChatHistory();
 
-         // Lắng nghe tin nhắn mới
-         socket.on('receiveMessage', (message) => {
-            console.log('📥 Nhận tin nhắn từ socket:', message);
-            if (message.receiver_id === auth.user.id || message.sender_id === auth.user.id) {
-               setMessages((prev) => [...prev, message]);
-            }
-         });
+            const handleReceiveMessage = (message) => {
+               console.log('📥 Nhận tin nhắn từ socket:', message);
+               if (message.receiver_id === auth.user.id || message.sender_id === auth.user.id) {
+                  setMessages((prev) => [...prev, message]);
+                  scrollToBottom();
+               }
+            };
 
-         return () => {
-            socket.off('receiveMessage');
-         };
+            socket.on('receiveMessage', handleReceiveMessage);
+
+            // Thêm xử lý lỗi kết nối
+            socket.on('connect_error', (error) => {
+               console.error('Socket connection error:', error);
+               toast.error('Không thể kết nối đến server chat');
+            });
+
+            return () => {
+               socket.off('receiveMessage', handleReceiveMessage);
+               socket.off('connect_error');
+            };
+         } catch (error) {
+            console.error('Error in socket setup:', error);
+            toast.error('Có lỗi xảy ra khi thiết lập kết nối chat');
+         }
       }
    }, [auth.isAuthenticated, auth.user?.id]);
 
@@ -143,10 +159,10 @@ const Chat = () => {
          content: newMessage,
          created_at: new Date().toISOString(),
       };
-      console.log('🚀 Gửi tin nhắn:', messageData);
+      // console.log('🚀 Gửi tin nhắn:', messageData);
       try {
          const response = await MessageService.sendMessage(messageData);
-         console.log('>>>>>>>check response send message', response);
+         // console.log('>>>>>>>check response send message', response);
          if (response.EC === '0') {
             setMessages((prev) => [...prev, messageData]);
             socket.emit('sendMessage', messageData);
@@ -185,7 +201,11 @@ const Chat = () => {
                                  }`}
                               >
                                  <div className="text-sm">
-                                    <div className="flex flex-col">
+                                    <div
+                                       className={`flex flex-col ${
+                                          String(msg.sender_id) === String(adminId) ? 'items-start' : 'items-end'
+                                       }`}
+                                    >
                                        {/* Phân biệt giữa người dùng và admin */}
                                        {String(msg.sender_id) === String(adminId) ? (
                                           <span className="font-bold">Admin</span>

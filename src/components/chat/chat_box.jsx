@@ -6,19 +6,135 @@ import MessageService from '../../services/message_service';
 import AuthContext from '../../context/auth.context';
 import socket from '../../utils/socket';
 import { toast } from 'react-toastify';
+import { connectSocket } from '../../utils/socket';
 
-const ChatBox = ({ selectedUser }) => {
+const ChatBox = ({ selectedUser, onMessageSent }) => {
    const [message, setMessage] = useState('');
    const [messages, setMessages] = useState([]);
    const { auth } = useContext(AuthContext);
    const messagesEndRef = useRef(null);
    const adminId = process.env.REACT_APP_ADMIN_ID;
 
+   // Load chat history khi selectedUser thay đổi
    useEffect(() => {
       if (selectedUser?.id) {
          loadChatHistory();
       }
    }, [selectedUser]);
+
+   // Xử lý socket connection và events
+   useEffect(() => {
+      try {
+         console.log('=== ChatBox Socket Setup Start ===');
+         console.log('Selected User:', selectedUser);
+         console.log('Admin ID:', adminId);
+
+         // Kết nối socket
+         connectSocket();
+         console.log('Socket connected status:', socket.connected);
+
+         // Join room khi có selectedUser
+         if (selectedUser?.id) {
+            console.log('Joining rooms for:', {
+               adminRoom: Number(adminId),
+               userRoom: selectedUser.id,
+            });
+            socket.emit('joinRoom', Number(adminId));
+            socket.emit('joinRoom', selectedUser.id);
+         }
+
+         // Lắng nghe tin nhắn mới
+         const handleReceiveMessage = (newMessage) => {
+            console.log('=== New Message Received ===');
+            console.log('Message data:', newMessage);
+            console.log('Current selected user:', selectedUser?.id);
+            console.log('Current admin:', adminId);
+            console.log('Sender ID:', newMessage.sender_id);
+            console.log('Receiver ID:', newMessage.receiver_id);
+
+            // Convert IDs to numbers for comparison
+            const senderId = Number(newMessage.sender_id);
+            const receiverId = Number(newMessage.receiver_id);
+            const selectedUserId = Number(selectedUser?.id);
+            const adminIdNum = Number(adminId);
+
+            console.log('Converted IDs:', {
+               senderId,
+               receiverId,
+               selectedUserId,
+               adminIdNum,
+            });
+
+            // Kiểm tra chi tiết điều kiện
+            const isFromSelectedUser = senderId === selectedUserId;
+            const isToAdmin = receiverId === adminIdNum;
+            const isFromAdmin = senderId === adminIdNum;
+            const isToSelectedUser = receiverId === selectedUserId;
+
+            console.log('Message conditions:', {
+               isFromSelectedUser,
+               isToAdmin,
+               isFromAdmin,
+               isToSelectedUser,
+            });
+
+            const isRelevantMessage = (isFromSelectedUser && isToAdmin) || (isFromAdmin && isToSelectedUser);
+            console.log('Is relevant message:', isRelevantMessage);
+
+            if (isRelevantMessage) {
+               console.log('Processing relevant message...');
+               setMessages((prev) => {
+                  // Kiểm tra xem tin nhắn đã tồn tại chưa
+                  const messageExists = prev.some(
+                     (msg) =>
+                        msg.content === newMessage.content &&
+                        msg.created_at === newMessage.created_at &&
+                        Number(msg.sender_id) === senderId,
+                  );
+
+                  console.log('Message exists check:', messageExists);
+
+                  if (!messageExists) {
+                     console.log('Adding new message to state');
+                     const updatedMessages = [...prev, newMessage];
+                     console.log('Updated messages:', updatedMessages);
+                     setTimeout(scrollToBottom, 100);
+                     return updatedMessages;
+                  }
+                  return prev;
+               });
+            }
+         };
+
+         // Đăng ký lắng nghe sự kiện receiveMessage
+         socket.on('receiveMessage', handleReceiveMessage);
+         console.log('Registered receiveMessage handler');
+
+         // Cleanup function
+         return () => {
+            console.log('=== ChatBox Socket Cleanup ===');
+            if (selectedUser?.id) {
+               console.log('Leaving rooms:', {
+                  adminRoom: Number(adminId),
+                  userRoom: selectedUser.id,
+               });
+               socket.emit('leaveRoom', Number(adminId));
+               socket.emit('leaveRoom', selectedUser.id);
+            }
+            socket.off('receiveMessage', handleReceiveMessage);
+            console.log('Removed receiveMessage handler');
+         };
+      } catch (error) {
+         console.error('Error in ChatBox socket setup:', error);
+         toast.error('Có lỗi xảy ra khi thiết lập kết nối chat');
+      }
+   }, [selectedUser, adminId]);
+
+   // Debug messages state changes
+   useEffect(() => {
+      console.log('=== Messages State Updated ===');
+      console.log('Current messages:', messages);
+   }, [messages]);
 
    useEffect(() => {
       scrollToBottom();
@@ -36,6 +152,7 @@ const ChatBox = ({ selectedUser }) => {
 
          if (response.EC === 0 || response.EC === '0') {
             setMessages(response.DT || []);
+            scrollToBottom();
          }
       } catch (error) {
          console.error('Error loading chat history:', error);
@@ -43,52 +160,36 @@ const ChatBox = ({ selectedUser }) => {
       }
    };
 
-   useEffect(() => {
-      socket.on('receiveMessage', (newMessage) => {
-         console.log('Received new message:', newMessage);
-         if (newMessage.sender_id === selectedUser?.id || newMessage.receiver_id === selectedUser?.id) {
-            setMessages((prev) => [...prev, newMessage]);
-         }
-      });
-
-      return () => {
-         socket.off('receiveMessage');
-      };
-   }, [selectedUser]);
-
    const handleSend = async () => {
       if (!message.trim()) return;
 
       const messageData = {
-         sender_id: Number(adminId), // Đảm bảo admin là người gửi
+         sender_id: Number(adminId),
          receiver_id: selectedUser.id,
          content: message.trim(),
-         created_at: new Date().toISOString(), // Thêm thời gian gửi
+         created_at: new Date().toISOString(),
+         sender: {
+            user_id: Number(adminId),
+            name: 'Admin',
+            email: 'admin@example.com',
+         },
+         receiver: {
+            user_id: selectedUser.id,
+            name: selectedUser.name,
+            email: selectedUser.email,
+         },
       };
 
       try {
-         console.log('Sending message:', messageData);
          const response = await MessageService.sendMessage(messageData);
-
          if (response.EC === 0 || response.EC === '0') {
-            // Thêm thông tin sender và receiver vào tin nhắn
-            const newMessage = {
-               ...messageData,
-               sender: {
-                  user_id: Number(adminId),
-                  name: 'Admin',
-                  email: 'admin@gmail.com',
-               },
-               receiver: {
-                  user_id: selectedUser.id,
-                  name: selectedUser.name,
-                  email: selectedUser.email,
-               },
-            };
-
-            setMessages((prev) => [...prev, newMessage]);
-            socket.emit('sendMessage', newMessage);
+            // Thêm tin nhắn mới vào state ngay lập tức
+            setMessages((prev) => [...prev, messageData]);
+            // Emit tin nhắn qua socket
+            socket.emit('sendMessage', messageData);
             setMessage('');
+            scrollToBottom();
+            onMessageSent();
          }
       } catch (error) {
          console.error('Error sending message:', error);
