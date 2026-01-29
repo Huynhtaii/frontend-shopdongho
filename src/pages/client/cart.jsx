@@ -32,7 +32,7 @@ const Cart = () => {
                            </div>
                         </div>
                      </div>
-                     <Payment totalPrice={totalPrice} />
+                     <Payment totalPrice={totalPrice} cartItem={cartItem} />
                   </>
                ) : (
                   <div className="flex gap-1">

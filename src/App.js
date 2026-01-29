@@ -23,6 +23,7 @@ function App() {
             isLoading: false,
             isAuthenticated: true,
             user: {
+               id: response.DT.id,
                email: response.DT.email,
                name: response.DT.username,
                role: response.DT.role_id ? response.DT.role_id.toString() : '',
@@ -39,8 +40,10 @@ function App() {
             isAuthenticated: false,
             isLoading: false,
             user: {
+               id: '',
                email: '',
                name: '',
+               role: '',
             },
          });
       }

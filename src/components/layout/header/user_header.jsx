@@ -14,6 +14,7 @@ import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useCart } from '../../../context/cart_context';
+import { toast } from 'react-toastify';
 
 const UserHeader = () => {
    const { count } = useFavorite();
@@ -29,6 +30,7 @@ const UserHeader = () => {
    const handleLogout = async () => {
       const response = await UserService.logOutUser();
       if (response && response.EC === '0') {
+         toast.success('Đăng xuất thành công!');
          localStorage.removeItem('access_token');
          localStorage.removeItem('userId');
          localStorage.removeItem('userEmail');
@@ -99,17 +101,17 @@ const UserHeader = () => {
                </div>
                <Link to={'/cart'} className="relative hidden sm:flex">
                   <LuShoppingCart size={28} className="text-[#494949] cursor-pointer" />
-                  <span className="absolute top-0 -right-2 bg-primary rounded-full w-3.5 h-3.5 text-[11px] flex items-center justify-center">
+                  <span className="absolute top-0 -right-2 bg-primary rounded-full w-3.5 h-3.5 text-[11px] flex items-center justify-center z-[-2]">
                      {countCartItem || 0}
                   </span>
                </Link>
                <Link to={'/favorite'} className="relative hidden sm:flex">
                   <MdFavoriteBorder size={28} className="text-[#494949] cursor-pointer" />
-                  <span className="absolute top-0 -right-2 bg-primary rounded-full w-3.5 h-3.5 text-[11px] flex items-center justify-center">
+                  <span className="absolute top-0 -right-2 bg-primary rounded-full w-3.5 h-3.5 text-[11px] flex items-center justify-center z-[-2]">
                      {count}
                   </span>
                </Link>
-               {auth.user.role === '1' && (
+                {auth?.user?.role === '1' && (
                   <Link to={'/admin'} className="relative hidden sm:flex">
                      <RiBox3Line size={28} className="text-[#494949] cursor-pointer" />
                   </Link>
