@@ -119,7 +119,7 @@ const Order = () => {
 
             {/* Order list */}
             <div className="space-y-4">
-                {orders.map((order) => (
+                {orders && orders?.map((order) => (
                     <div key={order.id} className="border rounded-lg p-4">
                         {/* Order header */}
                         <div className="flex justify-between items-center pb-4 border-b">
