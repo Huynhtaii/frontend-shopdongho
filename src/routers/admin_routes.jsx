@@ -1,22 +1,17 @@
 import { Route, Routes } from 'react-router-dom';
 import Dashboard from '../pages/admin/dashboard';
-import PrivateRoute from './private_route';
 import NotFound from '../pages/common/not_found';
 import AdminLayout from '../components/layout/admin/admin_layout';
 import Chat from '../pages/admin/chat';
 import UserAdmin from '../pages/admin/user';
 import OrderAdmin from '../pages/admin/order';
 import ProductAdmin from '../pages/admin/product';
-import AuthContext from '../context/auth.context';
-import { useContext } from 'react';
+import { PrivateRouteAdmin } from './private_route';
 
 const AdminRoutes = () => {
-  const { auth } = useContext(AuthContext);
-  const isAuthenticated = auth.isAuthenticated;
-  const isRole = auth.user.role;
-  return (
-    <Routes>
-      <Route element={<PrivateRoute />}>
+   return (
+      <Routes>
+         <Route element={<PrivateRouteAdmin />}>
             <Route
                path="/"
                element={
