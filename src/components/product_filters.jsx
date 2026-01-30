@@ -1,27 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { IoIosArrowDown } from "react-icons/io";
 import { FaCheck } from "react-icons/fa6";
 
-const ProductFilters = () => {
+const ProductFilters = ({ setFilter, setCategoryName, categoryName }) => {
     const [priceRange, setPriceRange] = useState('all');
-    const [brand, setBrand] = useState('all');
-    const [type, setType] = useState('all');
+    const [type, setType] = useState(categoryName);
     const [rating, setRating] = useState('all');
     const [showFilter, setShowFilter] = useState({
         price: false,
-        brand: false,
         type: false,
         rating: false
     });
 
-    const brands = [
-        { id: 'all', name: 'Tất cả' },
-        { id: 'hublot', name: 'Hublot' },
-        { id: 'rolex', name: 'Rolex' },
-        { id: 'omega', name: 'Omega' },
-        { id: 'cartier', name: 'Cartier' },
-    ];
+    useEffect(() => {
+        setFilter({
+            price: priceRange,
+            rating: rating
+        })
+        setCategoryName(type)
+    }, [priceRange, rating, showFilter, type, setFilter, setCategoryName])
+
+    useEffect(() => {
+        setType(categoryName)
+    }, [categoryName])
 
     const prices = [
         { id: 'all', name: 'Tất cả' },
@@ -34,10 +36,11 @@ const ProductFilters = () => {
 
     const types = [
         { id: 'all', name: 'Tất cả' },
-        { id: 'nam', name: 'Đồng hồ Nam' },
-        { id: 'nu', name: 'Đồng hồ Nữ' },
-        { id: 'doi', name: 'Đồng hồ Đôi' },
-        { id: 'treo-tuong', name: 'Đồng hồ Treo tường' },
+        { id: 'Đồng hồ nam', name: 'Đồng hồ Nam' },
+        { id: 'Đồng hồ nữ', name: 'Đồng hồ Nữ' },
+        { id: 'Đồng hồ đôi', name: 'Đồng hồ Đôi' },
+        { id: 'Đồng hồ treo tường', name: 'Đồng hồ Treo tường' },
+        { id: 'Xu hướng 2025', name: 'Xu hướng 2025' },
     ];
 
     const ratings = [
@@ -64,33 +67,6 @@ const ProductFilters = () => {
         <div className="layout-container py-8">
             <h1 className="mt-6 mb-1">Lọc sản phẩm</h1>
             <div className="flex flex-wrap gap-4">
-                {/* Filter by Brand */}
-                <div className="relative">
-                    <button
-                        onClick={() => toggleFilter('brand')}
-                        className="flex items-center gap-2 px-4 py-2 border rounded-md hover:border-primary"
-                    >
-                        <span className="text-sm">Hãng</span>
-                        <IoIosArrowDown className={`transition-transform duration-300 ${showFilter.brand ? 'rotate-180' : ''}`} />
-                    </button>
-                    {showFilter.brand && (
-                        <div className="absolute z-10 w-48 mt-2 bg-white border rounded-md shadow-lg">
-                            {brands.map((item) => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => {
-                                        setBrand(item.id);
-                                        toggleFilter('brand');
-                                    }}
-                                    className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-50"
-                                >
-                                    <span className="text-sm">{item.name}</span>
-                                    {brand === item.id && <FaCheck className="text-primary" size={12} />}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
 
                 {/* Filter by Price */}
                 <div className="relative">
@@ -179,17 +155,6 @@ const ProductFilters = () => {
 
             {/* Selected Filters */}
             <div className="flex flex-wrap gap-2 mt-4">
-                {brand !== 'all' && (
-                    <div className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-100 rounded-full">
-                        <span>Hãng: {brands.find(x => x.id === brand)?.name}</span>
-                        <button
-                            onClick={() => setBrand('all')}
-                            className="text-gray-500 hover:text-red-500"
-                        >
-                            ×
-                        </button>
-                    </div>
-                )}
                 {priceRange !== 'all' && (
                     <div className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-100 rounded-full">
                         <span>Giá: {prices.find(x => x.id === priceRange)?.name}</span>

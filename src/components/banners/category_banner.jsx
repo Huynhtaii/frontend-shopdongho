@@ -2,20 +2,24 @@ import { v4 as uuid } from 'uuid';
 import { Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Link } from 'react-router-dom';
+import { memo } from 'react';
 
 const CategoryBanner = () => {
     const banners = [
         {
             id: uuid(),
-            image: '/banner_collection4.webp'
+            image: '/banner_collection4.webp',
+            url: '/category/all'
         },
         {
             id: uuid(),
-            image: '/banner_collection5.webp'
+            image: '/banner_collection5.webp',
+            url: '/category/all'
         },
         {
             id: uuid(),
-            image: '/banner_collection6.webp'
+            image: '/banner_collection6.webp',
+            url: '/category/all'
         },
     ]
     return (
@@ -34,7 +38,7 @@ const CategoryBanner = () => {
             >
                 {banners.map((banner) => (
                     <SwiperSlide key={banner.id}>
-                        <Link to={''} className='rounded-lg object-cover'>
+                        <Link to={banner.url} className='rounded-lg object-cover'>
                             <img src={banner.image} alt="" className='rounded-lg object-cover' />
                         </Link>
                     </SwiperSlide>
@@ -43,4 +47,4 @@ const CategoryBanner = () => {
         </div>
     )
 }
-export default CategoryBanner;
+export default memo(CategoryBanner);

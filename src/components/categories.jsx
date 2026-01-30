@@ -1,54 +1,29 @@
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { Swiper, SwiperSlide } from "swiper/react"
+import CategoryService from "../services/category_service";
+import { toast } from "react-toastify";
 
 const Categories = () => {
-    const categories = [
-        {
-            id: 1,
-            name: 'Đồng hồ nam',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 2,
-            name: 'Đồng hồ nữ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 3,
-            name: 'Đồng hồ địa kỷ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 4,
-            name: 'Đồng hồ địa kỷ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 5,
-            name: 'Đồng hồ địa kỷ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 6,
-            name: 'Đồng hồ địa kỷ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 7,
-            name: 'Đồng hồ địa kỷ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 8,
-            name: 'Đồng hồ địa kỷ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-        {
-            id: 9,
-            name: 'Đồng hồ địa kỷ',
-            image: 'https://www.watchstore.vn/images/collections_home/2024/09/06/resized/small-web-banner-xu-huong-2024_1725589299.webp'
-        },
-    ]
+    const [categories, setCategories] = useState([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const fetchAllCategories = async () => {
+            try {
+                setLoading(true);
+                const data = await CategoryService.getAllCategories()
+                setCategories(data.DT);
+            } catch (err) {
+                toast.error(err.message || "Có lỗi xảy ra khi tải sản phẩm");
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchAllCategories()
+    }, [])
+
+    if (loading) return <div className="layout-container"><div className="mt-10 w-[70%] m-auto">Đang tải...</div></div>
     return (
         <div className="layout-container">
             <div className="mt-10 w-[70%] m-auto">
@@ -66,21 +41,21 @@ const Categories = () => {
                     }}
                 >
                     {Array.from({ length: Math.ceil(categories.length / 2) }, (_, i) => i * 2).map(i => (
-                        <SwiperSlide key={categories[i].id}>
+                        <SwiperSlide key={i}>
                             <div>
                                 <div className="mt-5">
-                                    <Link to={''} >
+                                    <Link to={`/category/${categories[i].name}`} >
                                         <img src={categories[i].image}
-                                            className="w-full rounded-lg hover:shadow-lg shadow-black duration-100 object-cover"
+                                            className="w-full h-[100px] rounded-lg hover:shadow-lg shadow-black duration-100 object-cover"
                                             alt={categories[i].name} />
                                     </Link>
                                     <h3 className="text-center text-sm mt-1 text-[#3a3a3a]">{categories[i].name}</h3>
                                 </div>
                                 {categories[i + 1] && (
                                     <div className="mt-5">
-                                        <Link to={''} >
+                                        <Link to={`/category/${categories[i + 1].name}`} >
                                             <img src={categories[i + 1].image}
-                                                className="w-full rounded-lg hover:shadow-lg shadow-black duration-100 object-cover"
+                                                className="w-full h-[100px] rounded-lg hover:shadow-lg shadow-black duration-100 object-cover"
                                                 alt={categories[i + 1].name} />
                                         </Link>
                                         <h3 className="text-center text-sm mt-1 text-[#3a3a3a]">{categories[i + 1].name}</h3>

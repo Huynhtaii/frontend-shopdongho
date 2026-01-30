@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 
 import { MdNavigateNext } from "react-icons/md";
 
-const ProductListSlider = ({ title = '', col = 5 }) => {
+const ProductListSlider = ({ title = '', col = 5, products }) => {
     return (
         <div className='layout-container'>
             {title && (
@@ -16,25 +16,25 @@ const ProductListSlider = ({ title = '', col = 5 }) => {
                     <Link to={''} className='flex items-center text-sm hover:text-blue-500 duration-50'>Xem tất cả<MdNavigateNext size={18} /></Link>
                 </div>
             )}
-            <Swiper
-                spaceBetween={10}
-                navigation={true}
-                modules={[Navigation]}
-                breakpoints={{
-                    320: { slidesPerView: 2 },  // Điện thoại nhỏ
-                    480: { slidesPerView: 3 },  // Điện thoại lớn
-                    768: { slidesPerView: 4 },  // Tablet
-                    1024: { slidesPerView: col }, // Laptop
-                }}
-                className="mySwiper"
-            >
-                <SwiperSlide><ProductCard /></SwiperSlide>
-                <SwiperSlide><ProductCard /></SwiperSlide>
-                <SwiperSlide><ProductCard /></SwiperSlide>
-                <SwiperSlide><ProductCard /></SwiperSlide>
-                <SwiperSlide><ProductCard /></SwiperSlide>
-                <SwiperSlide><ProductCard /></SwiperSlide>
-            </Swiper>
+            {products?.length > 0 ?
+                <Swiper
+                    spaceBetween={10}
+                    navigation={true}
+                    modules={[Navigation]}
+                    breakpoints={{
+                        320: { slidesPerView: 2 },  // Điện thoại nhỏ
+                        480: { slidesPerView: 3 },  // Điện thoại lớn
+                        768: { slidesPerView: 4 },  // Tablet
+                        1024: { slidesPerView: col }, // Laptop
+                    }}
+                    className="mySwiper"
+                >
+                    {products?.map((product) => (
+                        <SwiperSlide key={product?.product_id}><ProductCard data={product} /></SwiperSlide>
+                    ))}
+                </Swiper>
+                : 'Không có sản phẩm'
+            }
         </div>
     );
 };

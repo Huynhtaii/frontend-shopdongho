@@ -9,6 +9,7 @@ import 'swiper/css/pagination';
 
 // import required modules
 import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
+import { memo } from 'react';
 
 const HomeBanner = () => {
     const banners = [
@@ -17,26 +18,26 @@ const HomeBanner = () => {
         '/slider_3.jpg',
     ]
     return (
-            <Swiper
-                spaceBetween={30}
-                effect={'fade'}
-                navigation={true}
-                pagination={{
-                    clickable: true,
-                }}
-                autoplay={{
-                    delay: 5000,
-                    disableOnInteraction: false
-                }}
+        <Swiper
+            spaceBetween={30}
+            effect={'fade'}
+            navigation={true}
+            pagination={{
+                clickable: true,
+            }}
+            autoplay={{
+                delay: 5000,
+                disableOnInteraction: false
+            }}
             modules={[EffectFade, Navigation, Pagination, Autoplay]}
-                className="mySwiper w-full"
-            >
-                {banners.map((url, index) => (
-                    <SwiperSlide key={url + index}>
-                        <img className="w-full h-full object-cover" src={url} alt="" />
-                    </SwiperSlide>
-                ))}
-            </Swiper>
+            className="mySwiper w-full"
+        >
+            {banners.map((url, index) => (
+                <SwiperSlide key={url + index}>
+                    <img className="w-full h-full object-cover" src={url} alt="" />
+                </SwiperSlide>
+            ))}
+        </Swiper>
     );
 }
-export default HomeBanner;
+export default memo(HomeBanner)

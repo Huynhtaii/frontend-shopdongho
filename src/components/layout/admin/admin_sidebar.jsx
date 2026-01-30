@@ -1,15 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
-import { RiDashboardLine, RiUserLine, RiShoppingCart2Line, RiMessage2Line, RiProductHuntLine } from 'react-icons/ri';
+import { RiDashboardLine, RiUserLine, RiShoppingCart2Line, RiMessage2Line, RiProductHuntLine, RiHomeSmileLine } from 'react-icons/ri';
 
 const AdminSidebar = ({ isOpen, setIsOpen }) => {
     const location = useLocation();
-    
+
     const menuItems = [
-        { path: '/admin/dashboard', icon: <RiDashboardLine size={24} />, label: 'Dashboard' },
+        { path: '/admin', icon: <RiDashboardLine size={24} />, label: 'Dashboard' },
         { path: '/admin/products', icon: <RiProductHuntLine size={24} />, label: 'Sản phẩm' },
         { path: '/admin/orders', icon: <RiShoppingCart2Line size={24} />, label: 'Đơn hàng' },
         { path: '/admin/users', icon: <RiUserLine size={24} />, label: 'Người dùng' },
         { path: '/admin/chat', icon: <RiMessage2Line size={24} />, label: 'Tin nhắn' },
+        { path: '/', icon: <RiHomeSmileLine size={24} />, label: 'Trang chủ' },
     ];
 
     return (
@@ -27,8 +28,8 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
                         key={item.path}
                         to={item.path}
                         className={`flex items-center px-6 py-3 cursor-pointer transition-colors
-                            ${location.pathname === item.path 
-                                ? 'bg-blue-600 text-white' 
+                            ${location.pathname === item.path
+                                ? 'bg-blue-600 text-white'
                                 : 'text-gray-300 hover:bg-gray-700'}
                             ${!isOpen && 'justify-center'}`}
                     >

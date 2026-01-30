@@ -1,7 +1,10 @@
 import { Navigate, Outlet } from "react-router-dom";
+import AuthContext from "../context/auth.context";
+import { useContext } from "react";
 
 const PublicRouter = () => {
-    const isAuthenticated = !!localStorage.getItem("token");// Kiểm tra user đã login chưa
+    const { auth } = useContext(AuthContext);
+    const isAuthenticated = auth.isAuthenticated;
     return isAuthenticated ? <Navigate to="/" replace /> : <Outlet />;
 }
 
