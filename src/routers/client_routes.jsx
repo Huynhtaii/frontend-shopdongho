@@ -9,11 +9,10 @@ import PublicRouter from './public_router';
 import NotFound from '../pages/common/not_found';
 import UserFooter from '../components/layout/user_footer';
 import UserHeader from '../components/layout/header/user_header';
-import   {PrivateRouteUser} from './private_route';
+import { PrivateRouteUser } from './private_route';
 
 import ProductDetail from '../pages/client/productdetail';
 import Category from '../pages/client/category';
-import Order from '../pages/client/order';
 import FloatingButtons from '../components/floating_buttons';
 import Account from '../pages/client/account';
 
@@ -66,14 +65,6 @@ const ClientRoutes = () => {
             element={
                <ClientLayout>
                   <Category />
-               </ClientLayout>
-            }
-         />
-         <Route
-            path="/order"
-            element={
-               <ClientLayout>
-                  <Order />
                </ClientLayout>
             }
          />
