@@ -22,13 +22,13 @@ const PaymentOption = ({ paymentMethod, setPaymentMethod }) => {
                <input
                   type="radio"
                   name="paymentMethod"
-                  id="momo"
-                  value="momo"
-                  checked={paymentMethod === 'momo'}
+                  id="qr_code"
+                  value="qr_code"
+                  checked={paymentMethod === 'qr_code'}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                />
-               <label htmlFor="momo" className="text-sm cursor-pointer">
-                  Thanh toán qua ví điện tử Momo
+               <label htmlFor="qr_code" className="text-sm cursor-pointer">
+                  Thanh toán QR Code
                </label>
             </div>
          </div>
@@ -36,4 +36,4 @@ const PaymentOption = ({ paymentMethod, setPaymentMethod }) => {
    );
 };
 
-export default PaymentOption; 
+export default PaymentOption;

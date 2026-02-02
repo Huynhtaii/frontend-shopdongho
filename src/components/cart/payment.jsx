@@ -46,7 +46,9 @@ const Payment = ({ totalPrice, cartItem }) => {
 
    const handleOrderProduct = () => {
       const transferContent = createTransferContent();
-      setIsModalOpen(true);
+      if (paymentMethod === 'qr_code') {
+         setIsModalOpen(true);
+      }
       console.log('Transfer content:', transferContent);
    };
 
@@ -88,12 +90,14 @@ const Payment = ({ totalPrice, cartItem }) => {
             <span className="text-xs pb-2">(Bằng cách đặt hàng bạn đồng ý với các điều khoản của chúng tôi)</span>
          </button>
 
-         <ModalPayment
-            isOpen={isModalOpen}
-            onClose={handleCloseModal}
-            totalAmount={totalPrice}
-            transferContent={createTransferContent()}
-         />
+         {paymentMethod === 'qr_code' && (
+            <ModalPayment
+               isOpen={isModalOpen}
+               onClose={handleCloseModal}
+               totalAmount={totalPrice}
+               transferContent={createTransferContent()}
+            />
+         )}
       </div>
    );
 };
