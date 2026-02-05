@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import AccountService from '../../services/account_service';
 import ModalPayment from '../modalPayment/modalPayment';
 import PaymentOption from './PaymentOption';
+import useFormatPrice from '../../hooks/use_formatPrice';
 
 const Payment = ({ totalPrice, cartItem }) => {
    const [paymentMethod, setPaymentMethod] = useState('cod');
    const [userOrder, setUserOrder] = useState(null);
    const [isModalOpen, setIsModalOpen] = useState(false);
+   const { formatPrice } = useFormatPrice();
+
    // Lấy id tài khoản đã đăng nhập
    const user_id = localStorage.getItem('userId');
    console.log('>>>>>>>>>>>>>>>check user_id', user_id);
@@ -79,7 +82,7 @@ const Payment = ({ totalPrice, cartItem }) => {
          </div>
          <div className="flex justify-between border-b py-5">
             <h3 className="text-[14px] font-[600]">Cần thanh toán:</h3>
-            <p className="text-[#ed1c24] font-[600] text-[14px]">{totalPrice.toLocaleString()}đ</p>
+            <p className="text-[#ed1c24] font-[600] text-[14px]">{formatPrice(totalPrice)}</p>
          </div>
          <PaymentOption paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />
          <button

@@ -1,195 +1,190 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { RiShoppingCart2Line, RiHeartLine } from "react-icons/ri";
-import { useParams } from "react-router-dom";
-import { FaStar } from "react-icons/fa";
-import ProductService from "../../services/product_service";
-import { useFavorite } from "../../context/favorite_context";
-import { useCart } from "../../context/cart_context";
+import React, { useCallback, useEffect, useState } from 'react';
+import { RiShoppingCart2Line, RiHeartLine } from 'react-icons/ri';
+import { useParams } from 'react-router-dom';
+import { FaStar } from 'react-icons/fa';
+import ProductService from '../../services/product_service';
+import { useFavorite } from '../../context/favorite_context';
+import { useCart } from '../../context/cart_context';
+import useFormatPrice from '../../hooks/use_formatPrice';
 function ProductDetail() {
-  const { addAndRemoveToFavorite, findFavorite } = useFavorite();
-  const { addToCart } = useCart();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(findFavorite(product?.product_id));
-  const { id } = useParams();
+   const { addAndRemoveToFavorite, findFavorite } = useFavorite();
+   const { addToCart } = useCart();
+   const [product, setProduct] = useState(null);
+   const [loading, setLoading] = useState(true);
+   const [isFavorite, setIsFavorite] = useState(findFavorite(product?.product_id));
+   const { id } = useParams();
+   const { formatPrice } = useFormatPrice();
 
-  useEffect(() => {
-    setIsFavorite(findFavorite(product?.product_id));
-  }, [product?.product_id, findFavorite]);
+   useEffect(() => {
+      setIsFavorite(findFavorite(product?.product_id));
+   }, [product?.product_id, findFavorite]);
 
-  // Định nghĩa hàm addRecentProduct trước khi sử dụng
-  const addRecentProduct = (productId) => {
-    // Lấy mảng đã lưu từ localStorage, nếu chưa có thì khởi tạo là mảng rỗng
-    const stored = localStorage.getItem("recentProduct");
-    let recentProducts = stored ? JSON.parse(stored) : [];
+   // Định nghĩa hàm addRecentProduct trước khi sử dụng
+   const addRecentProduct = (productId) => {
+      // Lấy mảng đã lưu từ localStorage, nếu chưa có thì khởi tạo là mảng rỗng
+      const stored = localStorage.getItem('recentProduct');
+      let recentProducts = stored ? JSON.parse(stored) : [];
 
-    // Nếu sản phẩm đã có trong mảng thì loại bỏ đi để sau đó thêm lại ở đầu
-    recentProducts = recentProducts.filter((id) => id !== productId);
+      // Nếu sản phẩm đã có trong mảng thì loại bỏ đi để sau đó thêm lại ở đầu
+      recentProducts = recentProducts.filter((id) => id !== productId);
 
-    // Thêm sản phẩm mới vào đầu mảng
-    recentProducts.unshift(productId);
+      // Thêm sản phẩm mới vào đầu mảng
+      recentProducts.unshift(productId);
 
-    // Giới hạn mảng tối đa 8 phần tử
-    if (recentProducts.length > 8) {
-      recentProducts = recentProducts.slice(0, 8);
-    }
-
-    // Lưu lại vào localStorage
-    localStorage.setItem("recentProduct", JSON.stringify(recentProducts));
-  };
-
-  const fetchProductById = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await ProductService.getProductById(id);
-      if (response.EC === "0") {
-        setProduct(response.DT);
+      // Giới hạn mảng tối đa 8 phần tử
+      if (recentProducts.length > 8) {
+         recentProducts = recentProducts.slice(0, 8);
       }
-    } catch (error) {
-      console.error("Error fetching product:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [id])
 
-  useEffect(() => {
-    fetchProductById();
-    addRecentProduct(id);
-  }, [id, fetchProductById]);
+      // Lưu lại vào localStorage
+      localStorage.setItem('recentProduct', JSON.stringify(recentProducts));
+   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+   const fetchProductById = useCallback(async () => {
+      try {
+         setLoading(true);
+         const response = await ProductService.getProductById(id);
+         if (response.EC === '0') {
+            setProduct(response.DT);
+         }
+      } catch (error) {
+         console.error('Error fetching product:', error);
+      } finally {
+         setLoading(false);
+      }
+   }, [id]);
 
-  if (!product) {
-    return <div>Không tìm thấy sản phẩm</div>;
-  }
+   useEffect(() => {
+      fetchProductById();
+      addRecentProduct(id);
+   }, [id, fetchProductById]);
 
-  const renderStars = (rating) => {
-    return [...Array(5)].map((_, index) => (
-      <FaStar
-        key={index}
-        className={`${index < rating ? "text-yellow-400" : "text-gray-300"} inline-block`}
-      />
-    ));
-  };
+   if (loading) {
+      return (
+         <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+         </div>
+      );
+   }
 
-  const calculateDiscount = (original, discounted) => {
-    const originalPrice = parseFloat(original);
-    const discountPrice = parseFloat(discounted);
-    return Math.round(((originalPrice - discountPrice) / originalPrice) * 100);
-  };
+   if (!product) {
+      return <div>Không tìm thấy sản phẩm</div>;
+   }
 
-  const handleAddToCart = async () => {
-    const cart_item = {
-      product_id: product.product_id,
-      quantity: 1,
-      created_at: new Date().toISOString()
-    }
-    addToCart(cart_item);
-  }
+   const renderStars = (rating) => {
+      return [...Array(5)].map((_, index) => (
+         <FaStar key={index} className={`${index < rating ? 'text-yellow-400' : 'text-gray-300'} inline-block`} />
+      ));
+   };
 
-  return (
-    <div className="layout-container mx-auto px-4 !py-8">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Ảnh sản phẩm */}
-        <div className="md:w-1/2">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <img
-              src={product.ProductImages[0]?.url}
-              alt={product.name}
-              className="w-full object-contain"
-            />
-          </div>
-        </div>
+   const calculateDiscount = (original, discounted) => {
+      const originalPrice = parseFloat(original);
+      const discountPrice = parseFloat(discounted);
+      return Math.round(((originalPrice - discountPrice) / originalPrice) * 100);
+   };
 
-        {/* Thông tin sản phẩm */}
-        <div className="md:w-1/2">
-          <h1 className="text-2xl font-semibold mb-4">{product.name}</h1>
+   const handleAddToCart = async () => {
+      const cart_item = {
+         product_id: product.product_id,
+         quantity: 1,
+         created_at: new Date().toISOString(),
+      };
+      addToCart(cart_item);
+   };
 
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex items-center">
-              {renderStars(product.rating)}
-              <span className="ml-2">{product.rating}/5</span>
+   return (
+      <div className="layout-container mx-auto px-4 !py-8">
+         <div className="flex flex-col md:flex-row gap-8">
+            {/* Ảnh sản phẩm */}
+            <div className="md:w-1/2">
+               <div className="bg-white p-4 rounded-lg shadow">
+                  <img src={product.ProductImages[0]?.url} alt={product.name} className="w-full object-contain" />
+               </div>
             </div>
-            <div className="text-gray-500">SKU: {product.sku}</div>
-          </div>
 
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-red-600">
-                {product.discount_price ? parseFloat(product.discount_price).toLocaleString() : parseFloat(product.price).toLocaleString()}đ
-              </span>
-              {product.discount_price && (
-                <>
-                  <span className="text-gray-500 line-through">
-                    {parseFloat(product.price).toLocaleString()}đ
-                  </span>
-                  <span className="text-red-600 bg-red-50 px-2 py-1 rounded">
-                    -{calculateDiscount(product.price, product.discount_price)}%
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
+            {/* Thông tin sản phẩm */}
+            <div className="md:w-1/2">
+               <h1 className="text-2xl font-semibold mb-4">{product.name}</h1>
 
-          <div className="mb-6">
-            <div className="flex items-center gap-4 mb-2">
-              <span className="text-gray-500 w-24">Danh mục:</span>
-              <span>{product.Categories[0]?.name}</span>
-            </div>
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-gray-500 w-24">Mô tả:</span>
-              <span>{product.description}</span>
-            </div>
-          </div>
+               <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center">
+                     {renderStars(product.rating)}
+                     <span className="ml-2">{product.rating}/5</span>
+                  </div>
+                  <div className="text-gray-500">SKU: {product.sku}</div>
+               </div>
 
-          {/* Buttons */}
-          <div className="flex gap-4">
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 bg-red-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-red-700 transition-colors">
-              <RiShoppingCart2Line size={20} />
-              Thêm vào giỏ hàng
-            </button>
-            <button
-              onClick={() => {
-                addAndRemoveToFavorite(product);
-                setIsFavorite(!isFavorite);
-              }}
-              className={`w-12 h-12 border border-gray-300 
+               <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                  <div className="flex items-baseline gap-2">
+                     <span className="text-3xl font-bold text-red-600">
+                        {formatPrice(product.discount_price || product.price)}
+                     </span>
+                     {product.discount_price && (
+                        <>
+                           <span className="text-gray-500 line-through">{formatPrice(product.price)}</span>
+                           <span className="text-red-600 bg-red-50 px-2 py-1 rounded">
+                              -{calculateDiscount(product.price, product.discount_price)}%
+                           </span>
+                        </>
+                     )}
+                  </div>
+               </div>
+
+               <div className="mb-6">
+                  <div className="flex items-center gap-4 mb-2">
+                     <span className="text-gray-500 w-24">Danh mục:</span>
+                     <span>{product.Categories[0]?.name}</span>
+                  </div>
+                  <div className="flex items-center gap-4 mb-4">
+                     <span className="text-gray-500 w-24">Mô tả:</span>
+                     <span>{product.description}</span>
+                  </div>
+               </div>
+
+               {/* Buttons */}
+               <div className="flex gap-4">
+                  <button
+                     onClick={handleAddToCart}
+                     className="flex-1 bg-red-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-red-700 transition-colors"
+                  >
+                     <RiShoppingCart2Line size={20} />
+                     Thêm vào giỏ hàng
+                  </button>
+                  <button
+                     onClick={() => {
+                        addAndRemoveToFavorite(product);
+                        setIsFavorite(!isFavorite);
+                     }}
+                     className={`w-12 h-12 border border-gray-300 
               rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors 
-              ${isFavorite ? 'bg-red-600 text-white' : ''}`}>
-              <RiHeartLine size={20} />
-            </button>
-          </div>
+              ${isFavorite ? 'bg-red-600 text-white' : ''}`}
+                  >
+                     <RiHeartLine size={20} />
+                  </button>
+               </div>
 
-          {/* Cam kết */}
-          <div className="mt-8 bg-white p-4 rounded-lg border">
-            <h3 className="font-semibold mb-4">CAM KẾT CỦA WATCHSTORE.VN</h3>
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Bảo hành chính hãng {product.name}
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Không bán hàng fake, chỉ bán hàng chính hãng
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-green-500">✓</span>
-                Freeship toàn quốc, thanh toán khi nhận hàng
-              </li>
-            </ul>
-          </div>
-        </div>
+               {/* Cam kết */}
+               <div className="mt-8 bg-white p-4 rounded-lg border">
+                  <h3 className="font-semibold mb-4">CAM KẾT CỦA WATCHSTORE.VN</h3>
+                  <ul className="space-y-2">
+                     <li className="flex items-center gap-2">
+                        <span className="text-green-500">✓</span>
+                        Bảo hành chính hãng {product.name}
+                     </li>
+                     <li className="flex items-center gap-2">
+                        <span className="text-green-500">✓</span>
+                        Không bán hàng fake, chỉ bán hàng chính hãng
+                     </li>
+                     <li className="flex items-center gap-2">
+                        <span className="text-green-500">✓</span>
+                        Freeship toàn quốc, thanh toán khi nhận hàng
+                     </li>
+                  </ul>
+               </div>
+            </div>
+         </div>
       </div>
-    </div>
-  );
+   );
 }
 
 export default ProductDetail;
