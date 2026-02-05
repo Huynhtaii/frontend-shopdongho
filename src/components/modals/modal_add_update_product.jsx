@@ -57,7 +57,7 @@ const ModalAddUpdateProduct = ({
                             <input
                                 type="number"
                                 name="price"
-                                value={formData.price || 0}
+                                value={formData.price}
                                 onChange={handleInputChange}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 placeholder="Nhập giá"
@@ -68,7 +68,7 @@ const ModalAddUpdateProduct = ({
                             <input
                                 type="number"
                                 name="discount_price"
-                                value={formData.discount_price || 0}
+                                value={formData.discount_price}
                                 onChange={handleInputChange}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 placeholder="Nhập giá khuyến mãi"

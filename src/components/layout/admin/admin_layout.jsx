@@ -13,7 +13,7 @@ const AdminLayout = ({ children }) => {
             {/* Main Content */}
             <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
                 <AdminHeader toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 p-6">
                     {children}
                 </main>
             </div>

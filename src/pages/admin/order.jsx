@@ -161,7 +161,7 @@ const OrderAdmin = () => {
                                              </tr>
                                           </thead>
                                           <tbody>
-                                             {order.OrderItems.map((item) => (
+                                             {order.order_items.map((item) => (
                                                 <tr key={item.order_item_id}>
                                                    <td className="py-2">{item.product_id}</td>
                                                    <td className="py-2">{item.quantity}</td>
