@@ -17,6 +17,7 @@ const Payment = ({ totalPrice, cartItem }) => {
       if (user_id) {
          fetchUser();
       }
+      console.log('>>>>>>>>>>>>>>>check cartItem', cartItem);
    }, []);
    const fetchUser = async () => {
       try {
@@ -95,10 +96,12 @@ const Payment = ({ totalPrice, cartItem }) => {
 
          {paymentMethod === 'qr_code' && (
             <ModalPayment
+               cartItem={cartItem}
                isOpen={isModalOpen}
                onClose={handleCloseModal}
                totalAmount={totalPrice}
-               transferContent={createTransferContent()}
+               transferContent={createTransferContent()    
+               }
             />
          )}
       </div>

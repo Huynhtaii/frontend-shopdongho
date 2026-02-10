@@ -1,22 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { IoMdClose } from 'react-icons/io';
-import paymentAPI from '../../services/payment_service';
+import { paymentAPI, paymentCompleted } from '../../services/payment_service';
 import { toast } from 'react-toastify';
 
-function ModalPayment({ isOpen, onClose, totalAmount, transferContent }) {
+function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem }) {
    // API DỮ LIỆU CHUYỂN TIỀN NHẬN TỪ GOOGLE SHEET
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
    const [hasCheckedPayment, setHasCheckedPayment] = useState(false);
    const [checkingPayment, setCheckingPayment] = useState(false);
-
+   //lấy ra userID
+   const userID = localStorage.getItem('userId');
+   const handlePayMentSuccess = async () => {
+      try {
+         console.log('Sending payment data:', {
+            userId: userID,
+            totalAmount,
+            cartItem,
+         });
+         const res = await paymentCompleted(userID, totalAmount, cartItem);
+         console.log('Payment response:', res);
+         toast.success('Thanh toán thành công!');
+      } catch (error) {
+         console.error('🔥 Lỗi khi thanh toán:', error);
+         toast.error('Có lỗi xảy ra khi thanh toán!');
+      }
+   };
    useEffect(() => {
       if (!isOpen) return;
       console.log('🔥 useEffect chạy');
-   
+
       setCheckingPayment(true);
       let checkCount = 0;
       const maxChecks = 10;
-   
+
       const interval = setInterval(async () => {
          try {
             const data = await paymentAPI();
@@ -24,35 +40,36 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent }) {
                console.log('⚠️ Không có dữ liệu giao dịch.');
                return;
             }
-   
+
             const lastPaid = data.data[data.data.length - 1];
             const lastPaidContent = lastPaid['Mô tả'];
             const lastPaidPrice = lastPaid['Giá trị'];
-   
+
             console.log('🔍 Kiểm tra giao dịch lần', checkCount + 1);
             console.log('📜 Nội dung giao dịch gốc:', lastPaidContent);
             console.log('📜 Nội dung mong muốn gốc:', transferContent);
-   
+
             // Chuẩn hóa: Xóa "|" và khoảng trắng, chuyển về chữ thường
             const normalizedTransferContent = transferContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
             const normalizedLastPaidContent = lastPaidContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
-   
+
             console.log('🆕 Nội dung giao dịch sau khi chuẩn hóa:', normalizedLastPaidContent);
             console.log('🆕 Nội dung mong muốn sau khi chuẩn hóa:', normalizedTransferContent);
             console.log('✅ So khớp lần 2:', normalizedLastPaidContent.includes(normalizedTransferContent));
             console.log('💰 Số tiền nhận được:', lastPaidPrice);
             console.log('💰 Số tiền đủ?', lastPaidPrice >= totalAmount);
-   
+
             if (normalizedLastPaidContent.includes(normalizedTransferContent) && lastPaidPrice >= totalAmount) {
                console.log('🎉 Thanh toán hợp lệ, đóng modal.');
                clearInterval(interval);
                setCheckingPayment(false);
                setHasCheckedPayment(true);
                alert('🎉 Thanh toán thành công!');
+               handlePayMentSuccess();
                onClose();
                return;
             }
-   
+
             checkCount++;
             if (checkCount >= maxChecks) {
                console.log('❌ Hết số lần kiểm tra, đóng modal.');
@@ -68,14 +85,12 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent }) {
             alert('Lỗi khi kiểm tra thanh toán!');
          }
       }, 6000);
-   
+
       return () => {
          console.log('⛔ Clearing interval...');
          clearInterval(interval);
       };
    }, [isOpen, totalAmount, transferContent]);
-   
-   
 
    const handleClose = () => {
       console.log('Closing modal...');
@@ -88,7 +103,6 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent }) {
 
    let amount = totalAmount ? totalAmount.toLocaleString('vi-VN') : '0';
    let QR = `https://img.vietqr.io/image/${process.env.REACT_APP_BANK_ID}-${process.env.REACT_APP_ACCOUNT_NO}-qr_only.png?amount=${totalAmount}&addInfo=${transferContent}&accountName=Nguyen%20Van%20A`;
-
    return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center">
          {/* Overlay - Thêm pointer-events-auto để đảm bảo có thể click */}

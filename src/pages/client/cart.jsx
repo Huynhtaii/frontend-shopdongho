@@ -4,6 +4,7 @@ import { GrFormPrevious } from 'react-icons/gr';
 import ProductListCart from '../../components/cart/product_list_cart';
 import Payment from '../../components/cart/payment';
 import { useCart } from '../../context/cart_context';
+import { useEffect } from 'react';
 import useFormatPrice from '../../hooks/use_formatPrice';
 const Cart = () => {
    const { cartItem, totalPrice, savingsPrice } = useCart();

@@ -42,8 +42,6 @@ const FloatingButtons = () => {
          </div>
          <div className="relative">
             {/* /nếu là admin thì không hiển thị chat */}
-            {console.log('>>>>>>>check auth.user?.id', auth.user?.id)}
-            {console.log('>>>>>>>check adminId', adminId)}
             {String(auth.user?.id) !== String(adminId) && (
                <div
                   onClick={() => setShowChat(!showChat)}

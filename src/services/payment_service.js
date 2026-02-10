@@ -1,3 +1,4 @@
+import axios from '../utils/axios_config';
 const paymentAPI = async () => {
    try {
       console.log('Calling payment API...');
@@ -13,4 +14,18 @@ const paymentAPI = async () => {
       throw error;
    }
 };
-export default paymentAPI;
+const paymentCompleted = async (userId, totalAmount, cartItem) => {
+   try {
+      const url = '/v1/update-payment';
+      const response = await axios.post(url, {
+         id: userId,
+         totalAmount: totalAmount,
+         cartItem: cartItem,
+      });
+      return response;
+   } catch (error) {
+      console.error('paymentCompleted API Error:', error);
+      throw error;
+   }
+};
+export { paymentAPI, paymentCompleted };

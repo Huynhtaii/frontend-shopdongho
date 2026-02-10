@@ -49,8 +49,8 @@ export const CartProvider = ({ children }) => {
          toast.success('Thêm vào giỏ hàng thành công');
          fetchCart();
       } else {
-        console.log(response.EM);
-        
+         console.log(response.EM);
+
          toast.error('Thêm vào giỏ hàng thất bại');
       }
    };

@@ -13,6 +13,7 @@ function ProductDetail() {
    const [loading, setLoading] = useState(true);
    const [isFavorite, setIsFavorite] = useState(findFavorite(product?.product_id));
    const { id } = useParams();
+
    const { formatPrice } = useFormatPrice();
 
    useEffect(() => {
