@@ -70,7 +70,7 @@ function App() {
                         <Route path="/admin/*" element={<AdminRoutes />} />
                      </Routes>
                      <ToastContainer
-                        position="top-right"
+                        position="bottom-center"
                         autoClose={5000}
                         hideProgressBar={false}
                         newestOnTop={false}

@@ -28,7 +28,7 @@ const PaymentOption = ({ paymentMethod, setPaymentMethod }) => {
                   onChange={(e) => setPaymentMethod(e.target.value)}
                />
                <label htmlFor="qr_code" className="text-sm cursor-pointer">
-                  Thanh toán QR Code
+                  Thanh toán Bằng Ngân Hàng Qua QR Code
                </label>
             </div>
          </div>
