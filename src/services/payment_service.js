@@ -14,11 +14,12 @@ const paymentAPI = async () => {
       throw error;
    }
 };
-const paymentCompleted = async (userId, totalAmount, cartItem) => {
+const paymentCompleted = async (userId, userEmail, totalAmount, cartItem) => {
    try {
       const url = '/v1/update-payment';
       const response = await axios.post(url, {
          id: userId,
+         email: userEmail,
          totalAmount: totalAmount,
          cartItem: cartItem,
       });

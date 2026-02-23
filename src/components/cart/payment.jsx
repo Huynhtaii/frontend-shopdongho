@@ -12,6 +12,8 @@ const Payment = ({ totalPrice, cartItem }) => {
 
    // Lấy id tài khoản đã đăng nhập
    const user_id = localStorage.getItem('userId');
+   //lấy ra email của user
+
    console.log('>>>>>>>>>>>>>>>check user_id', user_id);
    useEffect(() => {
       if (user_id) {
@@ -100,8 +102,7 @@ const Payment = ({ totalPrice, cartItem }) => {
                isOpen={isModalOpen}
                onClose={handleCloseModal}
                totalAmount={totalPrice}
-               transferContent={createTransferContent()    
-               }
+               transferContent={createTransferContent()}
             />
          )}
       </div>

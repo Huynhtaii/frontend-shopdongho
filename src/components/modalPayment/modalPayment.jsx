@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { paymentAPI, paymentCompleted } from '../../services/payment_service';
 import { toast } from 'react-toastify';
+import AuthContext from '../../context/auth.context';
 
 function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem }) {
    // API DỮ LIỆU CHUYỂN TIỀN NHẬN TỪ GOOGLE SHEET
@@ -10,14 +11,18 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem 
    const [checkingPayment, setCheckingPayment] = useState(false);
    //lấy ra userID
    const userID = localStorage.getItem('userId');
+   //lấy ra email của user
+   const { auth } = useContext(AuthContext);
+   const userEmail = auth.user.email;
    const handlePayMentSuccess = async () => {
       try {
-         console.log('Sending payment data:', {
-            userId: userID,
+         const res = await paymentCompleted(
+            userID,
+            userEmail,
             totalAmount,
-            cartItem,
-         });
-         const res = await paymentCompleted(userID, totalAmount, cartItem);
+            cartItem,   
+         );
+
          console.log('Payment response:', res);
          toast.success('Thanh toán thành công!');
       } catch (error) {
@@ -28,7 +33,6 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem 
    useEffect(() => {
       if (!isOpen) return;
       console.log('🔥 useEffect chạy');
-
       setCheckingPayment(true);
       let checkCount = 0;
       const maxChecks = 10;

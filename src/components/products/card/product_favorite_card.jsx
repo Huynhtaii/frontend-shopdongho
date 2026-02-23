@@ -16,7 +16,6 @@ const ProductFavoriteCard = ({ product }) => {
          created_at: new Date().toISOString(),
       };
       await addToCart(cart_item);
-      navigate('/cart');
    };
    return (
       <div className="bg-white px-3 pt-3 rounded-md border-[1px] border-[#e7e7e7]">

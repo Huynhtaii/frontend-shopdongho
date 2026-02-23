@@ -13,9 +13,12 @@ const OrderAdmin = () => {
    const fetchData = async () => {
       try {
          const ordersData = await OrderService.getAllOrders();
-         setOrders(ordersData.DT);
+         console.log(ordersData);
+         setOrders(Array.isArray(ordersData.DT.orders) ? ordersData.DT.orders : []);
       } catch (error) {
+         console.error('Error fetching orders:', error);
          toast.error('Có lỗi xảy ra khi tải dữ liệu hoá đơn');
+         setOrders([]);
       }
    };
 
@@ -113,12 +116,26 @@ const OrderAdmin = () => {
                   </tr>
                </thead>
                <tbody className="divide-y divide-gray-200">
-                  {orders &&
-                     orders?.map((order) => (
+                  {Array.isArray(orders) && orders.length > 0 ? (
+                     orders.map((order) => (
                         <React.Fragment key={order.order_id}>
                            <tr className="hover:bg-gray-50" onClick={() => handleViewDetails(order)}>
                               <td className="px-6 py-4 whitespace-nowrap">{order.order_id}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{order.order_date}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                 {new Date(order.order_date).toLocaleDateString('vi-VN', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                 })}{' '}
+                                 {new Date(order.order_date).toLocaleTimeString('vi-VN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: false,
+                                    timeZone: 'Asia/Ho_Chi_Minh',
+                                 })}
+                              </td>
+
                               <td className="px-6 py-4 whitespace-nowrap">
                                  <span
                                     className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(order.status)}`}
@@ -178,7 +195,14 @@ const OrderAdmin = () => {
                               </tr>
                            )}
                         </React.Fragment>
-                     ))}
+                     ))
+                  ) : (
+                     <tr>
+                        <td colSpan="7" className="px-6 py-4 text-center">
+                           Không có dữ liệu đơn hàng
+                        </td>
+                     </tr>
+                  )}
                </tbody>
             </table>
          </div>

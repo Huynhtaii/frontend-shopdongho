@@ -58,7 +58,7 @@ const Categories = () => {
                   ></div>
                </span>
             </div>
-            <div className="flex flex-wrap gap-4 mt-10 place-items-center w-[60%] justify-between">
+            <div className="flex flex-wrap gap-6 mt-10 place-items-center w-[60%] justify-center">
                {categories.map((category, index) => (
                   <div key={index} className="text-center transform hover:scale-105 transition-all duration-300">
                      <Link to={`/category/${category.name}`}>
