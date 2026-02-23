@@ -19,7 +19,7 @@ const Cart = () => {
                   <>
                      <div className="border-b pb-5">
                         <div className="flex items-center justify-between text-sm">
-                           <Link to={'/category/all'} className="flex items-center text-blue-500 z-[99999]">
+                           <Link to={'/category/all'} className="flex items-center text-blue-500 z-[9999]">
                               <GrFormPrevious size={20} />
                               Mua thêm sản phẩm khác
                            </Link>

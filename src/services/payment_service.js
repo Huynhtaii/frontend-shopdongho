@@ -14,7 +14,9 @@ const paymentAPI = async () => {
       throw error;
    }
 };
-const paymentCompleted = async (userId, userEmail, totalAmount, cartItem) => {
+const paymentCompleted = async (userId, userEmail, totalAmount, cartItem, paymentMethod) => {
+   console.log(userId, userEmail, totalAmount, cartItem);
+
    try {
       const url = '/v1/update-payment';
       const response = await axios.post(url, {
@@ -22,6 +24,7 @@ const paymentCompleted = async (userId, userEmail, totalAmount, cartItem) => {
          email: userEmail,
          totalAmount: totalAmount,
          cartItem: cartItem,
+         paymentMethod,
       });
       return response;
    } catch (error) {

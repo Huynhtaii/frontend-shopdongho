@@ -4,7 +4,7 @@ import { paymentAPI, paymentCompleted } from '../../services/payment_service';
 import { toast } from 'react-toastify';
 import AuthContext from '../../context/auth.context';
 
-function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem }) {
+function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem, paymentMethod }) {
    // API DỮ LIỆU CHUYỂN TIỀN NHẬN TỪ GOOGLE SHEET
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
    const [hasCheckedPayment, setHasCheckedPayment] = useState(false);
@@ -16,12 +16,7 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem 
    const userEmail = auth.user.email;
    const handlePayMentSuccess = async () => {
       try {
-         const res = await paymentCompleted(
-            userID,
-            userEmail,
-            totalAmount,
-            cartItem,   
-         );
+         const res = await paymentCompleted(userID, userEmail, totalAmount, cartItem, paymentMethod);
 
          console.log('Payment response:', res);
          toast.success('Thanh toán thành công!');

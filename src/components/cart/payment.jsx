@@ -3,6 +3,8 @@ import AccountService from '../../services/account_service';
 import ModalPayment from '../modalPayment/modalPayment';
 import PaymentOption from './PaymentOption';
 import useFormatPrice from '../../hooks/use_formatPrice';
+import { toast } from 'react-toastify';
+import { paymentCompleted } from '../../services/payment_service';
 
 const Payment = ({ totalPrice, cartItem }) => {
    const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -50,17 +52,52 @@ const Payment = ({ totalPrice, cartItem }) => {
       return `${userPart}${productParts}T${minutes}${seconds}`;
    };
 
-   const handleOrderProduct = () => {
-      const transferContent = createTransferContent();
-      if (paymentMethod === 'qr_code') {
-         setIsModalOpen(true);
+   const handleValidateForm = () => {
+      if (!userOrder.name) {
+         toast.error('Tên không được để trống');
+         return false;
       }
-      console.log('Transfer content:', transferContent);
+      if (!userOrder.phone) {
+         toast.error('Số điện thoại không được để trống');
+         return false;
+      }
+      if (!userOrder.email) {
+         toast.error('Email không được để trống');
+         return false;
+      }
+      if (!userOrder.address) {
+         toast.error('Địa chỉ không được để trống');
+         return false;
+      }
+      return true;
+   };
+
+   const handleOrderProduct = () => {
+      if (handleValidateForm()) {
+         if (paymentMethod === 'cod') {
+            handleOrderCodSuccess();
+         } else {
+            const transferContent = createTransferContent();
+            setIsModalOpen(true);
+            console.log('Transfer content:', transferContent);
+         }
+      }
    };
 
    const handleCloseModal = () => {
       console.log('Handling modal close....');
       setIsModalOpen(false);
+   };
+
+   const handleOrderCodSuccess = async () => {
+      try {
+         const res = await paymentCompleted(user_id, userOrder.email, totalPrice, cartItem,paymentMethod);
+         console.log('Payment response:', res);
+         toast.success('Đặt hàng thành công!');
+      } catch (error) {
+         console.error('🔥 Lỗi khi đặt hàng:', error);
+         toast.error('Có lỗi xảy ra khi đặt hàng!');
+      }
    };
 
    return (
