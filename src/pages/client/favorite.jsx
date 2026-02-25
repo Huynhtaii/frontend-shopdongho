@@ -6,7 +6,7 @@ const Favorite = () => {
 
     return (
         // <Empty />
-        <div className="layout-container !pb-20">
+        <div className="layout-container !pb-20 min-h-96">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 my-3">
                 <h1 className="text-xl font-[600]">Sản phẩm yêu thích ({count})</h1>

@@ -11,13 +11,26 @@ import { CartProvider } from './context/cart_context';
 import AuthContext from './context/auth.context';
 import { useContext, useEffect } from 'react';
 import AccountService from './services/account_service';
+import { useNavigate } from 'react-router-dom';
 
 function App() {
    const { auth, setAuth } = useContext(AuthContext);
-
+   const navigate = useNavigate();
    const fetchAccount = async () => {
       let response = await AccountService.getAccount();
       console.log('>>>>>>>check response check get account', response);
+      if (response.data === null) {
+         toast.warning('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
+         setTimeout(() => {
+            setAuth({
+               isAuthenticated: false,
+               isLoading: false,
+               user: { id: '', email: '', name: '', role: '' },
+            });
+            navigate('/login');
+         }, 2000);
+         return;
+      }
       if (response && response.EC === '0') {
          setAuth({
             isLoading: false,
@@ -63,7 +76,7 @@ function App() {
          {!auth.isLoading && (
             <CartProvider>
                <FavoriteProvider>
-                  <BrowserRouter>
+                  <>
                      <ScrollToTop />
                      <Routes>
                         <Route path="/*" element={<ClientRoutes />} />
@@ -82,7 +95,7 @@ function App() {
                         theme="colored"
                         transition={Bounce}
                      />
-                  </BrowserRouter>
+                  </>
                </FavoriteProvider>
             </CartProvider>
          )}

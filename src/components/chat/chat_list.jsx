@@ -42,6 +42,7 @@ const ChatList = ({ selectedUser, onSelectUser, refreshTrigger }) => {
                      email: userEmail,
                      lastMessage: message.content,
                      lastMessageTime: message.created_at,
+                     sender_id: message.sender_id,
                   });
                }
             });
@@ -106,7 +107,13 @@ const ChatList = ({ selectedUser, onSelectUser, refreshTrigger }) => {
                            <h3 className="font-medium truncate">{user.name}</h3>
                            <span className="text-xs text-gray-500">{formatTime(user.lastMessageTime)}</span>
                         </div>
-                        <p className="text-sm text-gray-500 truncate">{user.lastMessage}</p>
+                        {/* nếu là admin nhắn thì hiển thị Bạn: */}
+                        <p className="text-sm text-gray-500 truncate">
+                           {String(user.sender_id) === String(adminId)
+                              ? 'Bạn: '
+                              : `${user.name.split(' ')[user.name.split(' ').length - 1]}: `}
+                           {user.lastMessage}
+                        </p>
                      </div>
                   </div>
                ))

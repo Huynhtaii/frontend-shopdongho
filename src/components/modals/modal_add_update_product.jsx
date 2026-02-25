@@ -15,6 +15,11 @@ const ModalAddUpdateProduct = ({
    const [categories, setCategories] = useState([]);
    const { formatPrice } = useFormatPrice();
 
+   const formatPriceInput = (price) => {
+      if (!price) return '';
+      return Math.round(parseFloat(price)).toString();
+   };
+
    useEffect(() => {
       const fetchData = async () => {
          try {
@@ -26,83 +31,79 @@ const ModalAddUpdateProduct = ({
       };
       fetchData();
    }, []);
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
-                <h2 className="text-xl font-semibold mb-4">
-                    {selectedProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Mã sản phẩm</label>
-                            <span
-                                className="mt-1 block w-full text-[#b3b3b3] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            >
-                                {formData.sku}
-                            </span>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Tên sản phẩm</label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                placeholder="Nhập tên sản phẩm"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Giá</label>
-                            <input
-                                type="number"
-                                name="price"
-                                value={formData.price}
-                                onChange={handleInputChange}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                placeholder="Nhập giá"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Giá khuyến mãi</label>
-                            <input
-                                type="number"
-                                name="discount_price"
-                                value={formData.discount_price}
-                                onChange={handleInputChange}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                placeholder="Nhập giá khuyến mãi"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Danh mục</label>
-                            <select
-                                name="category_id"
-                                value={formData.Categories?.[0]?.category_id}
-                                onChange={handleInputChange}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            >
-                                <option value={0}>Chọn danh mục</option>
-                                {categories?.map(category => (
-                                    <option
-                                        key={category.category_id}
-                                        value={category.category_id}>
-                                        {category.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        {!selectedProduct && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Hình ảnh sản phẩm</label>
-                                <span className="text-xs text-[#b0b0b0]">Chỉ hổ trợ file (jpeg, jpg, png, webp)</span>
-                                <input
-                                    type="file"
-                                    name="images"
-                                    multiple
-                                    onChange={handleImageChange}
-                                    className="mt-1 block w-full text-sm text-gray-500
+   return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+         <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
+            <h2 className="text-xl font-semibold mb-4">
+               {selectedProduct ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới'}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700">Mã sản phẩm</label>
+                     <span className="mt-1 block w-full text-[#b3b3b3] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        {formData.sku}
+                     </span>
+                  </div>
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700">Tên sản phẩm</label>
+                     <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Nhập tên sản phẩm"
+                     />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700">Giá gốc</label>
+                     <input
+                        type="number"
+                        name="price"
+                        value={formatPriceInput(formData.price)}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Nhập giá"
+                     />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700">Giá bán khuyến mãi</label>
+                     <input
+                        type="number"
+                        name="discount_price"
+                        value={formatPriceInput(formData.discount_price)}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Nhập giá khuyến mãi"
+                     />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700">Danh mục</label>
+                     <select
+                        name="category_id"
+                        value={formData.Categories?.[0]?.category_id}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                     >
+                        <option value={0}>Chọn danh mục</option>
+                        {categories?.map((category) => (
+                           <option key={category.category_id} value={category.category_id}>
+                              {category.name}
+                           </option>
+                        ))}
+                     </select>
+                  </div>
+                  {!selectedProduct && (
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700">Hình ảnh sản phẩm</label>
+                        <span className="text-xs text-[#b0b0b0]">Chỉ hổ trợ file (jpeg, jpg, png, webp)</span>
+                        <input
+                           type="file"
+                           name="images"
+                           multiple
+                           onChange={handleImageChange}
+                           className="mt-1 block w-full text-sm text-gray-500
                                         file:mr-4 file:py-2 file:px-4
                                         file:rounded-md file:border-0
                                         file:text-sm file:font-semibold

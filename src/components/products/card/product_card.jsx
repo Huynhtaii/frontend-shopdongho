@@ -19,7 +19,7 @@ const ProductCard = ({ data }) => {
       <div className="bg-white px-3 pt-3 rounded-md border-[1px] border-[#e7e7e7]">
          <div className="relative">
             <Link to={`/product/${data.product_id}`}>
-               <img src={data.ProductImages[0]?.url} alt="" className="w-full object-cover" />
+               <img src={data.ProductImages[0]?.url} alt="" className="w-full h-[200px] object-cover" />
             </Link>
             <div
                className="absolute top-0 left-0 p-[5px] hover:bg-white hover:shadow-md rounded-full cursor-pointer text-[#626262]"
@@ -38,14 +38,16 @@ const ProductCard = ({ data }) => {
                </h3>
             </Link>
             <p className="text-[#ed1c24] font-[600] text-[18px]">{formatPrice(data.discount_price || data.price)}</p>
-            {data.discount_price && (
-               <div className="flex items-center gap-3">
-                  <p className="text-[14px] font-[500] line-through text-[#939393]">{formatPrice(data.price)}</p>
-                  <span className="text-xs text-[#ef5555] bg-[#f9e9e2]">
-                     {Math.round(((data.price - data.discount_price) / data.price) * 100)}%
-                  </span>
-               </div>
-            )}
+            <div className="flex items-center gap-3 min-h-[40px]">
+               {data.discount_price && (
+                  <>
+                     <p className="text-[14px] font-[500] line-through text-[#939393]">{formatPrice(data.price)}</p>
+                     <span className="text-xs text-[#ef5555] bg-[#f9e9e2]">
+                        {Math.round(((data.price - data.discount_price) / data.price) * 100)}%
+                     </span>
+                  </>
+               )}
+            </div>
          </div>
          <p className="flex gap-1 items-center text-[13px] pt-3 pb-2">
             <FaStar className="fill-[#f7c709]" />
