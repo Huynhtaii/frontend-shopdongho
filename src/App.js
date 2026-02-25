@@ -7,8 +7,10 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import ScrollToTop from './components/scroolltotop/ScrollToTop';
 import { FavoriteProvider } from './context/favorite_context';
+import { CompareProvider } from './context/compare_context';
 import { CartProvider } from './context/cart_context';
 import AuthContext from './context/auth.context';
+import CompareBar from './components/products/compare_bar';
 import { useContext, useEffect } from 'react';
 import AccountService from './services/account_service';
 import { useNavigate } from 'react-router-dom';
@@ -76,26 +78,29 @@ function App() {
          {!auth.isLoading && (
             <CartProvider>
                <FavoriteProvider>
-                  <>
-                     <ScrollToTop />
-                     <Routes>
-                        <Route path="/*" element={<ClientRoutes />} />
-                        <Route path="/admin/*" element={<AdminRoutes />} />
-                     </Routes>
-                     <ToastContainer
-                        position="bottom-center"
-                        autoClose={5000}
-                        hideProgressBar={false}
-                        newestOnTop={false}
-                        closeOnClick={false}
-                        rtl={false}
-                        pauseOnFocusLoss
-                        draggable
-                        pauseOnHover
-                        theme="colored"
-                        transition={Bounce}
-                     />
-                  </>
+                  <CompareProvider>
+                     <>
+                        <ScrollToTop />
+                        <Routes>
+                           <Route path="/*" element={<ClientRoutes />} />
+                           <Route path="/admin/*" element={<AdminRoutes />} />
+                        </Routes>
+                        <CompareBar />
+                        <ToastContainer
+                           position="bottom-center"
+                           autoClose={5000}
+                           hideProgressBar={false}
+                           newestOnTop={false}
+                           closeOnClick={false}
+                           rtl={false}
+                           pauseOnFocusLoss
+                           draggable
+                           pauseOnHover
+                           theme="colored"
+                           transition={Bounce}
+                        />
+                     </>
+                  </CompareProvider>
                </FavoriteProvider>
             </CartProvider>
          )}

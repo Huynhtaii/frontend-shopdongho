@@ -3,32 +3,61 @@ import { Link } from 'react-router-dom';
 import { FaStar } from 'react-icons/fa';
 
 import { MdFavoriteBorder } from 'react-icons/md';
+import { IoAdd } from 'react-icons/io5';
 import { useFavorite } from '../../../context/favorite_context';
+import { useCompare } from '../../../context/compare_context';
 import useFormatPrice from '../../../hooks/use_formatPrice';
 
 const ProductCard = ({ data }) => {
    const { addAndRemoveToFavorite, findFavorite } = useFavorite();
+   const { addToCompare, compareList } = useCompare();
    const [isFavorite, setIsFavorite] = useState(findFavorite(data?.product_id));
    const { formatPrice } = useFormatPrice();
+
+   const isInCompare = compareList.some((p) => p.product_id === data.product_id);
 
    useEffect(() => {
       setIsFavorite(findFavorite(data?.product_id));
    }, [data?.product_id, findFavorite]);
 
    return (
-      <div className="bg-white px-3 pt-3 rounded-md border-[1px] border-[#e7e7e7]">
-         <div className="relative">
+      <div className="bg-white px-3 pt-3 rounded-md border-[1px] border-[#e7e7e7] group relative">
+         <div className="relative overflow-hidden">
             <Link to={`/product/${data.product_id}`}>
-               <img src={data.ProductImages[0]?.url} alt="" className="w-full h-[200px] object-cover" />
+               <img
+                  src={data.ProductImages[0]?.url}
+                  alt=""
+                  className="w-full h-[200px] object-cover hover:scale-105 transition-transform duration-300"
+               />
             </Link>
             <div
-               className="absolute top-0 left-0 p-[5px] hover:bg-white hover:shadow-md rounded-full cursor-pointer text-[#626262]"
+               className="absolute top-0 left-0 p-[5px] hover:bg-white hover:shadow-md rounded-full cursor-pointer text-[#626262] bg-white/50 backdrop-blur-sm transition-all"
                onClick={() => {
                   addAndRemoveToFavorite(data);
                   setIsFavorite(!isFavorite);
                }}
             >
                <MdFavoriteBorder size={20} className={`${isFavorite ? 'text-red-600' : ''}`} />
+            </div>
+
+            {/* Nút so sánh */}
+            <div
+               className={`absolute bottom-2 right-2 p-1.5 rounded-md cursor-pointer transition-all duration-200 shadow-sm
+                  ${
+                     isInCompare
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white/80 text-gray-700 hover:bg-blue-600 hover:text-white border border-gray-200'
+                  }`}
+               title="So sánh sản phẩm"
+               onClick={(e) => {
+                  e.preventDefault();
+                  addToCompare(data);
+               }}
+            >
+               <div className="flex items-center gap-0.5">
+                  <IoAdd size={16} />
+                  <span className="text-[10px] font-bold">SO SÁNH</span>
+               </div>
             </div>
          </div>
          <div className="mt-3">

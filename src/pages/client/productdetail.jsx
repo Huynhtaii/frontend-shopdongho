@@ -6,15 +6,19 @@ import ProductService from '../../services/product_service';
 import { useFavorite } from '../../context/favorite_context';
 import { useCart } from '../../context/cart_context';
 import useFormatPrice from '../../hooks/use_formatPrice';
+import ProductListSlider from '../../components/products/product_list_slider';
+import useRecentProduct from '../../hooks/use_recent_product';
 function ProductDetail() {
    const { addAndRemoveToFavorite, findFavorite } = useFavorite();
    const { addToCart } = useCart();
    const [product, setProduct] = useState(null);
    const [loading, setLoading] = useState(true);
    const [isFavorite, setIsFavorite] = useState(findFavorite(product?.product_id));
+   const [activeTab, setActiveTab] = useState('specs');
    const { id } = useParams();
 
    const { formatPrice } = useFormatPrice();
+   const { products } = useRecentProduct();
 
    useEffect(() => {
       setIsFavorite(findFavorite(product?.product_id));
@@ -183,6 +187,160 @@ function ProductDetail() {
                   </ul>
                </div>
             </div>
+         </div>
+
+         {/* Tabs Section */}
+         <div className="mt-12 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+            <div className="flex border-b">
+               <button
+                  onClick={() => setActiveTab('specs')}
+                  className={`flex-1 py-4 text-center font-bold text-lg transition-all ${
+                     activeTab === 'specs'
+                        ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+               >
+                  Thông số kỹ thuật
+               </button>
+               <button
+                  onClick={() => setActiveTab('guide')}
+                  className={`flex-1 py-4 text-center font-bold text-lg transition-all ${
+                     activeTab === 'guide'
+                        ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+               >
+                  Hướng dẫn chọn size
+               </button>
+            </div>
+
+            <div className="p-6">
+               {activeTab === 'specs' ? (
+                  <div className="animate-fadeIn">
+                     <h2 className="text-xl font-bold mb-6 text-gray-800">Thông số sản phẩm - {product.name}</h2>
+                     <div className="space-y-0 border rounded-lg overflow-hidden border-gray-100 max-w-4xl mx-auto">
+                        <div className="flex bg-gray-100 p-3 items-center">
+                           <div className="w-1/2 flex items-center">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Thương hiệu:</span>
+                              <span className="text-blue-600 hover:underline cursor-pointer text-sm">
+                                 {product.Categories[0]?.name || 'Đang cập nhật'}
+                              </span>
+                           </div>
+                           <div className="w-1/2 flex items-center border-l pl-4 border-gray-300">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Xuất xứ:</span>
+                              <span className="text-sm">{product.origin || 'Đang cập nhật'}</span>
+                           </div>
+                        </div>
+                        <div className="flex bg-white p-3 items-center">
+                           <div className="w-1/2 flex items-center">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Đối tượng:</span>
+                              <span className="text-sm">{product.target_audience || 'Đang cập nhật'}</span>
+                           </div>
+                           <div className="w-1/2 flex items-center border-l pl-4 border-gray-300">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Dòng sản phẩm:</span>
+                              <span className="text-sm">{product.product_line || 'Đang cập nhật'}</span>
+                           </div>
+                        </div>
+                        <div className="flex bg-gray-100 p-3 items-center">
+                           <div className="w-1/2 flex items-center">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Kháng nước:</span>
+                              <span className="text-sm">{product.water_resistance || 'Đang cập nhật'}</span>
+                           </div>
+                           <div className="w-1/2 flex items-center border-l pl-4 border-gray-300">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Loại máy:</span>
+                              <span className="text-sm">{product.movement_type || 'Đang cập nhật'}</span>
+                           </div>
+                        </div>
+                        <div className="flex bg-white p-3 items-center">
+                           <div className="w-1/2 flex items-center">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Chất liệu kính:</span>
+                              <span className="text-sm">{product.glass_material || 'Đang cập nhật'}</span>
+                           </div>
+                           <div className="w-1/2 flex items-center border-l pl-4 border-gray-300">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Chất liệu dây:</span>
+                              <span className="text-sm">{product.strap_material || 'Đang cập nhật'}</span>
+                           </div>
+                        </div>
+                        <div className="flex bg-gray-100 p-3 items-center">
+                           <div className="w-1/2 flex items-center">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Size mặt:</span>
+                              <span className="text-sm">{product.case_size || 'Đang cập nhật'}</span>
+                           </div>
+                           <div className="w-1/2 flex items-center border-l pl-4 border-gray-300">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Độ dày:</span>
+                              <span className="text-sm">{product.case_thickness || 'Đang cập nhật'}</span>
+                           </div>
+                        </div>
+                        <div className="flex bg-white p-3 items-center">
+                           <div className="w-full flex items-center">
+                              <span className="font-semibold text-gray-700 text-sm mr-1">Tiện ích:</span>
+                              <span className="text-sm">{product.utilities || 'Đang cập nhật'}</span>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               ) : (
+                  <div className="animate-fadeIn max-w-4xl mx-auto">
+                     <div className="text-gray-600 text-sm leading-relaxed space-y-8">
+                        <p className="text-base">
+                           Sở thích của mỗi người khác nhau, có người tay nhỏ thích đeo đồng hồ size to, có người tay to
+                           lại thích size nhỏ. Để chọn đồng hồ thẩm mỹ nhất, bạn nên tham khảo cách chọn size dưới đây:
+                        </p>
+
+                        <div className="space-y-4">
+                           <h3 className="font-bold text-gray-800 text-lg border-l-4 border-blue-600 pl-4">
+                              Hướng dẫn đo cổ tay bằng thước giấy WatchStore
+                           </h3>
+                           <img
+                              src="/huong-dan-do-size-co-tay-bang-thuoc-giay-watchstore.jpg"
+                              alt="Hướng dẫn đo cổ tay bằng thước giấy WatchStore"
+                              className="w-full rounded-xl border border-gray-100 shadow-md"
+                           />
+                           <p className="text-xs text-center italic text-gray-500">
+                              Chọn size mặt đồng hồ phù hợp nhất với tay - Ảnh 1
+                           </p>
+                        </div>
+
+                        <div className="space-y-6 pt-6 border-t border-gray-100">
+                           <h3 className="font-bold text-gray-800 text-lg border-l-4 border-blue-600 pl-4 uppercase tracking-wider">
+                              Hướng dẫn đo cổ tay bằng thước dây
+                           </h3>
+
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div className="space-y-3">
+                                 <p className="font-bold text-blue-600 text-base">Bước 1: Đo chu vi cổ tay</p>
+                                 <img
+                                    src="/Q9lydDN.png"
+                                    alt="Bước 1: Đo chu vi cổ tay"
+                                    className="w-full rounded-xl border border-gray-100 shadow-md"
+                                 />
+                                 <p className="text-xs text-center italic text-gray-500">
+                                    Chọn size mặt đồng hồ phù hợp nhất với tay - Ảnh 1
+                                 </p>
+                              </div>
+
+                              <div className="space-y-3">
+                                 <p className="font-bold text-blue-600 text-base">
+                                    Bước 2: So sánh size cổ tay để chọn mặt đồng hồ phù hợp
+                                 </p>
+                                 <img
+                                    src="/VAOlz7D.png"
+                                    alt="Bước 2: So sánh size cổ tay"
+                                    className="w-full rounded-xl border border-gray-100 shadow-md"
+                                 />
+                                 <p className="text-xs text-center italic text-gray-500">
+                                    Chọn size mặt đồng hồ phù hợp nhất với tay - Ảnh 2
+                                 </p>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               )}
+            </div>
+         </div>
+         <div className="mt-12">
+            <ProductListSlider title="Sản phẩm đã xem" products={products} />
          </div>
       </div>
    );

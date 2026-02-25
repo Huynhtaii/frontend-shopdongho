@@ -15,6 +15,7 @@ import ProductDetail from '../pages/client/productdetail';
 import Category from '../pages/client/category';
 import FloatingButtons from '../components/floating_buttons';
 import Account from '../pages/client/account';
+import Compare from '../pages/client/compare';
 
 const ClientLayout = ({ children }) => (
    <>
@@ -65,6 +66,14 @@ const ClientRoutes = () => {
             element={
                <ClientLayout>
                   <Category />
+               </ClientLayout>
+            }
+         />
+         <Route
+            path="/compare"
+            element={
+               <ClientLayout>
+                  <Compare />
                </ClientLayout>
             }
          />

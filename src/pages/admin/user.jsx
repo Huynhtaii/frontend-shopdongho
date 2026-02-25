@@ -43,7 +43,14 @@ const UserAdmin = () => {
 
    const handleAdd = () => {
       setEditingUser(null);
-      setFormData({ name: '', email: '', password: '', phone: '', address: '', role_id: '' });
+      setFormData({
+         name: '',
+         email: '',
+         password: '',
+         phone: '',
+         address: '',
+         role_id: roles.length > 0 ? roles[0].role_id : '',
+      });
       setIsModalVisible(true);
    };
 
@@ -69,15 +76,21 @@ const UserAdmin = () => {
    const handleSubmit = async (e) => {
       e.preventDefault();
       try {
+         let res;
          if (editingUser) {
-            await UserService.updateUser(editingUser.user_id, formData);
+            res = await UserService.updateUser(editingUser.user_id, formData);
          } else {
             const newFromData = { ...formData, created_at: new Date().toISOString() };
-            await UserService.addUser(newFromData);
+            res = await UserService.addUser(newFromData);
          }
-         fetchData();
-         setIsModalVisible(false);
-         toast.success(`${editingUser ? 'Cập nhật' : 'Thêm'} người dùng thành công`);
+
+         if (res && res.EC === '0') {
+            fetchData();
+            setIsModalVisible(false);
+            toast.success(`${editingUser ? 'Cập nhật' : 'Thêm'} người dùng thành công`);
+         } else {
+            toast.error(res?.EM || 'Có lỗi xảy ra');
+         }
       } catch (error) {
          toast.error('Có lỗi xảy ra');
       }

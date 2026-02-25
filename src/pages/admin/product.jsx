@@ -21,6 +21,16 @@ const ProductAdmin = () => {
       sku: '',
       category_id: 0,
       images: '',
+      origin: '',
+      target_audience: '',
+      product_line: '',
+      water_resistance: '',
+      movement_type: '',
+      glass_material: '',
+      strap_material: '',
+      case_size: '',
+      case_thickness: '',
+      utilities: '',
    });
    const { formatPrice } = useFormatPrice();
 
@@ -56,6 +66,16 @@ const ProductAdmin = () => {
          sku: autoSku(),
          category_id: 0,
          images: '',
+         origin: '',
+         target_audience: '',
+         product_line: '',
+         water_resistance: '',
+         movement_type: '',
+         glass_material: '',
+         strap_material: '',
+         case_size: '',
+         case_thickness: '',
+         utilities: '',
       });
       setPreviewImages([]);
       setShowModal(true);
@@ -63,7 +83,13 @@ const ProductAdmin = () => {
 
    const handleEdit = (product) => {
       setSelectedProduct(product);
-      setFormData(product);
+      // Extra category_id from Categories array if it exists
+      const categoryId = product.Categories && product.Categories.length > 0 ? product.Categories[0].category_id : 0;
+
+      setFormData({
+         ...product,
+         category_id: categoryId,
+      });
       setPreviewImages(
          product.ProductImages.map((img) => ({
             url: img.url,
@@ -110,9 +136,20 @@ const ProductAdmin = () => {
       if (validateForm()) {
          try {
             if (selectedProduct) {
-               await ProductService.updateProduct(selectedProduct.product_id, formData);
+               // If images is an array of files, take the first one
+               let updateData = { ...formData };
+               if (Array.isArray(formData.images) && formData.images.length > 0) {
+                  updateData.images = formData.images[0];
+               } else {
+                  // Don't send the string URL back as a file to the server
+                  delete updateData.images;
+               }
+               await ProductService.updateProduct(selectedProduct.product_id, updateData);
             } else {
-               await ProductService.createProduct({ ...formData, images: formData.images[0] });
+               await ProductService.createProduct({
+                  ...formData,
+                  images: Array.isArray(formData.images) ? formData.images[0] : formData.images,
+               });
             }
             setShowModal(false);
             fetchData();

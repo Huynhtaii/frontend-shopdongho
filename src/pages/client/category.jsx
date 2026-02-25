@@ -27,14 +27,23 @@ const Category = () => {
       const fetchProducts = async () => {
          const limit = 10;
          const data = await ProductService.getProductByCategoriesWithPaginate(page, limit, categoryName, filter);
-         setProducts(data.DT.product);
-         setTotalPages(data.DT.totalPages);
+         if (data && data.EC === 0 && data.DT) {
+            setProducts(data.DT.product || []);
+            setTotalPages(data.DT.totalPages || 0);
+         } else {
+            setProducts([]);
+            setTotalPages(0);
+         }
       };
       fetchProducts();
    }, [page, filter, categoryName]);
 
    useEffect(() => {
-      setCategoryName(category);
+      setPage(1);
+   }, [categoryName, filter]);
+
+   useEffect(() => {
+      setCategoryName(category || 'all');
    }, [category]);
 
    return (
