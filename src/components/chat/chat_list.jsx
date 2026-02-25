@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import MessageService from '../../services/message_service';
 
@@ -7,11 +7,7 @@ const ChatList = ({ selectedUser, onSelectUser, refreshTrigger }) => {
    const [chatUsers, setChatUsers] = useState([]);
    const adminId = process.env.REACT_APP_ADMIN_ID;
 
-   useEffect(() => {
-      loadChatUsers();
-   }, [refreshTrigger]);
-
-   const loadChatUsers = async () => {
+   const loadChatUsers = useCallback(async () => {
       try {
          const response = await MessageService.getAllChat();
 
@@ -56,7 +52,11 @@ const ChatList = ({ selectedUser, onSelectUser, refreshTrigger }) => {
       } catch (error) {
          console.error('Error loading chat users:', error);
       }
-   };
+   }, [adminId]);
+
+   useEffect(() => {
+      loadChatUsers();
+   }, [refreshTrigger, loadChatUsers]);
 
    const handleUserSelect = (user) => {
       onSelectUser(user);

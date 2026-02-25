@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, useRef } from 'react';
+import { useEffect, useState, useContext, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { FaUser } from 'react-icons/fa';
 import { IoChevronUp, IoSend } from 'react-icons/io5';
@@ -86,6 +86,21 @@ const Chat = () => {
          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
       }
    };
+
+   const loadChatHistory = useCallback(async () => {
+      console.log('>>>>>>>loadChatHistory is called');
+      try {
+         const response = await MessageService.getChatHistory(auth.user.id);
+         console.log('>>>>>>>check auth', auth.user.id);
+         console.log('>>>>>>>check response check get chat history', response);
+         if (response.EC === '0') {
+            setMessages(response.DT);
+         }
+      } catch (error) {
+         console.error('Error loading chat history:', error);
+      }
+   }, [auth.user.id]);
+
    useEffect(() => {
       console.log('>>>>>>>check auth condition:', {
          isAuthenticated: auth.isAuthenticated,
@@ -127,21 +142,7 @@ const Chat = () => {
             toast.error('Có lỗi xảy ra khi thiết lập kết nối chat');
          }
       }
-   }, [auth.isAuthenticated, auth.user?.id]);
-
-   const loadChatHistory = async () => {
-      console.log('>>>>>>>loadChatHistory is called');
-      try {
-         const response = await MessageService.getChatHistory(auth.user.id);
-         console.log('>>>>>>>check auth', auth.user.id);
-         console.log('>>>>>>>check response check get chat history', response);
-         if (response.EC === '0') {
-            setMessages(response.DT);
-         }
-      } catch (error) {
-         console.error('Error loading chat history:', error);
-      }
-   };
+   }, [auth.isAuthenticated, auth.user?.id, loadChatHistory]);
 
    const handleSendMessage = async () => {
       if (!auth.isAuthenticated) {

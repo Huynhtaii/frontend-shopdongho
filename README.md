@@ -1,70 +1,180 @@
-# Getting Started with Create React App
+# 🕰️ WatchStore - Website Bán Đồng Hồ Full-Stack
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 📋 Tổng quan dự án
 
-## Available Scripts
+WatchStore là một website thương mại điện tử chuyên bán đồng hồ được xây dựng với React.js (Frontend) và Node.js (Backend). Dự án cung cấp đầy đủ các tính năng của một cửa hàng trực tuyến hiện đại với giao diện thân thiện và trải nghiệm người dùng mượt mà.
 
-In the project directory, you can run:
+## ✨ Các chức năng chính
 
-### `npm start`
+### 🛍️ **Chức năng khách hàng (Customer Features)**
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+#### 🔐 **Xác thực & Quản lý tài khoản**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+-  Đăng ký tài khoản mới với xác thực email
+-  Đăng nhập/đăng xuất với JWT authentication
+-  Quản lý thông tin cá nhân (tên, số điện thoại, địa chỉ)
+-  Lịch sử mua hàng với theo dõi trạng thái đơn hàng
 
-### `npm test`
+#### 🛒 **Mua sắm & Giỏ hàng**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+-  Duyệt danh mục sản phẩm đa dạng (Nam, Nữ, Treo tường, Xu hướng 2025)
+-  Tìm kiếm sản phẩm thông minh
+-  Bộ lọc sản phẩm theo giá, loại, đánh giá
+-  Thêm/xóa/cập nhật số lượng sản phẩm trong giỏ hàng
+-  Danh sách yêu thích (Wishlist)
+-  Xem chi tiết sản phẩm với hình ảnh, mô tả, đánh giá
 
-### `npm run build`
+#### 💳 **Thanh toán đa dạng**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+-  **Thanh toán COD**: Trả tiền khi nhận hàng
+-  **Thanh toán QR Code**: Chuyển khoản ngân hàng qua QR
+   -  Tự động tạo mã QR với thông tin chuyển khoản
+   -  Kiểm tra thanh toán tự động qua Google Sheets API
+   -  Xác nhận thanh toán thời gian thực
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+#### 💬 **Hỗ trợ khách hàng**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+-  **Chat realtime** với admin sử dụng Socket.io
+-  Floating chat button luôn sẵn sàng hỗ trợ
+-  Gửi/nhận tin nhắn tức thì
+-  Lịch sử chat được lưu trữ
 
-### `npm run eject`
+#### 🎯 **Tính năng chung**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+-  Responsive design cho mọi thiết bị
+-  Slider banner quảng cáo
+-  Sản phẩm đã xem gần đây
+-  Scroll to top button
+-  Toast notifications
+-  Loading states
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 🔧 **Chức năng quản trị (Admin Features)**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+#### 📊 **Dashboard & Thống kê**
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+-  Tổng quan doanh thu, đơn hàng, sản phẩm, khách hàng
+-  Biểu đồ doanh thu theo thời gian (Chart.js)
+-  Thống kê trạng thái đơn hàng
+-  Báo cáo tương tác trực quan
 
-## Learn More
+#### 📦 **Quản lý sản phẩm**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+-  Thêm/sửa/xóa sản phẩm
+-  Upload hình ảnh sản phẩm
+-  Quản lý danh mục, giá gốc, giá khuyến mãi
+-  Tự động tạo mã SKU
+-  Chuyển đổi số thành chữ cho giá tiền
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+#### 📋 **Quản lý đơn hàng**
 
-### Code Splitting
+-  Xem danh sách tất cả đơn hàng
+-  Cập nhật trạng thái đơn hàng (Pending, Shipped, Completed, Cancelled)
+-  Chi tiết đơn hàng và thông tin khách hàng
+-  Xóa đơn hàng
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+#### 👥 **Quản lý người dùng**
 
-### Analyzing the Bundle Size
+-  Thêm/sửa/xóa tài khoản người dùng
+-  Phân quyền vai trò (Admin, Customer)
+-  Quản lý thông tin liên hệ
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+#### 💬 **Quản lý tin nhắn**
 
-### Making a Progressive Web App
+-  Xem tất cả cuộc hội thoại với khách hàng
+-  Chat realtime với khách hàng
+-  Lịch sử tin nhắn đầy đủ
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🛠️ **Công nghệ sử dụng**
 
-### Advanced Configuration
+### **Frontend**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+-  **React 19.0.0** - UI Framework
+-  **React Router Dom** - Navigation
+-  **TailwindCSS** - Styling
+-  **Socket.io Client** - Real-time communication
+-  **Axios** - HTTP requests
+-  **Chart.js** - Data visualization
+-  **Swiper** - Image sliders
+-  **React Icons** - Icon library
+-  **React Toastify** - Notifications
 
-### Deployment
+### **Backend Integration**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+-  JWT Authentication
+-  RESTful API
+-  Real-time WebSocket
+-  File upload (Multer)
+-  Google Sheets API (Payment tracking)
 
-### `npm run build` fails to minify
+### **Payment Integration**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+-  VietQR API for QR code generation
+-  Google Apps Script for payment verification
+-  Multiple payment methods support
+
+## 🌟 **Tính năng nổi bật**
+
+1. **💰 Thanh toán thông minh**: Tích hợp QR code với xác minh tự động
+2. **💬 Chat realtime**: Hỗ trợ khách hàng 24/7 với Socket.io
+3. **📱 Responsive**: Tối ưu cho mọi thiết bị từ mobile đến desktop
+4. **🔍 Tìm kiếm thông minh**: Lọc và tìm kiếm sản phẩm đa tiêu chí
+5. **📊 Dashboard admin**: Quản lý toàn diện với biểu đồ thống kê
+6. **🛡️ Bảo mật**: JWT authentication và role-based access control
+7. **⚡ Performance**: Optimized loading và lazy loading components
+
+## 📁 **Cấu trúc dự án**
+
+```
+src/
+├── components/          # Các component tái sử dụng
+├── pages/              # Các trang chính
+├── services/           # API services
+├── context/            # React Context (Auth, Cart, Favorite)
+├── hooks/              # Custom hooks
+├── utils/              # Utilities và helpers
+├── constants/          # Dữ liệu constants
+└── routers/            # Route configuration
+```
+
+## 🚀 **Hướng dẫn chạy dự án**
+
+1. **Clone repository**
+
+   ```bash
+   git clone [repository-url]
+   cd frontend-shopdongho
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Setup environment variables**
+
+   ```bash
+   # Tạo file .env với các biến môi trường
+   REACT_APP_ADMIN_ID=your_admin_id
+   REACT_APP_BANK_ID=your_bank_id
+   REACT_APP_ACCOUNT_NO=your_account_number
+   ```
+
+4. **Start development server**
+   ```bash
+   npm start
+   ```
+
+## 👥 **Đối tượng sử dụng**
+
+-  **Khách hàng**: Mua sắm đồng hồ trực tuyến với trải nghiệm mượt mà
+-  **Admin**: Quản lý toàn bộ hoạt động kinh doanh qua dashboard
+-  **Nhân viên hỗ trợ**: Chat tư vấn khách hàng realtime
+
+## 🔮 **Tính năng tương lai**
+
+-  Tích hợp AI chatbot tư vấn sản phẩm
+-  Hệ thống review và rating
+-  Notifications push
+-  Multi-language support
+-  Advanced analytics

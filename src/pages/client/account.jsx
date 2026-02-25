@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { FaTrash } from 'react-icons/fa';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import AccountService from '../../services/account_service';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,15 +11,11 @@ function Account() {
       address: 'Chưa có thông tin',
       orders: [],
    });
-   const [id, setId] = useState(localStorage.getItem('userId'));
+   const id = useState(localStorage.getItem('userId'));
    const adminId = process.env.REACT_APP_ADMIN_ID;
    const { auth } = useContext(AuthContext);
-   useEffect(() => {
-      fetchData();
-      console.log(user.orders);
-   }, []);
 
-   const fetchData = async () => {
+   const fetchData = useCallback(async () => {
       try {
          const response = await AccountService.getInforAccount(id);
          if (response?.EC === '0') {
@@ -35,7 +30,12 @@ function Account() {
       } catch (error) {
          console.error('Lỗi khi lấy dữ liệu tài khoản:', error);
       }
-   };
+   }, [id]);
+
+   useEffect(() => {
+      fetchData();
+      console.log(user.orders);
+   }, [fetchData, user.orders]);
 
    const handleToastDisabledEdit = () => {
       toast.info('Bạn không thể sửa đổi email');

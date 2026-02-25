@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { RiShoppingCart2Line, RiUserLine, RiProductHuntLine, RiMoneyDollarCircleLine } from 'react-icons/ri';
 import OrderService from '../../services/order_service';
 import useFormatPrice from '../../hooks/use_formatPrice';
@@ -19,7 +19,6 @@ import { Line, Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 const Dashboard = () => {
-   const [orders, setOrders] = useState([]);
    const [stats, setStats] = useState([
       {
          title: 'Tổng doanh thu',
@@ -60,22 +59,43 @@ const Dashboard = () => {
       },
    });
 
-   useEffect(() => {
-      fetchOrders();
-   }, []);
+   const updateStats = useCallback(
+      (stats) => {
+         setStats((prev) =>
+            prev.map((stat) => {
+               switch (stat.title) {
+                  case 'Tổng doanh thu':
+                     return { ...stat, value: formatPrice(stats.totalRevenue) };
+                  case 'Đơn hàng':
+                     return { ...stat, value: stats.totalOrders.toString() };
+                  case 'Sản phẩm':
+                     return { ...stat, value: stats.totalProducts.toString() };
+                  case 'Khách hàng':
+                     return { ...stat, value: stats.totalCustomers.toString() };
+                  default:
+                     return stat;
+               }
+            }),
+         );
+      },
+      [formatPrice],
+   );
 
-   const fetchOrders = async () => {
+   const fetchOrders = useCallback(async () => {
       try {
          const response = await OrderService.getAllOrders();
          if (response.EC === '0') {
-            setOrders(response.DT.orders);
             updateStats(response.DT.stats);
             prepareChartData(response.DT.orders);
          }
       } catch (error) {
          console.error('Error fetching orders:', error);
       }
-   };
+   }, [updateStats]);
+
+   useEffect(() => {
+      fetchOrders();
+   }, [fetchOrders]);
 
    const prepareChartData = (orders) => {
       // Chuẩn bị dữ liệu cho biểu đồ doanh thu
@@ -124,40 +144,6 @@ const Dashboard = () => {
             ],
          },
       });
-   };
-
-   const updateStats = (stats) => {
-      setStats((prev) =>
-         prev.map((stat) => {
-            switch (stat.title) {
-               case 'Tổng doanh thu':
-                  return { ...stat, value: formatPrice(stats.totalRevenue) };
-               case 'Đơn hàng':
-                  return { ...stat, value: stats.totalOrders.toString() };
-               case 'Sản phẩm':
-                  return { ...stat, value: stats.totalProducts.toString() };
-               case 'Khách hàng':
-                  return { ...stat, value: stats.totalCustomers.toString() };
-               default:
-                  return stat;
-            }
-         }),
-      );
-   };
-
-   const getStatusColor = (status) => {
-      switch (status?.toLowerCase()) {
-         case 'completed':
-            return 'text-green-600';
-         case 'pending':
-            return 'text-yellow-600';
-         case 'shipped':
-            return 'text-blue-600';
-         case 'canceled':
-            return 'text-red-600';
-         default:
-            return 'text-gray-600';
-      }
    };
 
    return (

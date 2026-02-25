@@ -95,6 +95,7 @@ export const CartProvider = ({ children }) => {
             updateQuantityCartItem,
             totalPrice,
             savingsPrice,
+            fetchCart,
          }}
       >
          {children}

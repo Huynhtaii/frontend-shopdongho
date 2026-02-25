@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import AccountService from '../../services/account_service';
 import ModalPayment from '../modalPayment/modalPayment';
 import PaymentOption from './PaymentOption';
 import useFormatPrice from '../../hooks/use_formatPrice';
 import { toast } from 'react-toastify';
 import { paymentCompleted } from '../../services/payment_service';
+import { useCart } from '../../context/cart_context';
+import { useNavigate } from 'react-router-dom';
 
 const Payment = ({ totalPrice, cartItem }) => {
+   const { fetchCart } = useCart();
+   const navigate = useNavigate();
    const [paymentMethod, setPaymentMethod] = useState('cod');
    const [userOrder, setUserOrder] = useState(null);
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,13 +21,7 @@ const Payment = ({ totalPrice, cartItem }) => {
    //lấy ra email của user
 
    console.log('>>>>>>>>>>>>>>>check user_id', user_id);
-   useEffect(() => {
-      if (user_id) {
-         fetchUser();
-      }
-      console.log('>>>>>>>>>>>>>>>check cartItem', cartItem);
-   }, []);
-   const fetchUser = async () => {
+   const fetchUser = useCallback(async () => {
       try {
          const response = await AccountService.getInforAccount(user_id);
          console.log('>>>>>>>>>>>>>>>check res order', response);
@@ -33,7 +31,14 @@ const Payment = ({ totalPrice, cartItem }) => {
       } catch (error) {
          console.error('Lỗi khi gọi API:', error);
       }
-   };
+   }, [user_id]);
+
+   useEffect(() => {
+      if (user_id) {
+         fetchUser();
+      }
+      console.log('>>>>>>>>>>>>>>>check cartItem', cartItem);
+   }, [cartItem, fetchUser, user_id]);
 
    // Hàm tạo nội dung chuyển khoản với phút và giây
    const createTransferContent = () => {
@@ -53,20 +58,11 @@ const Payment = ({ totalPrice, cartItem }) => {
    };
 
    const handleValidateForm = () => {
-      if (!userOrder.name) {
-         toast.error('Tên không được để trống');
-         return false;
-      }
-      if (!userOrder.phone) {
-         toast.error('Số điện thoại không được để trống');
-         return false;
-      }
-      if (!userOrder.email) {
-         toast.error('Email không được để trống');
-         return false;
-      }
-      if (!userOrder.address) {
-         toast.error('Địa chỉ không được để trống');
+      if (!userOrder.name || !userOrder.phone || !userOrder.email || !userOrder.address) {
+         toast.warning('Bạn sẽ được chuyển hướng về trang tài khoản để cập nhật thông tin sau 4 giây');
+         setTimeout(() => {
+            navigate('/account');
+         }, 4000);
          return false;
       }
       return true;
@@ -91,9 +87,9 @@ const Payment = ({ totalPrice, cartItem }) => {
 
    const handleOrderCodSuccess = async () => {
       try {
-         const res = await paymentCompleted(user_id, userOrder.email, totalPrice, cartItem,paymentMethod);
-         console.log('Payment response:', res);
-         toast.success('Đặt hàng thành công!');
+         await paymentCompleted(user_id, userOrder.email, totalPrice, cartItem, paymentMethod);
+         fetchCart();
+         toast.success('Đặt hàng thành công, vui lòng kiểm tra email!');
       } catch (error) {
          console.error('🔥 Lỗi khi đặt hàng:', error);
          toast.error('Có lỗi xảy ra khi đặt hàng!');
@@ -140,6 +136,7 @@ const Payment = ({ totalPrice, cartItem }) => {
                onClose={handleCloseModal}
                totalAmount={totalPrice}
                transferContent={createTransferContent()}
+               paymentMethod={paymentMethod}
             />
          )}
       </div>

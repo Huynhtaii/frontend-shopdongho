@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import ClientRoutes from './routers/client_routes';
 import AdminRoutes from './routers/admin_routes';
 import { Bounce, toast, ToastContainer } from 'react-toastify';
@@ -16,36 +16,36 @@ import { useNavigate } from 'react-router-dom';
 function App() {
    const { auth, setAuth } = useContext(AuthContext);
    const navigate = useNavigate();
-   const fetchAccount = async () => {
-      let response = await AccountService.getAccount();
-      console.log('>>>>>>>check response check get account', response);
-      if (response.data === null) {
-         toast.warning('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
-         setTimeout(() => {
-            setAuth({
-               isAuthenticated: false,
-               isLoading: false,
-               user: { id: '', email: '', name: '', role: '' },
-            });
-            navigate('/login');
-         }, 2000);
-         return;
-      }
-      if (response && response.EC === '0') {
-         setAuth({
-            isLoading: false,
-            isAuthenticated: true,
-            user: {
-               id: response.DT.id,
-               email: response.DT.email,
-               name: response.DT.username,
-               role: response.DT.role_id ? response.DT.role_id.toString() : '',
-            },
-         });
-      }
-   };
-
    useEffect(() => {
+      const fetchAccount = async () => {
+         let response = await AccountService.getAccount();
+         console.log('>>>>>>>check response check get account', response);
+         if (response.data === null) {
+            toast.warning('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
+            setTimeout(() => {
+               setAuth({
+                  isAuthenticated: false,
+                  isLoading: false,
+                  user: { id: '', email: '', name: '', role: '' },
+               });
+               navigate('/login');
+            }, 2000);
+            return;
+         }
+         if (response && response.EC === '0') {
+            setAuth({
+               isLoading: false,
+               isAuthenticated: true,
+               user: {
+                  id: response.DT.id,
+                  email: response.DT.email,
+                  name: response.DT.username,
+                  role: response.DT.role_id ? response.DT.role_id.toString() : '',
+               },
+            });
+         }
+      };
+
       if (localStorage.getItem('access_token')) {
          fetchAccount();
       } else {
@@ -60,7 +60,7 @@ function App() {
             },
          });
       }
-   }, []);
+   }, [setAuth, navigate]);
 
    useEffect(() => {
       console.log('Auth state changed:', auth);

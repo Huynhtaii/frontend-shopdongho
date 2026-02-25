@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { paymentAPI, paymentCompleted } from '../../services/payment_service';
 import { toast } from 'react-toastify';
 import AuthContext from '../../context/auth.context';
-
+import { useCart } from '../../context/cart_context';
 function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem, paymentMethod }) {
    // API DỮ LIỆU CHUYỂN TIỀN NHẬN TỪ GOOGLE SHEET
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
+   const { fetchCart } = useCart();
    const [hasCheckedPayment, setHasCheckedPayment] = useState(false);
    const [checkingPayment, setCheckingPayment] = useState(false);
    //lấy ra userID
@@ -14,17 +15,26 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
    //lấy ra email của user
    const { auth } = useContext(AuthContext);
    const userEmail = auth.user.email;
-   const handlePayMentSuccess = async () => {
+   const handlePayMentSuccess = useCallback(async () => {
       try {
          const res = await paymentCompleted(userID, userEmail, totalAmount, cartItem, paymentMethod);
 
          console.log('Payment response:', res);
-         toast.success('Thanh toán thành công!');
+         fetchCart();
+         toast.success('Thanh toán thành công, vui lòng kiểm tra email!');
       } catch (error) {
          console.error('🔥 Lỗi khi thanh toán:', error);
          toast.error('Có lỗi xảy ra khi thanh toán!');
       }
-   };
+   }, [userID, userEmail, totalAmount, cartItem, paymentMethod]);
+
+   const handleClose = useCallback(() => {
+      console.log('Closing modal...');
+      if (onClose) {
+         onClose();
+      }
+   }, [onClose]);
+
    useEffect(() => {
       if (!isOpen) return;
       console.log('🔥 useEffect chạy');
@@ -62,7 +72,6 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
                console.log('🎉 Thanh toán hợp lệ, đóng modal.');
                clearInterval(interval);
                setCheckingPayment(false);
-               setHasCheckedPayment(true);
                alert('🎉 Thanh toán thành công!');
                handlePayMentSuccess();
                onClose();
@@ -89,18 +98,10 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
          console.log('⛔ Clearing interval...');
          clearInterval(interval);
       };
-   }, [isOpen, totalAmount, transferContent]);
-
-   const handleClose = () => {
-      console.log('Closing modal...');
-      if (onClose) {
-         onClose();
-      }
-   };
+   }, [isOpen, totalAmount, transferContent, handlePayMentSuccess, handleClose, onClose]);
 
    if (!isOpen) return null;
 
-   let amount = totalAmount ? totalAmount.toLocaleString('vi-VN') : '0';
    let QR = `https://img.vietqr.io/image/${process.env.REACT_APP_BANK_ID}-${process.env.REACT_APP_ACCOUNT_NO}-qr_only.png?amount=${totalAmount}&addInfo=${transferContent}&accountName=Nguyen%20Van%20A`;
    return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center">

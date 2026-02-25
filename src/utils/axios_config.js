@@ -10,8 +10,6 @@ const instance = axios.create({
    withCredentials: true,
 });
 // Biến để kiểm soát việc hiển thị toast
-let isShowingUnauthorizedToast = false;
-let isShowingForbiddenToast = false;
 // Add a request interceptor
 instance.interceptors.request.use(
    function (config) {
@@ -48,16 +46,11 @@ instance.interceptors.response.use(
                window.location.pathname !== '/login' &&
                window.location.pathname !== '/register'
             ) {
-               isShowingUnauthorizedToast = true;
                localStorage.removeItem('access_token');
                setTimeout(() => {
                   window.location.href = '/login';
                }, 3000);
-               toast.error('Session expired. Please log in again!', {
-                  onClose: () => {
-                     isShowingUnauthorizedToast = false;
-                  },
-               });
+               toast.error('Session expired. Please log in again!');
             }
             return Promise.resolve({ data: null, status: 401 });
          }

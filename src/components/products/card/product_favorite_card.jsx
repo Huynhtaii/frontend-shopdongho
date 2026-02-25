@@ -1,12 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { IoCloseSharp } from 'react-icons/io5';
 import { FaStar } from 'react-icons/fa';
 import { useFavorite } from '../../../context/favorite_context';
 import { useCart } from '../../../context/cart_context';
-
+import useFormatPrice from '../../../hooks/use_formatPrice';
 const ProductFavoriteCard = ({ product }) => {
-   const navigate = useNavigate();
+   const { formatPrice } = useFormatPrice();
    const { addAndRemoveToFavorite } = useFavorite();
    const { addToCart } = useCart();
    const handleAddToCart = async () => {
@@ -32,12 +32,12 @@ const ProductFavoriteCard = ({ product }) => {
                   </h3>
                </Link>
                <p className="text-[#ed1c24] font-[600] text-[18px]">
-                  {product.discount_price?.toLocaleString() || product.price?.toLocaleString()}đ
+                  {formatPrice(product.discount_price?.toLocaleString() || product.price?.toLocaleString())}
                </p>
                {product.discount_price && (
                   <div className="flex items-center gap-3">
                      <p className="text-[14px] font-[500] line-through text-[#939393]">
-                        {product.price?.toLocaleString()}đ
+                        {formatPrice(product.price?.toLocaleString())}
                      </p>
                      <span className="text-xs text-[#ef5555] bg-[#f9e9e2]">
                         {Math.round(((product.price - product.discount_price) / product.price) * 100)}%

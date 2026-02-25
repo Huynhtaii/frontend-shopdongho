@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import CategoryService from '../../services/category_service';
 import { toast } from 'react-toastify';
-import useFormatPrice from '../../hooks/use_formatPrice';
-
+import numberToWords from '../../utils/convertNumberToWords';
 const ModalAddUpdateProduct = ({
    setShowModal,
    selectedProduct,
@@ -13,7 +12,6 @@ const ModalAddUpdateProduct = ({
    previewImages,
 }) => {
    const [categories, setCategories] = useState([]);
-   const { formatPrice } = useFormatPrice();
 
    const formatPriceInput = (price) => {
       if (!price) return '';
@@ -31,6 +29,7 @@ const ModalAddUpdateProduct = ({
       };
       fetchData();
    }, []);
+
    return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
          <div className="bg-white p-6 rounded-lg w-full max-w-2xl">
@@ -56,27 +55,37 @@ const ModalAddUpdateProduct = ({
                         placeholder="Nhập tên sản phẩm"
                      />
                   </div>
-                  <div>
-                     <label className="block text-sm font-medium text-gray-700">Giá gốc</label>
-                     <input
-                        type="number"
-                        name="price"
-                        value={formatPriceInput(formData.price)}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Nhập giá"
-                     />
+                  <div className='flex flex-col'>
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700">Giá gốc</label>
+                        <input
+                           type="number"
+                           name="price"
+                           value={formatPriceInput(formData.price)}
+                           onChange={handleInputChange}
+                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="Nhập giá"
+                        />
+                     </div>
+                     {formData.price && (
+                        <p className="text-red-500 text-sm mt-1">{numberToWords(parseInt(formData.price))}</p>
+                     )}
                   </div>
-                  <div>
-                     <label className="block text-sm font-medium text-gray-700">Giá bán khuyến mãi</label>
-                     <input
-                        type="number"
-                        name="discount_price"
-                        value={formatPriceInput(formData.discount_price)}
-                        onChange={handleInputChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Nhập giá khuyến mãi"
-                     />
+                  <div className="flex flex-col">
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700">Giá bán khuyến mãi</label>
+                        <input
+                           type="number"
+                           name="discount_price"
+                           value={formatPriceInput(formData.discount_price)}
+                           onChange={handleInputChange}
+                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="Nhập giá khuyến mãi"
+                        />
+                     </div>
+                     {formData.discount_price && (
+                        <p className="text-red-500 text-sm mt-1">{numberToWords(parseInt(formData.discount_price))}</p>
+                     )}
                   </div>
                   <div>
                      <label className="block text-sm font-medium text-gray-700">Danh mục</label>

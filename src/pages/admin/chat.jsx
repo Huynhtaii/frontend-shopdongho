@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import ChatList from '../../components/chat/chat_list';
 import ChatBox from '../../components/chat/chat_box';
 import socket from '../../utils/socket';
-import { toast } from 'react-toastify';
 
 const Chat = () => {
    const [selectedUser, setSelectedUser] = useState(null);

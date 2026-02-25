@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { RiSendPlaneFill } from 'react-icons/ri';
 import { FaUser } from 'react-icons/fa';
 import { MdOutlineSupportAgent } from 'react-icons/md';
 import MessageService from '../../services/message_service';
-import AuthContext from '../../context/auth.context';
 import socket from '../../utils/socket';
 import { toast } from 'react-toastify';
 import { connectSocket } from '../../utils/socket';
@@ -11,16 +10,31 @@ import { connectSocket } from '../../utils/socket';
 const ChatBox = ({ selectedUser, onMessageSent }) => {
    const [message, setMessage] = useState('');
    const [messages, setMessages] = useState([]);
-   const { auth } = useContext(AuthContext);
    const messagesEndRef = useRef(null);
    const adminId = process.env.REACT_APP_ADMIN_ID;
+
+   const loadChatHistory = useCallback(async () => {
+      try {
+         console.log('Loading chat history for user:', selectedUser.id);
+         const response = await MessageService.getChatHistory(selectedUser.id);
+         console.log('Chat history response:', response);
+
+         if (response.EC === 0 || response.EC === '0') {
+            setMessages(response.DT || []);
+            scrollToBottom();
+         }
+      } catch (error) {
+         console.error('Error loading chat history:', error);
+         toast.error('Không thể tải lịch sử chat');
+      }
+   }, [selectedUser]);
 
    // Load chat history khi selectedUser thay đổi
    useEffect(() => {
       if (selectedUser?.id) {
          loadChatHistory();
       }
-   }, [selectedUser]);
+   }, [selectedUser, loadChatHistory]);
 
    // Xử lý socket connection và events
    useEffect(() => {
@@ -142,22 +156,6 @@ const ChatBox = ({ selectedUser, onMessageSent }) => {
 
    const scrollToBottom = () => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-   };
-
-   const loadChatHistory = async () => {
-      try {
-         console.log('Loading chat history for user:', selectedUser.id);
-         const response = await MessageService.getChatHistory(selectedUser.id);
-         console.log('Chat history response:', response);
-
-         if (response.EC === 0 || response.EC === '0') {
-            setMessages(response.DT || []);
-            scrollToBottom();
-         }
-      } catch (error) {
-         console.error('Error loading chat history:', error);
-         toast.error('Không thể tải lịch sử chat');
-      }
    };
 
    const handleSend = async () => {

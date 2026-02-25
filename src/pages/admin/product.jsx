@@ -97,10 +97,11 @@ const ProductAdmin = () => {
          toast.error('Vui lòng điền đầy đủ thông tin');
          return false;
       }
-      if (formData.discount_price > formData.price) {
-         toast.error('Giá khuyến mãi phải nhỏ hơn giá gốc');
+      if (Number(formData.discount_price) >= Number(formData.price)) {
+         toast.error('Giá bán khuyến mãi phải nhỏ hơn giá gốc');
          return false;
       }
+
       return true;
    };
 
