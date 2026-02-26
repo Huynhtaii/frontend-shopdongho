@@ -15,7 +15,27 @@ export const CartProvider = ({ children }) => {
    const user_id = localStorage.getItem('userId');
 
    const fetchCart = useCallback(async () => {
-      if (!auth.isAuthenticated) return;
+      if (!auth.isAuthenticated) {
+         // Guest Cart Logic
+         const localCart = JSON.parse(localStorage.getItem('guestCart')) || [];
+         setCartItem(localCart);
+         setCountItem(localCart.reduce((acc, item) => acc + item.quantity, 0));
+
+         const total = localCart.reduce((acc, item) => {
+            const price = item.Product.discount_price || item.Product.price;
+            return acc + item.quantity * price;
+         }, 0);
+         setTotalPrice(total);
+
+         const savings = localCart.reduce((acc, item) => {
+            if (item.Product.discount_price) {
+               return acc + (item.Product.price - item.Product.discount_price) * item.quantity;
+            }
+            return acc;
+         }, 0);
+         setSavingsPrice(savings);
+         return;
+      }
 
       const response = await CartService.getCartByUserId(user_id);
 
@@ -26,11 +46,7 @@ export const CartProvider = ({ children }) => {
          const total = response.DT[0]?.CartItems.reduce((acc, item) => acc + item.quantity, 0);
          setCountItem(total);
          setTotalPrice(response.totalPrice);
-         setSavingsPrice(
-            response.totalSavings >= response.totalPrice
-               ? response.totalSavings - response.totalPrice
-               : response.totalPrice - response.totalSavings,
-         );
+         setSavingsPrice(response.totalSavings);
       }
    }, [auth.isAuthenticated, user_id]);
 
@@ -38,9 +54,26 @@ export const CartProvider = ({ children }) => {
       fetchCart();
    }, [auth.isAuthenticated, fetchCart]);
 
-   const addToCart = async (cart_item) => {
+   const addToCart = async (cart_item, productDetail) => {
       if (!auth.isAuthenticated) {
-         toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+         // Add to Guest Cart
+         const localCart = JSON.parse(localStorage.getItem('guestCart')) || [];
+         const existingItemIndex = localCart.findIndex((item) => item.product_id === cart_item.product_id);
+
+         if (existingItemIndex > -1) {
+            localCart[existingItemIndex].quantity += cart_item.quantity;
+         } else {
+            // We need product detail for the UI to display correctly
+            localCart.push({
+               ...cart_item,
+               cart_item_id: Date.now(), // Temporary ID for guest
+               Product: productDetail,
+            });
+         }
+
+         localStorage.setItem('guestCart', JSON.stringify(localCart));
+         toast.success('Thêm vào giỏ hàng thành công (Khách)');
+         fetchCart();
          return;
       }
 
@@ -57,7 +90,11 @@ export const CartProvider = ({ children }) => {
 
    const deleteCartItem = async (cart_item_id) => {
       if (!auth.isAuthenticated) {
-         toast.error('Vui lòng đăng nhập để xóa khỏi giỏ hàng');
+         const localCart = JSON.parse(localStorage.getItem('guestCart')) || [];
+         const updatedCart = localCart.filter((item) => item.cart_item_id !== cart_item_id);
+         localStorage.setItem('guestCart', JSON.stringify(updatedCart));
+         fetchCart();
+         toast.success('Xóa khỏi giỏ hàng thành công');
          return;
       }
 
@@ -72,7 +109,13 @@ export const CartProvider = ({ children }) => {
 
    const updateQuantityCartItem = async (cart_item_id, quantity) => {
       if (!auth.isAuthenticated) {
-         toast.error('Vui lòng đăng nhập để cập nhật giỏ hàng');
+         const localCart = JSON.parse(localStorage.getItem('guestCart')) || [];
+         const itemIndex = localCart.findIndex((item) => item.cart_item_id === cart_item_id);
+         if (itemIndex > -1) {
+            localCart[itemIndex].quantity = quantity;
+            localStorage.setItem('guestCart', JSON.stringify(localCart));
+            fetchCart();
+         }
          return;
       }
 

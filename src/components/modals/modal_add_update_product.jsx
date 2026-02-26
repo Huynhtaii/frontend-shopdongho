@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import CategoryService from '../../services/category_service';
+import BrandService from '../../services/brand_service';
 import { toast } from 'react-toastify';
 import numberToWords from '../../utils/convertNumberToWords';
 
@@ -9,10 +10,12 @@ const ModalAddUpdateProduct = ({
    formData,
    handleInputChange,
    handleImageChange,
+   handleRemoveImage,
    handleSubmit,
    previewImages,
 }) => {
    const [categories, setCategories] = useState([]);
+   const [brands, setBrands] = useState([]);
 
    const formatPriceInput = (price) => {
       if (!price) return '';
@@ -22,10 +25,14 @@ const ModalAddUpdateProduct = ({
    useEffect(() => {
       const fetchData = async () => {
          try {
-            const categoriesData = await CategoryService.getAllCategories();
+            const [categoriesData, brandsData] = await Promise.all([
+               CategoryService.getAllCategories(),
+               BrandService.getAll(),
+            ]);
             setCategories(categoriesData.DT);
+            setBrands(brandsData.DT || []);
          } catch (error) {
-            toast.error('Có lỗi xảy ra khi tải dữ loại sản phẩm');
+            toast.error('Có lỗi xảy ra khi tải dữ liệu');
          }
       };
       fetchData();
@@ -132,17 +139,31 @@ const ModalAddUpdateProduct = ({
                      </select>
                   </div>
                   <div>
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Thương hiệu</label>
+                     <select
+                        name="brand_id"
+                        value={formData.brand_id || 0}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2.5 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer bg-white shadow-sm"
+                     >
+                        <option value={0}>Chọn thương hiệu</option>
+                        {brands?.map((brand) => (
+                           <option key={brand.brand_id} value={brand.brand_id}>
+                              {brand.name}
+                           </option>
+                        ))}
+                     </select>
+                  </div>
+                  <div>
                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Hình ảnh sản phẩm</label>
-                     {!selectedProduct && (
-                        <input
-                           type="file"
-                           name="images"
-                           multiple
-                           onChange={handleImageChange}
-                           className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer shadow-sm border border-dashed border-gray-300 p-1.5 rounded-lg"
-                           accept="image/*"
-                        />
-                     )}
+                     <input
+                        type="file"
+                        name="images"
+                        multiple
+                        onChange={handleImageChange}
+                        className="w-full text-[10px] text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer shadow-sm border border-dashed border-gray-300 p-1.5 rounded-lg"
+                        accept="image/*"
+                     />
                   </div>
                   <div className="col-span-2">
                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Mô tả ngắn</label>
@@ -193,8 +214,8 @@ const ModalAddUpdateProduct = ({
                   </div>
                </div>
 
-               {/* Xem trước ảnh (Chỉ khi thêm mới) */}
-               {previewImages?.length > 0 && !selectedProduct && (
+               {/* Xem trước ảnh */}
+               {previewImages?.length > 0 && (
                   <div className="pt-2 animate-fadeIn">
                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
                         Xem trước hình ảnh ({previewImages.length})
@@ -207,7 +228,15 @@ const ModalAddUpdateProduct = ({
                                  alt={`Preview ${index}`}
                                  className="w-16 h-16 object-cover rounded-lg border-2 border-gray-100 shadow-sm"
                               />
-                              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                              <button
+                                 type="button"
+                                 onClick={() => handleRemoveImage(index)}
+                                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-sm z-10"
+                                 title="Xóa ảnh"
+                              >
+                                 ✕
+                              </button>
+                              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
                            </div>
                         ))}
                      </div>

@@ -7,19 +7,21 @@ import socket, { connectSocket } from '../utils/socket';
 import MessageService from '../services/message_service';
 import AuthContext from '../context/auth.context';
 import { toast } from 'react-toastify';
+import AIService from '../services/ai_service';
+import { RiRobot2Line } from 'react-icons/ri';
+import ReactMarkdown from 'react-markdown';
+import { v4 as uuidv4 } from 'uuid';
 
 const FloatingButtons = () => {
    const [isVisible, setIsVisible] = useState(false);
    const [showChat, setShowChat] = useState(false);
+   const [showAIChat, setShowAIChat] = useState(false);
    const adminId = process.env.REACT_APP_ADMIN_ID;
    const { auth } = useContext(AuthContext);
+
    useEffect(() => {
       const toggleVisibility = () => {
-         if (window.scrollY > 300) {
-            setIsVisible(true);
-         } else {
-            setIsVisible(false);
-         }
+         setIsVisible(window.scrollY > 300);
       };
       window.addEventListener('scroll', toggleVisibility);
       return () => window.removeEventListener('scroll', toggleVisibility);
@@ -30,29 +32,36 @@ const FloatingButtons = () => {
          <div className="relative w-10 h-10">
             <button
                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-               className={`absolute w-10 h-10 bg-yellow-400 rounded-full 
-                    flex items-center justify-center shadow-lg 
-                    hover:scale-110 duration-300
-                    top-1/2 left-1/2 -translate-x-1/2
-                     ${isVisible ? '-translate-y-1/2 visible opacity-100' : '-translate-y-20 invisible opacity-0'}
-                   `}
+               className={`absolute w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg hover:scale-110 duration-300 top-1/2 left-1/2 -translate-x-1/2 ${isVisible ? '-translate-y-1/2 visible opacity-100' : '-translate-y-20 invisible opacity-0'}`}
             >
                <IoChevronUp size={24} />
             </button>
          </div>
+
          <div className="relative">
-            {/* /nếu là admin thì không hiển thị chat */}
             {String(auth.user?.id) !== String(adminId) && (
                <div
                   onClick={() => setShowChat(!showChat)}
-                  className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center hover:scale-110 transition cursor-pointer"
+                  className={`w-10 h-10 ${showChat ? 'bg-yellow-500' : 'bg-yellow-400'} rounded-full flex items-center justify-center hover:scale-110 transition cursor-pointer shadow-lg`}
+                  title="Chat với nhân viên"
                >
                   <MdOutlineSupportAgent size={24} />
                </div>
             )}
             {showChat && <Chat />}
          </div>
-         {/*  {/* /nếu là admin thì không hiển thị chat zalo */}
+
+         <div className="relative">
+            <div
+               onClick={() => setShowAIChat(!showAIChat)}
+               className={`w-10 h-10 ${showAIChat ? 'bg-blue-600 text-white' : 'bg-white text-blue-600'} border-2 border-blue-600 rounded-full flex items-center justify-center hover:scale-110 transition cursor-pointer shadow-lg`}
+               title="AI Tư vấn sản phẩm"
+            >
+               <RiRobot2Line size={24} />
+            </div>
+            {showAIChat && <AIChat />}
+         </div>
+
          {String(auth.user?.id) !== String(adminId) && (
             <Link href="#" target="_blank" className="flex items-center justify-center hover:scale-110 transition">
                <img
@@ -70,68 +79,44 @@ const Chat = () => {
    const [messages, setMessages] = useState([]);
    const [newMessage, setNewMessage] = useState('');
    const { auth } = useContext(AuthContext);
-   //lấy ra tên của người dùng đang nhắn tin
+   const adminId = process.env.REACT_APP_ADMIN_ID;
+   const messagesEndRef = useRef(null);
+
    let userName = '';
    if (auth.isAuthenticated && auth.user?.id) {
       userName = auth.user.name;
    }
-   const adminId = process.env.REACT_APP_ADMIN_ID; // ID của admin
-   const messagesEndRef = useRef(null);
-   console.log('>>>>>>>check auth in Chat component:', auth); // Thêm log này
+
    useEffect(() => {
-      scrollToBottom();
-   }, [messages]);
-   const scrollToBottom = () => {
       if (messagesEndRef.current) {
          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
       }
-   };
+   }, [messages]);
 
    const loadChatHistory = useCallback(async () => {
-      console.log('>>>>>>>loadChatHistory is called');
       try {
          const response = await MessageService.getChatHistory(auth.user.id);
-         console.log('>>>>>>>check auth', auth.user.id);
-         console.log('>>>>>>>check response check get chat history', response);
-         if (response.EC === '0') {
-            setMessages(response.DT);
-         }
+         if (response.EC === '0') setMessages(response.DT);
       } catch (error) {
          console.error('Error loading chat history:', error);
       }
    }, [auth.user.id]);
 
    useEffect(() => {
-      console.log('>>>>>>>check auth condition:', {
-         isAuthenticated: auth.isAuthenticated,
-         userId: auth.user?.id,
-      });
-
       if (auth.isAuthenticated && auth.user?.id) {
-         console.log('>>>>>>>check auth condition2:', {
-            isAuthenticated: auth.isAuthenticated,
-            userId: auth.user?.id,
-         });
          try {
             connectSocket();
             socket.emit('joinRoom', auth.user.id);
             loadChatHistory();
 
             const handleReceiveMessage = (message) => {
-               console.log('📥 Nhận tin nhắn từ socket:', message);
                if (message.receiver_id === auth.user.id || message.sender_id === auth.user.id) {
                   setMessages((prev) => [...prev, message]);
-                  scrollToBottom();
                }
             };
 
             socket.on('receiveMessage', handleReceiveMessage);
-
-            // Thêm xử lý lỗi kết nối
-            socket.on('connect_error', (error) => {
-               console.error('Socket connection error:', error);
-               toast.error('Không thể kết nối đến server chat');
-            });
+            socket.on('connect_error', () => toast.error('Không thể kết nối đến server chat'));
 
             return () => {
                socket.off('receiveMessage', handleReceiveMessage);
@@ -149,7 +134,6 @@ const Chat = () => {
          toast.error('Vui lòng đăng nhập để chat với chúng tôi!');
          return;
       }
-
       if (!newMessage.trim()) return;
 
       const messageData = {
@@ -158,16 +142,14 @@ const Chat = () => {
          content: newMessage,
          created_at: new Date().toISOString(),
       };
-      // console.log('🚀 Gửi tin nhắn:', messageData);
       try {
          const response = await MessageService.sendMessage(messageData);
-         // console.log('>>>>>>>check response send message', response);
          if (response.EC === '0') {
             setMessages((prev) => [...prev, messageData]);
             socket.emit('sendMessage', messageData);
             setNewMessage('');
          }
-      } catch (error) {
+      } catch {
          toast.error('Không thể gửi tin nhắn. Vui lòng thử lại!');
       }
    };
@@ -183,44 +165,31 @@ const Chat = () => {
                         {messages.map((msg, index) => (
                            <div
                               key={index}
-                              className={`flex items-start gap-2 ${
-                                 msg.sender_id === auth.user.id ? 'flex-row-reverse' : ''
-                              }`}
+                              className={`flex items-start gap-2 ${msg.sender_id === auth.user.id ? 'flex-row-reverse' : ''}`}
                            >
                               <div
-                                 className={`w-8 h-8 rounded-full ${
-                                    msg.sender_id === auth.user.id ? 'bg-yellow-200' : 'bg-gray-200'
-                                 } flex items-center justify-center`}
+                                 className={`w-8 h-8 rounded-full ${msg.sender_id === auth.user.id ? 'bg-yellow-200' : 'bg-gray-200'} flex items-center justify-center`}
                               >
                                  {msg.sender_id === auth.user.id ? <FaUser /> : <MdOutlineSupportAgent size={20} />}
                               </div>
                               <div
-                                 className={`p-2 rounded-lg max-w-[80%] ${
-                                    msg.sender_id === auth.user.id ? 'bg-yellow-100' : 'bg-gray-100'
-                                 }`}
+                                 className={`p-2 rounded-lg max-w-[80%] ${msg.sender_id === auth.user.id ? 'bg-yellow-100' : 'bg-gray-100'}`}
                               >
                                  <div className="text-sm">
                                     <div
-                                       className={`flex flex-col ${
-                                          String(msg.sender_id) === String(adminId) ? 'items-start' : 'items-end'
-                                       }`}
+                                       className={`flex flex-col ${String(msg.sender_id) === String(adminId) ? 'items-start' : 'items-end'}`}
                                     >
-                                       {/* Phân biệt giữa người dùng và admin */}
                                        {String(msg.sender_id) === String(adminId) ? (
                                           <span className="font-bold">Admin</span>
                                        ) : (
                                           <span className="font-bold">{userName || 'Bạn'}</span>
                                        )}
-
                                        <p>{msg.content}</p>
                                     </div>
-
                                     <p className="text-xs flex items-end justify-end text-gray-500">
-                                       {' '}
-                                       {new Intl.DateTimeFormat('vi-VN', {
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                       }).format(new Date(msg.created_at))}
+                                       {new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(
+                                          new Date(msg.created_at),
+                                       )}
                                     </p>
                                  </div>
                               </div>
@@ -254,6 +223,190 @@ const Chat = () => {
                   </Link>
                </div>
             )}
+         </div>
+      </div>
+   );
+};
+
+const AIChat = () => {
+   const { auth } = useContext(AuthContext);
+   const [messages, setMessages] = useState([]);
+   const [newMessage, setNewMessage] = useState('');
+   const [loading, setLoading] = useState(false);
+   const [historyLoading, setHistoryLoading] = useState(true);
+   const messagesEndRef = useRef(null);
+
+   const [sessionId] = useState(() => {
+      let id = localStorage.getItem('ai_session_id');
+      if (!id) {
+         id = uuidv4();
+         localStorage.setItem('ai_session_id', id);
+      }
+      return id;
+   });
+
+   const GREETING = {
+      sender: 'ai',
+      content: 'Xin chào! Tôi là trợ lý ảo của WatchStore. Tôi có thể giúp gì cho bạn trong việc chọn đồng hồ hôm nay?',
+      created_at: new Date().toISOString(),
+   };
+
+   // Load chat history on mount
+   useEffect(() => {
+      const loadHistory = async () => {
+         try {
+            setHistoryLoading(true);
+            const res = await AIService.getHistory(auth.user?.id, sessionId);
+            if (res.EC === '0' && res.DT && res.DT.length > 0) {
+               const mapped = res.DT.map((m) => ({
+                  sender: m.role === 'assistant' ? 'ai' : 'user',
+                  content: m.content,
+                  created_at: m.created_at,
+               }));
+               setMessages(mapped);
+            } else {
+               setMessages([GREETING]);
+            }
+         } catch {
+            setMessages([GREETING]);
+         } finally {
+            setHistoryLoading(false);
+         }
+      };
+      loadHistory();
+   }, [auth.user?.id, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+   // Scroll to bottom when messages change
+   useEffect(() => {
+      if (messagesEndRef.current) {
+         messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+   }, [messages, loading]);
+
+   const handleSend = async () => {
+      if (!newMessage.trim() || loading) return;
+
+      const userMsg = { sender: 'user', content: newMessage, created_at: new Date().toISOString() };
+      setMessages((prev) => [...prev, userMsg]);
+      setNewMessage('');
+      setLoading(true);
+
+      try {
+         const response = await AIService.consult(newMessage, auth.user?.id, sessionId);
+         if (response.EC === '0') {
+            const aiMsg = { sender: 'ai', content: response.DT, created_at: new Date().toISOString() };
+            setMessages((prev) => [...prev, aiMsg]);
+         } else {
+            toast.error('AI đang bận, vui lòng thử lại sau!');
+         }
+      } catch {
+         toast.error('Lỗi kết nối AI!');
+      } finally {
+         setLoading(false);
+      }
+   };
+
+   return (
+      <div
+         className="absolute bottom-12 right-0 w-80 h-[450px] bg-white rounded-xl shadow-2xl p-4 border border-blue-100 flex flex-col z-[1001]"
+         onClick={(e) => e.stopPropagation()}
+      >
+         <div className="flex items-center gap-2 border-b pb-3 mb-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+               <RiRobot2Line size={24} />
+            </div>
+            <div>
+               <h3 className="font-bold text-gray-800">AI Consultant</h3>
+               <p className="text-xs text-green-500 flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Trực tuyến
+               </p>
+            </div>
+         </div>
+
+         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {historyLoading ? (
+               <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm gap-2">
+                  <div className="flex gap-1">
+                     <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"></span>
+                     <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                     <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  </div>
+                  <span>Đang tải lịch sử...</span>
+               </div>
+            ) : (
+               <>
+                  {messages.map((msg, index) => (
+                     <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div
+                           className={`max-w-[90%] p-3 rounded-2xl text-sm ${
+                              msg.sender === 'user'
+                                 ? 'bg-blue-600 text-white rounded-tr-none'
+                                 : 'bg-gray-100 text-gray-800 rounded-tl-none border border-gray-200'
+                           }`}
+                        >
+                           <div className="markdown-content">
+                              <ReactMarkdown
+                                 components={{
+                                    a: ({ node, ...props }) => (
+                                       <Link
+                                          to={props.href}
+                                          className="text-blue-600 font-bold underline hover:text-blue-800 transition-colors inline-block my-1"
+                                       >
+                                          {props.children}
+                                       </Link>
+                                    ),
+                                    p: ({ node, ...props }) => (
+                                       <p {...props} className="mb-2 last:mb-0 leading-relaxed" />
+                                    ),
+                                    strong: ({ node, ...props }) => <strong {...props} className="font-bold" />,
+                                 }}
+                              >
+                                 {msg.content}
+                              </ReactMarkdown>
+                           </div>
+                           <p
+                              className={`text-[10px] mt-1 ${msg.sender === 'user' ? 'text-blue-100 text-right' : 'text-gray-400'}`}
+                           >
+                              {new Date(msg.created_at).toLocaleTimeString('vi-VN', {
+                                 hour: '2-digit',
+                                 minute: '2-digit',
+                              })}
+                           </p>
+                        </div>
+                     </div>
+                  ))}
+                  {loading && (
+                     <div className="flex justify-start">
+                        <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none border border-gray-200">
+                           <div className="flex gap-1">
+                              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                           </div>
+                        </div>
+                     </div>
+                  )}
+               </>
+            )}
+            <div ref={messagesEndRef} />
+         </div>
+
+         <div className="mt-3 relative">
+            <input
+               type="text"
+               value={newMessage}
+               onChange={(e) => setNewMessage(e.target.value)}
+               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+               placeholder="Hỏi AI về đồng hồ..."
+               className="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+            />
+            <button
+               onClick={handleSend}
+               disabled={loading || !newMessage.trim()}
+               className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 transition-all"
+            >
+               <IoSend size={16} />
+            </button>
          </div>
       </div>
    );

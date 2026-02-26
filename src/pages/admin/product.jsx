@@ -89,6 +89,8 @@ const ProductAdmin = () => {
       setFormData({
          ...product,
          category_id: categoryId,
+         images: [], // Reset images to empty when starting edit, but we'll show previews from ProductImages
+         keptImageIds: product.ProductImages.map((img) => img.product_image_id),
       });
       setPreviewImages(
          product.ProductImages.map((img) => ({
@@ -113,12 +115,15 @@ const ProductAdmin = () => {
    };
 
    const validateForm = () => {
+      const hasNewImages = Array.isArray(formData.images) ? formData.images.length > 0 : formData.images !== '';
+      const hasKeptImages = Array.isArray(formData.keptImageIds) ? formData.keptImageIds.length > 0 : false;
+
       if (
          formData.name === '' ||
          formData.price === 0 ||
          formData.description === '' ||
          formData.category_id === 0 ||
-         formData.images === ''
+         (!hasNewImages && !hasKeptImages)
       ) {
          toast.error('Vui lòng điền đầy đủ thông tin');
          return false;
@@ -136,20 +141,9 @@ const ProductAdmin = () => {
       if (validateForm()) {
          try {
             if (selectedProduct) {
-               // If images is an array of files, take the first one
-               let updateData = { ...formData };
-               if (Array.isArray(formData.images) && formData.images.length > 0) {
-                  updateData.images = formData.images[0];
-               } else {
-                  // Don't send the string URL back as a file to the server
-                  delete updateData.images;
-               }
-               await ProductService.updateProduct(selectedProduct.product_id, updateData);
+               await ProductService.updateProduct(selectedProduct.product_id, formData);
             } else {
-               await ProductService.createProduct({
-                  ...formData,
-                  images: Array.isArray(formData.images) ? formData.images[0] : formData.images,
-               });
+               await ProductService.createProduct(formData);
             }
             setShowModal(false);
             fetchData();
@@ -170,17 +164,53 @@ const ProductAdmin = () => {
    const handleImageChange = (e) => {
       const files = Array.from(e.target.files);
 
-      const newPreviewImages = files.map((file) => ({
+      const newPreviews = files.map((file) => ({
          url: URL.createObjectURL(file),
          file: file,
+         isNew: true,
       }));
 
-      setPreviewImages(newPreviewImages);
+      setPreviewImages((prev) => [...prev, ...newPreviews]);
 
       setFormData((prev) => ({
          ...prev,
-         images: files,
+         images: [...(Array.isArray(prev.images) ? prev.images : []), ...files],
       }));
+   };
+
+   const handleRemoveImage = (index) => {
+      const imageToRemove = previewImages[index];
+
+      // Remove from previews
+      setPreviewImages((prev) => {
+         const updated = [...prev];
+         updated.splice(index, 1);
+         return updated;
+      });
+
+      // If it's a newly added file, remove it from formData.images
+      if (imageToRemove.isNew) {
+         setFormData((prev) => {
+            // Find the index of this file in the images array
+            // Since we append files in the same order as previews, we need to find the correct file
+            const newFilesOnly = previewImages.filter((img) => img.isNew);
+            const fileIndexInNewFiles = newFilesOnly.indexOf(imageToRemove);
+
+            const updatedImages = [...prev.images];
+            updatedImages.splice(fileIndexInNewFiles, 1);
+
+            return {
+               ...prev,
+               images: updatedImages,
+            };
+         });
+      } else {
+         // If it's an existing image, remove its ID from keptImageIds
+         setFormData((prev) => ({
+            ...prev,
+            keptImageIds: prev.keptImageIds.filter((id) => id !== imageToRemove.product_image_id),
+         }));
+      }
    };
 
    return (
@@ -250,6 +280,7 @@ const ProductAdmin = () => {
                formData={formData}
                handleInputChange={handleInputChange}
                handleImageChange={handleImageChange}
+               handleRemoveImage={handleRemoveImage}
                handleSubmit={handleSubmit}
                previewImages={previewImages}
             />

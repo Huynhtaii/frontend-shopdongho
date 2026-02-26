@@ -73,9 +73,9 @@ const OrderAdmin = () => {
       }
    };
 
-   const handleUpdateStatus = async (orderId, status) => {
+   const handleUpdateStatus = async (orderId, status, paymentStatus) => {
       try {
-         await OrderService.updateOrderStatus(orderId, status);
+         await OrderService.updateOrderStatus(orderId, status, paymentStatus);
          toast.success('Cập nhật trạng thái đơn hàng thành công');
          fetchData();
       } catch (error) {
@@ -99,7 +99,10 @@ const OrderAdmin = () => {
                         Ngày đặt
                      </th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Trạng thái
+                        Trạng thái đơn hàng
+                     </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Thanh toán
                      </th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Tổng tiền
@@ -143,6 +146,13 @@ const OrderAdmin = () => {
                                     {order.status}
                                  </span>
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                 <span
+                                    className={`px-2 py-1 rounded-full text-xs ${order.Payment?.status === 'Success' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
+                                 >
+                                    {order.Payment?.status || 'Pending'}
+                                 </span>
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(order.total_amount)}</td>
                               <td className="px-6 py-4 whitespace-nowrap">{order.user_id}</td>
                               <td className="px-6 py-4 whitespace-nowrap">{order.discount_id || 'Không có'}</td>
@@ -165,7 +175,7 @@ const OrderAdmin = () => {
                            </tr>
                            {isDetailModalVisible === order.order_id && (
                               <tr>
-                                 <td colSpan="7" className="px-6 py-4 bg-gray-50">
+                                 <td colSpan="8" className="px-6 py-4 bg-gray-50">
                                     <div className="text-sm text-gray-600">
                                        <div className="font-semibold mb-2">Chi tiết đơn hàng:</div>
                                        <table className="w-full">
@@ -198,7 +208,7 @@ const OrderAdmin = () => {
                      ))
                   ) : (
                      <tr>
-                        <td colSpan="7" className="px-6 py-4 text-center">
+                        <td colSpan="8" className="px-6 py-4 text-center">
                            Không có dữ liệu đơn hàng
                         </td>
                      </tr>
@@ -213,6 +223,7 @@ const OrderAdmin = () => {
                handleClose={() => setIsModalVisible(false)}
                orderId={selectedOrder?.order_id}
                currentStatus={selectedOrder?.status}
+               currentPaymentStatus={selectedOrder?.Payment?.status}
                onUpdateStatus={handleUpdateStatus}
             />
          )}

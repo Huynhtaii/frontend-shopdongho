@@ -54,7 +54,11 @@ const ProductService = {
       formData.append('case_thickness', data.case_thickness || '');
       formData.append('utilities', data.utilities || '');
 
-      if (data.images) {
+      if (Array.isArray(data.images)) {
+         data.images.forEach((file) => {
+            formData.append('images', file);
+         });
+      } else if (data.images) {
          formData.append('images', data.images);
       }
 
@@ -64,8 +68,33 @@ const ProductService = {
       });
    },
    updateProduct: async (id, data) => {
+      const formData = new FormData();
+
+      // Thêm dữ liệu text vào formData
+      Object.keys(data).forEach((key) => {
+         if (key !== 'images' && key !== 'keptImageIds' && data[key] !== undefined && data[key] !== null) {
+            formData.append(key, data[key]);
+         }
+      });
+
+      // Thêm danh sách ID ảnh cũ được giữ lại
+      if (Array.isArray(data.keptImageIds)) {
+         formData.append('keptImageIds', JSON.stringify(data.keptImageIds));
+      }
+
+      // Thêm các file ảnh nếu có
+      if (Array.isArray(data.images)) {
+         data.images.forEach((file) => {
+            if (file instanceof File) {
+               formData.append('images', file);
+            }
+         });
+      }
+
       const url = `/v1/update/product/${id}`;
-      return await axios.put(url, data);
+      return await axios.put(url, formData, {
+         headers: { 'Content-Type': 'multipart/form-data' },
+      });
    },
    deleteProduct: async (id) => {
       const url = `/v1/delete/product/${id}`;

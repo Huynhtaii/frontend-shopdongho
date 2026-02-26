@@ -7,10 +7,13 @@ import { toast } from 'react-toastify';
 import { paymentCompleted } from '../../services/payment_service';
 import { useCart } from '../../context/cart_context';
 import { useNavigate } from 'react-router-dom';
+import AuthContext from '../../context/auth.context';
+import { useContext } from 'react';
 
 const Payment = ({ totalPrice, cartItem }) => {
    const { fetchCart } = useCart();
    const navigate = useNavigate();
+   const { auth } = useContext(AuthContext);
    const [paymentMethod, setPaymentMethod] = useState('cod');
    const [userOrder, setUserOrder] = useState(null);
    const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,13 +21,10 @@ const Payment = ({ totalPrice, cartItem }) => {
 
    // Lấy id tài khoản đã đăng nhập
    const user_id = localStorage.getItem('userId');
-   //lấy ra email của user
 
-   console.log('>>>>>>>>>>>>>>>check user_id', user_id);
    const fetchUser = useCallback(async () => {
       try {
          const response = await AccountService.getInforAccount(user_id);
-         console.log('>>>>>>>>>>>>>>>check res order', response);
          if (response.EC === '0') {
             setUserOrder(response.DT);
          }
@@ -69,6 +69,11 @@ const Payment = ({ totalPrice, cartItem }) => {
    };
 
    const handleOrderProduct = () => {
+      if (!auth.isAuthenticated) {
+         toast.error('Vui lòng đăng nhập để đặt hàng!');
+         navigate('/login');
+         return;
+      }
       if (handleValidateForm()) {
          if (paymentMethod === 'cod') {
             handleOrderCodSuccess();

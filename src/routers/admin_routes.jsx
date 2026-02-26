@@ -7,6 +7,7 @@ import UserAdmin from '../pages/admin/user';
 import OrderAdmin from '../pages/admin/order';
 import ProductAdmin from '../pages/admin/product';
 import { PrivateRouteAdmin } from './private_route';
+import BrandAdmin from '../pages/admin/brand';
 
 const AdminRoutes = () => {
    return (
@@ -57,6 +58,14 @@ const AdminRoutes = () => {
                element={
                   <AdminLayout>
                      <Chat />
+                  </AdminLayout>
+               }
+            />
+            <Route
+               path="brands"
+               element={
+                  <AdminLayout>
+                     <BrandAdmin />
                   </AdminLayout>
                }
             />

@@ -8,6 +8,14 @@ import { useCart } from '../../context/cart_context';
 import useFormatPrice from '../../hooks/use_formatPrice';
 import ProductListSlider from '../../components/products/product_list_slider';
 import useRecentProduct from '../../hooks/use_recent_product';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { FreeMode, Navigation, Thumbs } from 'swiper/modules';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/free-mode';
+import 'swiper/css/navigation';
+import 'swiper/css/thumbs';
 function ProductDetail() {
    const { addAndRemoveToFavorite, findFavorite } = useFavorite();
    const { addToCart } = useCart();
@@ -15,6 +23,7 @@ function ProductDetail() {
    const [loading, setLoading] = useState(true);
    const [isFavorite, setIsFavorite] = useState(findFavorite(product?.product_id));
    const [activeTab, setActiveTab] = useState('specs');
+   const [thumbsSwiper, setThumbsSwiper] = useState(null);
    const { id } = useParams();
 
    const { formatPrice } = useFormatPrice();
@@ -94,7 +103,7 @@ function ProductDetail() {
          quantity: 1,
          created_at: new Date().toISOString(),
       };
-      addToCart(cart_item);
+      addToCart(cart_item, product);
    };
 
    return (
@@ -102,8 +111,64 @@ function ProductDetail() {
          <div className="flex flex-col md:flex-row gap-8">
             {/* Ảnh sản phẩm */}
             <div className="md:w-1/2">
-               <div className="bg-white p-4 rounded-lg shadow">
-                  <img src={product.ProductImages[0]?.url} alt={product.name} className="w-full object-contain" />
+               <div className="product-images-container space-y-4">
+                  {/* Main Slider */}
+                  <div className="bg-white p-4 rounded-lg shadow main-image-slider">
+                     <Swiper
+                        style={{
+                           '--swiper-navigation-color': '#EF4444',
+                           '--swiper-pagination-color': '#EF4444',
+                        }}
+                        spaceBetween={10}
+                        navigation={true}
+                        thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+                        modules={[FreeMode, Navigation, Thumbs]}
+                        className="mySwiper2"
+                     >
+                        {product.ProductImages?.length > 0 ? (
+                           product.ProductImages.map((image, index) => (
+                              <SwiperSlide key={index}>
+                                 <img
+                                    src={image.url}
+                                    alt={`${product.name} ${index + 1}`}
+                                    className="w-full h-[400px] object-contain"
+                                 />
+                              </SwiperSlide>
+                           ))
+                        ) : (
+                           <SwiperSlide>
+                              <div className="w-full h-[400px] flex items-center justify-center bg-gray-100 rounded">
+                                 Không có ảnh
+                              </div>
+                           </SwiperSlide>
+                        )}
+                     </Swiper>
+                  </div>
+
+                  {/* Thumbs Slider */}
+                  <div className="thumbs-slider-container">
+                     <Swiper
+                        onSwiper={setThumbsSwiper}
+                        spaceBetween={10}
+                        slidesPerView={5}
+                        freeMode={true}
+                        watchSlidesProgress={true}
+                        modules={[FreeMode, Navigation, Thumbs]}
+                        className="mySwiper"
+                     >
+                        {product.ProductImages?.map((image, index) => (
+                           <SwiperSlide key={index} className="cursor-pointer">
+                              <div className="thumbnail-box rounded-md border-2 border-transparent hover:border-red-500 overflow-hidden bg-white p-1 shadow-sm transition-all duration-300">
+                                 <img
+                                    src={image.url}
+                                    alt={`${product.name} shadow ${index + 1}`}
+                                    className="w-full h-20 object-contain"
+                                 />
+                              </div>
+                           </SwiperSlide>
+                        ))}
+                     </Swiper>
+                  </div>
                </div>
             </div>
 

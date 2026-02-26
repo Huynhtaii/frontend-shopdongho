@@ -84,15 +84,15 @@ const ClientRoutes = () => {
             <Route path="/register" element={<Register />} />
          </Route>
 
+         <Route
+            path="/cart"
+            element={
+               <CartLayout>
+                  <Cart />
+               </CartLayout>
+            }
+         />
          <Route element={<PrivateRouteUser />}>
-            <Route
-               path="/cart"
-               element={
-                  <CartLayout>
-                     <Cart />
-                  </CartLayout>
-               }
-            />
             <Route
                path="/account"
                element={
