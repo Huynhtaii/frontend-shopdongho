@@ -1,14 +1,13 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import { useEffect, useState, useContext, useCallback } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { paymentAPI, paymentCompleted } from '../../services/payment_service';
 import { toast } from 'react-toastify';
 import AuthContext from '../../context/auth.context';
 import { useCart } from '../../context/cart_context';
-function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem, paymentMethod }) {
+function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem, paymentMethod, onOrderSuccess }) {
    // API DỮ LIỆU CHUYỂN TIỀN NHẬN TỪ GOOGLE SHEET
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
    const { fetchCart } = useCart();
-   const [hasCheckedPayment, setHasCheckedPayment] = useState(false);
    const [checkingPayment, setCheckingPayment] = useState(false);
    //lấy ra userID
    const userID = localStorage.getItem('userId');
@@ -18,15 +17,25 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
    const handlePayMentSuccess = useCallback(async () => {
       try {
          const res = await paymentCompleted(userID, userEmail, totalAmount, cartItem, paymentMethod);
+         // Lấy order_id từ response trả về
+         const order_id = res?.data?.DT?.order_id || null;
 
          console.log('Payment response:', res);
          fetchCart();
+         if (onOrderSuccess) {
+            const itemsToRate = cartItem.map((item) => ({
+               product_id: item.product_id,
+               productData: item.productData,
+               order_id,
+            }));
+            onOrderSuccess(itemsToRate);
+         }
          toast.success('Thanh toán thành công, vui lòng kiểm tra email!');
       } catch (error) {
          console.error('🔥 Lỗi khi thanh toán:', error);
          toast.error('Có lỗi xảy ra khi thanh toán!');
       }
-   }, [userID, userEmail, totalAmount, cartItem, paymentMethod]);
+   }, [userID, userEmail, totalAmount, cartItem, paymentMethod, fetchCart, onOrderSuccess]);
 
    const handleClose = useCallback(() => {
       console.log('Closing modal...');

@@ -3,6 +3,7 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import ModalUpdateOrder from '../../components/modals/modal_update_order';
 import OrderService from '../../services/order_service';
+import Pagination from '../../components/pagination';
 
 const OrderAdmin = () => {
    const [orders, setOrders] = useState([]);
@@ -10,10 +11,17 @@ const OrderAdmin = () => {
    const [isDetailModalVisible, setIsDetailModalVisible] = useState(0);
    const [selectedOrder, setSelectedOrder] = useState(null);
 
+   // Filter states
+   const [shippingFilter, setShippingFilter] = useState('All');
+   const [paymentFilter, setPaymentFilter] = useState('All');
+
+   // Pagination states
+   const [currentPage, setCurrentPage] = useState(1);
+   const itemsPerPage = 10;
+
    const fetchData = async () => {
       try {
          const ordersData = await OrderService.getAllOrders();
-         console.log(ordersData);
          setOrders(Array.isArray(ordersData.DT.orders) ? ordersData.DT.orders : []);
       } catch (error) {
          console.error('Error fetching orders:', error);
@@ -26,13 +34,23 @@ const OrderAdmin = () => {
       fetchData();
    }, []);
 
+   const filteredOrders = orders.filter((order) => {
+      const matchShipping = shippingFilter === 'All' || order.status === shippingFilter;
+      const matchPayment = paymentFilter === 'All' || (order.Payment?.status || 'Pending') === paymentFilter;
+      return matchShipping && matchPayment;
+   });
+
+   // Reset to page 1 when filters change
+   useEffect(() => {
+      setCurrentPage(1);
+   }, [shippingFilter, paymentFilter]);
+
+   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+   const paginatedOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
    const handleViewDetails = (order) => {
       setSelectedOrder(order);
-      if (isDetailModalVisible === order.order_id) {
-         setIsDetailModalVisible(0);
-      } else {
-         setIsDetailModalVisible(order.order_id);
-      }
+      setIsDetailModalVisible(isDetailModalVisible === order.order_id ? 0 : order.order_id);
    };
 
    const handleEdit = (e, order) => {
@@ -79,17 +97,50 @@ const OrderAdmin = () => {
          toast.success('Cập nhật trạng thái đơn hàng thành công');
          fetchData();
       } catch (error) {
-         toast.error('Có lỗi xảy ra khi tải dữ liệu hoá đơn' + error);
+         toast.error('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng' + error);
       }
    };
 
    return (
-      <div className="p-6">
-         <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold">Quản lý đơn hàng</h1>
+      <div className="p-4 md:p-6">
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <h1 className="text-xl md:text-2xl font-semibold">Quản lý đơn hàng</h1>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-3 md:gap-4 w-full sm:w-auto">
+               <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Giao hàng:</span>
+                  <select
+                     className="border border-gray-300 rounded px-3 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                     value={shippingFilter}
+                     onChange={(e) => setShippingFilter(e.target.value)}
+                  >
+                     <option value="All">Tất cả</option>
+                     <option value="Pending">Pending</option>
+                     <option value="Shipped">Shipped</option>
+                     <option value="Completed">Completed</option>
+                     <option value="Canceled">Canceled</option>
+                  </select>
+               </div>
+
+               <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Thanh toán:</span>
+                  <select
+                     className="border border-gray-300 rounded px-3 py-1 text-sm outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                     value={paymentFilter}
+                     onChange={(e) => setPaymentFilter(e.target.value)}
+                  >
+                     <option value="All">Tất cả</option>
+                     <option value="Pending">Pending</option>
+                     <option value="Success">Success</option>
+                     <option value="Failed">Failed</option>
+                  </select>
+               </div>
+            </div>
          </div>
-         <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
+
+         <div className="max-w-full overflow-x-auto border border-gray-200 rounded-lg bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200">
                <thead className="bg-gray-50">
                   <tr>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -108,10 +159,7 @@ const OrderAdmin = () => {
                         Tổng tiền
                      </th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Mã người dùng
-                     </th>
-                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Mã giảm giá
+                        Tên người dùng
                      </th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Thao tác
@@ -119,26 +167,15 @@ const OrderAdmin = () => {
                   </tr>
                </thead>
                <tbody className="divide-y divide-gray-200">
-                  {Array.isArray(orders) && orders.length > 0 ? (
-                     orders.map((order) => (
+                  {paginatedOrders.length > 0 ? (
+                     paginatedOrders.map((order) => (
                         <React.Fragment key={order.order_id}>
                            <tr className="hover:bg-gray-50" onClick={() => handleViewDetails(order)}>
                               <td className="px-6 py-4 whitespace-nowrap">{order.order_id}</td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                 {new Date(order.order_date).toLocaleDateString('vi-VN', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                 })}{' '}
-                                 {new Date(order.order_date).toLocaleTimeString('vi-VN', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                    hour12: false,
-                                    timeZone: 'Asia/Ho_Chi_Minh',
-                                 })}
+                                 {new Date(order.order_date).toLocaleDateString('vi-VN')}{' '}
+                                 {new Date(order.order_date).toLocaleTimeString('vi-VN')}
                               </td>
-
                               <td className="px-6 py-4 whitespace-nowrap">
                                  <span
                                     className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(order.status)}`}
@@ -148,21 +185,26 @@ const OrderAdmin = () => {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs ${order.Payment?.status === 'Success' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}
+                                    className={`px-2 py-1 rounded-full text-xs ${
+                                       order.Payment?.status === 'Success'
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-yellow-100 text-yellow-800'
+                                    }`}
                                  >
                                     {order.Payment?.status || 'Pending'}
                                  </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(order.total_amount)}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{order.user_id}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">{order.discount_id || 'Không có'}</td>
                               <td className="px-6 py-4 whitespace-nowrap">
+                                 {order.User?.name || `ID: ${order.user_id}`}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                  <div className="flex gap-2">
                                     <button
                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
                                        onClick={(e) => handleEdit(e, order)}
                                     >
-                                       <FaEdit /> Cập nhật trạng thái
+                                       <FaEdit /> Cập nhật
                                     </button>
                                     <button
                                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
@@ -175,30 +217,52 @@ const OrderAdmin = () => {
                            </tr>
                            {isDetailModalVisible === order.order_id && (
                               <tr>
-                                 <td colSpan="8" className="px-6 py-4 bg-gray-50">
+                                 <td colSpan="7" className="px-6 py-4 bg-gray-50">
                                     <div className="text-sm text-gray-600">
-                                       <div className="font-semibold mb-2">Chi tiết đơn hàng:</div>
+                                       <div className="font-semibold mb-2 subrayado">Chi tiết đơn hàng:</div>
                                        <table className="w-full">
                                           <thead>
-                                             <tr>
-                                                <th className="text-left py-2">Mã sản phẩm</th>
+                                             <tr className="border-b border-gray-300">
+                                                <th className="text-left py-2">Sản phẩm</th>
                                                 <th className="text-left py-2">Số lượng</th>
-                                                <th className="text-left py-2">Đơn giá</th>
-                                                <th className="text-left py-2">Thành tiền</th>
+                                                <th className="text-left py-2 text-right">Đơn giá</th>
+                                                <th className="text-left py-2 text-right">Thành tiền</th>
                                              </tr>
                                           </thead>
                                           <tbody>
-                                             {order.order_items.map((item) => (
-                                                <tr key={item.order_item_id}>
-                                                   <td className="py-2">{item.product_id}</td>
-                                                   <td className="py-2">{item.quantity}</td>
-                                                   <td className="py-2">{formatCurrency(item.price)}</td>
-                                                   <td className="py-2">
+                                             {order.order_items?.map((item) => (
+                                                <tr key={item.order_item_id} className="border-b border-gray-200">
+                                                   <td className="py-3">
+                                                      <div className="flex items-center gap-2">
+                                                         <img
+                                                            src={
+                                                               item.Product?.ProductImages?.[0]?.url ||
+                                                               'https://via.placeholder.com/100'
+                                                            }
+                                                            alt={item.Product?.name}
+                                                            className="w-10 h-10 object-cover rounded border"
+                                                         />
+                                                         <span>{item.Product?.name || 'Sản phẩm không xác định'}</span>
+                                                      </div>
+                                                   </td>
+                                                   <td className="py-3 px-2 text-center">x{item.quantity}</td>
+                                                   <td className="py-3 text-right">{formatCurrency(item.price)}</td>
+                                                   <td className="py-3 text-right">
                                                       {formatCurrency(item.price * item.quantity)}
                                                    </td>
                                                 </tr>
                                              ))}
                                           </tbody>
+                                          <tfoot>
+                                             <tr>
+                                                <td colSpan="3" className="py-3 text-right font-semibold">
+                                                   Tổng giá trị đơn hàng:
+                                                </td>
+                                                <td className="py-3 text-right font-bold text-lg text-red-600">
+                                                   {formatCurrency(order.total_amount)}
+                                                </td>
+                                             </tr>
+                                          </tfoot>
                                        </table>
                                     </div>
                                  </td>
@@ -208,7 +272,7 @@ const OrderAdmin = () => {
                      ))
                   ) : (
                      <tr>
-                        <td colSpan="8" className="px-6 py-4 text-center">
+                        <td colSpan="7" className="px-6 py-4 text-center">
                            Không có dữ liệu đơn hàng
                         </td>
                      </tr>
@@ -216,6 +280,8 @@ const OrderAdmin = () => {
                </tbody>
             </table>
          </div>
+
+         <Pagination page={currentPage} totalPages={totalPages} setPage={setCurrentPage} />
 
          {isModalVisible && (
             <ModalUpdateOrder

@@ -15,6 +15,7 @@ import ProductDetail from '../pages/client/productdetail';
 import Category from '../pages/client/category';
 import FloatingButtons from '../components/floating_buttons';
 import Account from '../pages/client/account';
+import OrderHistory from '../pages/client/order_history';
 import Compare from '../pages/client/compare';
 
 const ClientLayout = ({ children }) => (
@@ -98,6 +99,14 @@ const ClientRoutes = () => {
                element={
                   <ClientLayout>
                      <Account />
+                  </ClientLayout>
+               }
+            />
+            <Route
+               path="/orders"
+               element={
+                  <ClientLayout>
+                     <OrderHistory />
                   </ClientLayout>
                }
             />

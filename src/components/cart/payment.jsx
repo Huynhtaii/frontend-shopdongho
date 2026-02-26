@@ -10,13 +10,14 @@ import { useNavigate } from 'react-router-dom';
 import AuthContext from '../../context/auth.context';
 import { useContext } from 'react';
 
-const Payment = ({ totalPrice, cartItem }) => {
+const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
    const { fetchCart } = useCart();
    const navigate = useNavigate();
    const { auth } = useContext(AuthContext);
    const [paymentMethod, setPaymentMethod] = useState('cod');
    const [userOrder, setUserOrder] = useState(null);
    const [isModalOpen, setIsModalOpen] = useState(false);
+   const [loading, setLoading] = useState(false);
    const { formatPrice } = useFormatPrice();
 
    // Lấy id tài khoản đã đăng nhập
@@ -91,13 +92,27 @@ const Payment = ({ totalPrice, cartItem }) => {
    };
 
    const handleOrderCodSuccess = async () => {
+      setLoading(true);
       try {
-         await paymentCompleted(user_id, userOrder.email, totalPrice, cartItem, paymentMethod);
+         const res = await paymentCompleted(user_id, userOrder.email, totalPrice, cartItem, paymentMethod);
+         // Lấy order_id từ response trả về
+         const order_id = res?.data?.DT?.order_id || null;
+         // Lưu lại cartItem kèm order_id trước khi clear
+         const itemsToRate = cartItem.map((item) => ({
+            product_id: item.product_id,
+            productData: item.productData,
+            order_id,
+         }));
          fetchCart();
+         if (onOrderSuccess) {
+            onOrderSuccess(itemsToRate);
+         }
          toast.success('Đặt hàng thành công, vui lòng kiểm tra email!');
       } catch (error) {
          console.error('🔥 Lỗi khi đặt hàng:', error);
          toast.error('Có lỗi xảy ra khi đặt hàng!');
+      } finally {
+         setLoading(false);
       }
    };
 
@@ -127,11 +142,21 @@ const Payment = ({ totalPrice, cartItem }) => {
          </div>
          <PaymentOption paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />
          <button
-            className="bg-blue-600 py-3 px-5 text-white rounded-md m-auto flex flex-col items-center text-[20px]"
+            className="bg-blue-600 py-3 px-5 text-white rounded-md m-auto flex flex-col items-center text-[20px] disabled:opacity-70 disabled:cursor-not-allowed min-w-[200px]"
             onClick={handleOrderProduct}
+            disabled={loading}
          >
-            <h1 className="font-[500]">Đặt hàng</h1>
-            <span className="text-xs pb-2">(Bằng cách đặt hàng bạn đồng ý với các điều khoản của chúng tôi)</span>
+            {loading ? (
+               <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="font-[500]">Đang xử lý...</span>
+               </div>
+            ) : (
+               <>
+                  <h1 className="font-[500]">Đặt hàng</h1>
+                  <span className="text-xs pb-2">(Bằng cách đặt hàng bạn đồng ý với các điều khoản của chúng tôi)</span>
+               </>
+            )}
          </button>
 
          {paymentMethod === 'qr_code' && (
@@ -142,6 +167,7 @@ const Payment = ({ totalPrice, cartItem }) => {
                totalAmount={totalPrice}
                transferContent={createTransferContent()}
                paymentMethod={paymentMethod}
+               onOrderSuccess={onOrderSuccess}
             />
          )}
       </div>

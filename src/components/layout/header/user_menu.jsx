@@ -1,13 +1,38 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { MENU_HEIGHT } from '../../../constants/index';
-import { USER_MENU_NAV } from '../../../constants/user_menu';
 import { useEffect, useRef, useState } from 'react';
 import { GrFormDown, GrFormNext, GrFormPrevious } from 'react-icons/gr';
+import CategoryService from '../../../services/category_service';
 
 const UserMenu = () => {
    const menuRef = useRef(null);
    const [itemCol, setItemCol] = useState(0);
    const [itemCurrent, setItemCurrent] = useState(0);
+   const [menuNav, setMenuNav] = useState([]);
+   const { pathname } = useLocation();
+
+   useEffect(() => {
+      const fetchCategories = async () => {
+         try {
+            const res = await CategoryService.getAll();
+            if (res && res.EC === '0' && Array.isArray(res.DT)) {
+               const categoryItems = res.DT.map((cat) => ({
+                  id: cat.category_id ?? cat.id ?? cat.name,
+                  name: cat.name,
+                  icon: '',
+                  link: `/category/${cat.name}`,
+                  active: false,
+                  subMenu: [],
+               }));
+               // Giữ 2 mục đầu tĩnh (Xu hướng 2025, Menu), thay phần còn lại
+               setMenuNav([...categoryItems]);
+            }
+         } catch (err) {
+            console.error('Lỗi khi tải danh mục menu:', err);
+         }
+      };
+      fetchCategories();
+   }, []);
 
    useEffect(() => {
       const checkVisibility = () => {
@@ -83,14 +108,19 @@ const UserMenu = () => {
                ref={menuRef}
                style={{ transform: `translateY(-${itemCurrent * MENU_HEIGHT}px)` }}
             >
-               {USER_MENU_NAV.map((item, index) => (
+               {menuNav.map((item, index) => (
                   <li
                      key={item.id}
                      className="py-5 px-4 font-[500] cursor-pointer
                          whitespace-nowrap flex items-center"
                   >
                      <div className="group flex items-center gap-2 menu-item">
-                        <Link to={item.link} className={`${index === 0 && 'text-primary uppercase'}`}>
+                        <Link
+                           to={item.link}
+                           className={`hover:text-primary transition-colors ${
+                              item.link && decodeURIComponent(pathname) === item.link ? 'text-primary font-bold' : ''
+                           }`}
+                        >
                            {item.name}
                         </Link>
                         <Link to={item.link}>{item.subMenu.length > 0 && <GrFormDown size={20} />}</Link>

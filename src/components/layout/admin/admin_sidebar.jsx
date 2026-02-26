@@ -5,8 +5,8 @@ import {
    RiShoppingCart2Line,
    RiMessage2Line,
    RiProductHuntLine,
-   RiHomeSmileLine,
    RiPriceTag3Line,
+   RiApps2Line,
 } from 'react-icons/ri';
 
 const AdminSidebar = ({ isOpen, setIsOpen }) => {
@@ -15,47 +15,54 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
    const menuItems = [
       { path: '/admin', icon: <RiDashboardLine size={24} />, label: 'Dashboard' },
       { path: '/admin/products', icon: <RiProductHuntLine size={24} />, label: 'Sản phẩm' },
+      { path: '/admin/categories', icon: <RiApps2Line size={24} />, label: 'Danh mục' },
       { path: '/admin/brands', icon: <RiPriceTag3Line size={24} />, label: 'Thương hiệu' },
       { path: '/admin/orders', icon: <RiShoppingCart2Line size={24} />, label: 'Đơn hàng' },
       { path: '/admin/users', icon: <RiUserLine size={24} />, label: 'Người dùng' },
       { path: '/admin/chat', icon: <RiMessage2Line size={24} />, label: 'Tin nhắn' },
-      { path: '/', icon: <RiHomeSmileLine size={24} />, label: 'Trang chủ' },
    ];
 
    return (
-      <aside
-         className={`fixed left-0 top-0 h-screen bg-[#1a1a1a] text-white transition-all duration-300 
-            ${isOpen ? 'w-64' : 'w-20'}`}
-      >
-         {/* Logo */}
-         <div className="h-16 flex items-center justify-center border-b border-gray-700">
-            <img
-               src="/logo-watchstore.webp"
-               alt="Logo"
-               className={`${isOpen ? 'w-40' : 'w-12'} transition-all duration-300`}
-            />
-         </div>
+      <>
+         <aside
+            className={`fixed left-0 top-0 h-screen bg-[#333333] text-white transition-all duration-300 z-50
+               ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20 w-64'}`}
+         >
+            {/* Logo */}
+            <Link to="/" className="h-16 flex items-center justify-center border-b border-gray-700">
+               <img
+                  src="/logo-watchstore.webp"
+                  alt="Logo"
+                  className={`${isOpen ? 'w-40' : 'w-12'} transition-all duration-300`}
+               />
+            </Link>
 
-         {/* Menu Items */}
-         <nav className="mt-6">
-            {menuItems.map((item) => (
-               <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center px-6 py-3 cursor-pointer transition-colors
+            {/* Menu Items */}
+            <nav className="mt-6">
+               {menuItems.map((item) => (
+                  <Link
+                     key={item.path}
+                     to={item.path}
+                     onClick={() => {
+                        if (window.innerWidth < 1024) {
+                           setIsOpen(false);
+                        }
+                     }}
+                     className={`flex items-center px-6 py-3 cursor-pointer transition-colors
                             ${
                                location.pathname === item.path
                                   ? 'bg-blue-600 text-white'
                                   : 'text-gray-300 hover:bg-gray-700'
                             }
                             ${!isOpen && 'justify-center'}`}
-               >
-                  <span className="inline-block">{item.icon}</span>
-                  {isOpen && <span className="ml-3">{item.label}</span>}
-               </Link>
-            ))}
-         </nav>
-      </aside>
+                  >
+                     <span className="inline-block">{item.icon}</span>
+                     {isOpen && <span className="ml-3">{item.label}</span>}
+                  </Link>
+               ))}
+            </nav>
+         </aside>
+      </>
    );
 };
 

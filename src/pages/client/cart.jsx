@@ -1,16 +1,24 @@
 import { Link } from 'react-router-dom';
-
+import { useState } from 'react';
 import { GrFormPrevious } from 'react-icons/gr';
 import ProductListCart from '../../components/cart/product_list_cart';
 import Payment from '../../components/cart/payment';
 import { useCart } from '../../context/cart_context';
 import useFormatPrice from '../../hooks/use_formatPrice';
+import RatingModal from '../../components/modals/rating_modal';
+
 const Cart = () => {
    const { cartItem, totalPrice, savingsPrice } = useCart();
    const { formatPrice } = useFormatPrice();
+   const [showRating, setShowRating] = useState(false);
+   const [orderedItems, setOrderedItems] = useState([]);
+
+   const handleOrderSuccess = (items) => {
+      setOrderedItems(items);
+      setShowRating(true);
+   };
 
    return (
-      //  <Empty />
       <div className="bg-[#f8f8f8] py-5">
          <div className="layout-container">
             <div className="w-[85%] sm:w-[85%] md:[75%] lg:w-[65%] xl:w-[55%] m-auto shadow-md rounded-lg bg-white p-6">
@@ -33,7 +41,7 @@ const Cart = () => {
                            </div>
                         </div>
                      </div>
-                     <Payment totalPrice={totalPrice} cartItem={cartItem} />
+                     <Payment totalPrice={totalPrice} cartItem={cartItem} onOrderSuccess={handleOrderSuccess} />
                   </>
                ) : (
                   <div className="flex gap-1">
@@ -45,6 +53,8 @@ const Cart = () => {
                )}
             </div>
          </div>
+
+         <RatingModal isOpen={showRating} onClose={() => setShowRating(false)} cartItems={orderedItems} />
       </div>
    );
 };

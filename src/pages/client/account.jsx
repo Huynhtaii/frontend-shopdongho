@@ -1,199 +1,251 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import AccountService from '../../services/account_service';
 import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import AuthContext from '../../context/auth.context';
+import { FiUser, FiPhone, FiMapPin, FiMail, FiShoppingBag, FiEdit3, FiSave } from 'react-icons/fi';
+
 function Account() {
-   const [user, setUser] = useState({
-      name: 'Chưa có thông tin',
-      email: 'Chưa có thông tin',
-      phone: 'Chưa có thông tin',
-      address: 'Chưa có thông tin',
-      orders: [],
-   });
-   const id = useState(localStorage.getItem('userId'));
-   const adminId = process.env.REACT_APP_ADMIN_ID;
+   const id = localStorage.getItem('userId'); // FIX: bỏ useState wrapper
    const { auth } = useContext(AuthContext);
+
+   const [user, setUser] = useState({
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+   });
+   const [loading, setLoading] = useState(true);
+   const [saving, setSaving] = useState(false);
+   const [isEditing, setIsEditing] = useState(false);
 
    const fetchData = useCallback(async () => {
       try {
          const response = await AccountService.getInforAccount(id);
          if (response?.EC === '0') {
             setUser({
-               name: response.DT.name || 'Chưa có thông tin',
-               email: response.DT.email || 'Chưa có thông tin',
-               phone: response.DT.phone || 'Chưa có thông tin',
-               address: response.DT.address || 'Chưa có thông tin',
-               orders: response.DT.orders || [],
+               name: response.DT.name || '',
+               email: response.DT.email || '',
+               phone: response.DT.phone || '',
+               address: response.DT.address || '',
             });
          }
       } catch (error) {
          console.error('Lỗi khi lấy dữ liệu tài khoản:', error);
+      } finally {
+         setLoading(false);
       }
    }, [id]);
 
    useEffect(() => {
       fetchData();
-      console.log(user.orders);
-   }, [fetchData, user.orders]);
+   }, [fetchData]);
 
-   const handleToastDisabledEdit = () => {
-      toast.info('Bạn không thể sửa đổi email');
-   };
    const handleUpdateInfo = async () => {
+      setSaving(true);
       try {
          const response = await AccountService.updateInforAccount(id, user);
-
-         console.log('Response từ backend:', response);
-
          if (response?.EC === '0') {
-            toast.success(response.EM || 'Cập nhật thông tin thành công');
+            toast.success('Cập nhật thông tin thành công!');
+            setIsEditing(false);
             fetchData();
          } else {
-            toast.error(response.EM || 'Có lỗi xảy ra khi cập nhật');
+            toast.error(response?.EM || 'Có lỗi xảy ra khi cập nhật');
          }
       } catch (error) {
-         console.error('Lỗi khi gửi request cập nhật:', error);
          toast.error('Cập nhật thông tin thất bại, vui lòng thử lại!');
+      } finally {
+         setSaving(false);
       }
    };
 
+   const getInitials = (name) => {
+      if (!name) return '?';
+      return name
+         .split(' ')
+         .map((w) => w[0])
+         .join('')
+         .toUpperCase()
+         .slice(0, 2);
+   };
+
+   if (loading) {
+      return (
+         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+               <div className="w-10 h-10 rounded-full border-4 border-red-200 border-t-red-600 animate-spin" />
+               <p className="text-slate-500 text-sm">Đang tải thông tin...</p>
+            </div>
+         </div>
+      );
+   }
+
    return (
-      <div className="min-h-screen bg-gray-100 py-10 px-4">
-         <h1 className="text-2xl font-bold mb-8 text-center text-red-600">Quản lý tài khoản của bạn</h1>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50 py-10 px-4">
+         <div className="layout-container">
+            {/* Header */}
+            <div className="mb-8 text-center">
+               <h1 className="text-3xl font-bold text-slate-800">Tài khoản của tôi</h1>
+               <p className="text-slate-500 mt-1 text-sm">Quản lý thông tin cá nhân của bạn</p>
+            </div>
 
-         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Thông tin cá nhân */}
-            <div className="bg-white shadow-lg rounded-lg p-6">
-               <h2 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-2">Thông tin cá nhân</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               {/* Sidebar card */}
+               <div className="md:col-span-1">
+                  <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+                     {/* gradient header */}
+                     <div className="bg-gradient-to-br from-red-500 to-rose-600 p-6 flex flex-col items-center">
+                        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/50 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                           {getInitials(user.name)}
+                        </div>
+                        <h2 className="mt-3 text-white font-semibold text-lg leading-tight text-center">
+                           {user.name || 'Người dùng'}
+                        </h2>
+                        <p className="text-red-100 text-xs mt-1 truncate max-w-full px-2">{user.email}</p>
+                     </div>
 
-               <div className="flex flex-col items-center mb-6">
-                  <img
-                     className="w-24 h-24 rounded-full border-4 border-blue-500 mb-4"
-                     src="https://th.bing.com/th/id/OIP.4jxvWlLezIhMpagdKO3GQAHaHa?w=1200&h=1200&rs=1&pid=ImgDetMain"
-                     alt="Avatar"
-                  />
+                     {/* Nav links */}
+                     <div className="p-3">
+                        <div className="flex flex-col gap-1">
+                           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 text-red-600 font-medium text-sm">
+                              <FiUser size={16} />
+                              <span>Thông tin cá nhân</span>
+                           </div>
+                           <Link
+                              to="/orders"
+                              className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium"
+                           >
+                              <FiShoppingBag size={16} />
+                              <span>Lịch sử mua hàng</span>
+                           </Link>
+                        </div>
+                     </div>
+                  </div>
                </div>
-               <div onClick={() => handleToastDisabledEdit()}>
-                  <label className="block text-gray-700 font-medium mb-1">Email:</label>
-                  <input type="email" className="w-full p-2 border rounded-lg bg-gray-50" value={user.email} disabled />
-               </div>
 
-               <div className="space-y-4">
-                  <div>
-                     <label className="block text-gray-700 font-medium mb-1">Tên:</label>
-                     <input
-                        type="text"
-                        className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={user.name}
-                        onChange={(e) => {
-                           setUser({ ...user, name: e.target.value });
-                        }}
-                     />
-                  </div>
+               {/* Main form card */}
+               <div className="md:col-span-2">
+                  <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+                     <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                        <h3 className="font-semibold text-slate-800">Thông tin cá nhân</h3>
+                        {!isEditing ? (
+                           <button
+                              onClick={() => setIsEditing(true)}
+                              className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors"
+                           >
+                              <FiEdit3 size={15} />
+                              Chỉnh sửa
+                           </button>
+                        ) : (
+                           <button
+                              onClick={() => {
+                                 setIsEditing(false);
+                                 fetchData();
+                              }}
+                              className="text-sm text-slate-400 hover:text-slate-600 transition-colors"
+                           >
+                              Hủy
+                           </button>
+                        )}
+                     </div>
 
-                  <div>
-                     <label className="block text-gray-700 font-medium mb-1">Số điện thoại:</label>
-                     <input
-                        type="text"
-                        className="w-full p-2 border rounded-lg"
-                        value={user.phone}
-                        onChange={(e) => setUser({ ...user, phone: e.target.value })}
-                     />
-                  </div>
+                     <div className="p-6 space-y-5">
+                        {/* Email (disabled) */}
+                        <div>
+                           <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                              <FiMail size={13} /> Email
+                           </label>
+                           <div
+                              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 text-sm cursor-not-allowed select-none"
+                              onClick={() => toast.info('Email không thể thay đổi')}
+                           >
+                              {user.email || 'Chưa có email'}
+                           </div>
+                        </div>
 
-                  <div>
-                     <label className="block text-gray-700 font-medium mb-1">Địa chỉ:</label>
-                     <input
-                        type="text"
-                        className="w-full p-2 border rounded-lg"
-                        value={user.address}
-                        onChange={(e) => setUser({ ...user, address: e.target.value })}
-                     />
-                  </div>
+                        {/* Tên */}
+                        <div>
+                           <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                              <FiUser size={13} /> Họ và tên
+                           </label>
+                           <input
+                              type="text"
+                              disabled={!isEditing}
+                              className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none ${
+                                 isEditing
+                                    ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 bg-white'
+                                    : 'border-slate-200 bg-slate-50 text-slate-600 cursor-default'
+                              }`}
+                              placeholder="Nhập họ và tên"
+                              value={user.name}
+                              onChange={(e) => setUser({ ...user, name: e.target.value })}
+                           />
+                        </div>
 
-                  <div className="flex justify-center mt-6">
-                     <button
-                        className="bg-blue-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-blue-600 transition"
-                        onClick={() => handleUpdateInfo()}
-                     >
-                        Cập nhật thông tin
-                     </button>
+                        {/* SĐT */}
+                        <div>
+                           <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                              <FiPhone size={13} /> Số điện thoại
+                           </label>
+                           <input
+                              type="text"
+                              disabled={!isEditing}
+                              className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none ${
+                                 isEditing
+                                    ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 bg-white'
+                                    : 'border-slate-200 bg-slate-50 text-slate-600 cursor-default'
+                              }`}
+                              placeholder="Nhập số điện thoại"
+                              value={user.phone}
+                              onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                           />
+                        </div>
+
+                        {/* Địa chỉ */}
+                        <div>
+                           <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                              <FiMapPin size={13} /> Địa chỉ
+                           </label>
+                           <input
+                              type="text"
+                              disabled={!isEditing}
+                              className={`w-full px-4 py-3 border rounded-xl text-sm transition-all outline-none ${
+                                 isEditing
+                                    ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100 bg-white'
+                                    : 'border-slate-200 bg-slate-50 text-slate-600 cursor-default'
+                              }`}
+                              placeholder="Nhập địa chỉ"
+                              value={user.address}
+                              onChange={(e) => setUser({ ...user, address: e.target.value })}
+                           />
+                        </div>
+
+                        {/* Save button */}
+                        {isEditing && (
+                           <div className="pt-2">
+                              <button
+                                 onClick={handleUpdateInfo}
+                                 disabled={saving}
+                                 className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold rounded-xl shadow-md shadow-red-200 transition-all disabled:opacity-60"
+                              >
+                                 {saving ? (
+                                    <>
+                                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                       Đang lưu...
+                                    </>
+                                 ) : (
+                                    <>
+                                       <FiSave size={16} />
+                                       Lưu thay đổi
+                                    </>
+                                 )}
+                              </button>
+                           </div>
+                        )}
+                     </div>
                   </div>
                </div>
             </div>
-
-            {/* Lịch sử mua hàng */}
-            {String(auth.user?.id) === String(adminId) ? (
-               <div className="bg-white shadow-lg rounded-lg p-6 max-h-[610.5px] overflow-y-auto">
-                  <h2 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-2">Lịch sử mua hàng</h2>
-                  <div className="text-center py-8 text-gray-500">
-                     <p>Admin không có đơn hàng.</p>
-                  </div>
-               </div>
-            ) : (
-               <div className="bg-white shadow-lg rounded-lg p-6 max-h-[610.5px] overflow-y-auto">
-                  <h2 className="text-xl font-semibold mb-6 text-gray-800 border-b pb-2">Lịch sử mua hàng</h2>
-                  <div className="space-y-4">
-                     {user.orders.length > 0 ? (
-                        user.orders.map((order) => (
-                           <div
-                              key={order.order_id}
-                              className="border p-4 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
-                           >
-                              <div className="flex justify-between items-start">
-                                 <div className="space-y-2">
-                                    <p className="text-gray-600">
-                                       <strong>Mã đơn hàng:</strong> {order.order_id}
-                                    </p>
-                                    {order.order_items.map((item, index) => (
-                                       <p key={index} className="text-gray-600">
-                                          <strong>Sản phẩm:</strong> {item.Product.name} - Số lượng: {item.quantity}
-                                       </p>
-                                    ))}
-                                    <p className="text-gray-600">
-                                       <strong>Ngày mua:</strong> {new Date(order.order_date).toLocaleDateString()}
-                                    </p>
-                                    <p className="text-gray-600">
-                                       <strong>Trạng thái:</strong>{' '}
-                                       <span
-                                          className={`px-2 py-1 rounded-full text-sm ${
-                                             order.status === 'Pending'
-                                                ? 'bg-yellow-100 text-yellow-800'
-                                                : order.status === 'Shipped'
-                                                ? 'bg-blue-100 text-blue-800'
-                                                : order.status === 'Completed'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                          }`}
-                                       >
-                                          {order.status === 'Pending' && 'Đang chờ'}
-                                          {order.status === 'Shipped' && 'Đang giao hàng'}
-                                          {order.status === 'Completed' && 'Đã giao hàng'}
-                                          {order.status === 'Cancelled' && 'Đã hủy'}
-                                       </span>
-                                    </p>
-                                    <p className="text-gray-600">
-                                       <strong>Tổng tiền:</strong>{' '}
-                                       <span className="text-primary font-medium">
-                                          {new Intl.NumberFormat('vi-VN', {
-                                             style: 'currency',
-                                             currency: 'VND',
-                                          }).format(order.total_amount)}
-                                       </span>
-                                    </p>
-                                 </div>
-                              </div>
-                           </div>
-                        ))
-                     ) : (
-                        <div className="text-center py-8 text-gray-500">
-                           <p>Bạn chưa có đơn hàng nào.</p>
-                        </div>
-                     )}
-                  </div>
-               </div>
-            )}
          </div>
       </div>
    );

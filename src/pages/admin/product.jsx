@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import ModalAddUpdateProduct from '../../components/modals/modal_add_update_product';
 import ProductService from '../../services/product_service';
 import useFormatPrice from '../../hooks/use_formatPrice';
+import Pagination from '../../components/pagination';
 
 const ProductAdmin = () => {
    const [products, setProducts] = useState([]);
@@ -33,6 +34,13 @@ const ProductAdmin = () => {
       utilities: '',
    });
    const { formatPrice } = useFormatPrice();
+
+   // Pagination states
+   const [currentPage, setCurrentPage] = useState(1);
+   const itemsPerPage = 8;
+
+   const totalPages = Math.ceil(products.length / itemsPerPage);
+   const paginatedProducts = products.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
    const autoSku = () => {
       const randomNumber = Math.floor(1000 + Math.random() * 9000);
@@ -225,8 +233,8 @@ const ProductAdmin = () => {
             </button>
          </div>
 
-         <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-200">
+         <div className="max-w-full overflow-x-auto border border-gray-200 rounded-lg bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200">
                <thead className="bg-gray-50">
                   <tr>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ảnh</th>
@@ -238,7 +246,7 @@ const ProductAdmin = () => {
                   </tr>
                </thead>
                <tbody className="divide-y divide-gray-200">
-                  {products.map((product) => (
+                  {paginatedProducts.map((product) => (
                      <tr key={product.product_id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                            <img
@@ -272,6 +280,8 @@ const ProductAdmin = () => {
                </tbody>
             </table>
          </div>
+
+         <Pagination page={currentPage} totalPages={totalPages} setPage={setCurrentPage} />
 
          {showModal && (
             <ModalAddUpdateProduct

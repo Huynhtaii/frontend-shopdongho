@@ -288,7 +288,7 @@ function ProductDetail() {
                            <div className="w-1/2 flex items-center">
                               <span className="font-semibold text-gray-700 text-sm mr-1">Thương hiệu:</span>
                               <span className="text-blue-600 hover:underline cursor-pointer text-sm">
-                                 {product.Categories[0]?.name || 'Đang cập nhật'}
+                                 {product?.brand?.name || 'Đang cập nhật'}
                               </span>
                            </div>
                            <div className="w-1/2 flex items-center border-l pl-4 border-gray-300">

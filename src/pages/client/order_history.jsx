@@ -1,0 +1,317 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import AccountService from '../../services/account_service';
+import axios from '../../utils/axios_config';
+import { toast } from 'react-toastify';
+import ConfirmModal from '../../components/modals/confirm_modal';
+import { FiUser, FiShoppingBag, FiPackage, FiChevronDown, FiChevronUp, FiArrowLeft, FiXCircle } from 'react-icons/fi';
+
+const statusConfig = {
+   Pending: { label: 'Đang chờ xử lý', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
+   Shipped: { label: 'Đang giao hàng', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-400' },
+   Completed: { label: 'Đã giao hàng', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-400' },
+   Canceled: { label: 'Đã hủy', color: 'bg-red-100 text-red-600', dot: 'bg-red-400' },
+};
+
+const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+
+function OrderHistory() {
+   const id = localStorage.getItem('userId');
+   const [orders, setOrders] = useState([]);
+   const [userName, setUserName] = useState('');
+   const [loading, setLoading] = useState(true);
+   const [expandedOrders, setExpandedOrders] = useState({});
+   const [activeFilter, setActiveFilter] = useState('All');
+   const [confirmModal, setConfirmModal] = useState({ isOpen: false, orderId: null });
+
+   const fetchData = useCallback(async () => {
+      try {
+         const response = await AccountService.getInforAccount(id);
+         if (response?.EC === '0') {
+            setOrders(response.DT.orders || []);
+            setUserName(response.DT.name || '');
+         }
+      } catch (error) {
+         console.error('Lỗi khi lấy lịch sử đơn hàng:', error);
+      } finally {
+         setLoading(false);
+      }
+   }, [id]);
+
+   useEffect(() => {
+      fetchData();
+   }, [fetchData]);
+
+   const toggleOrder = (orderId) => {
+      setExpandedOrders((prev) => ({ ...prev, [orderId]: !prev[orderId] }));
+   };
+
+   const handleCancelOrder = (orderId) => {
+      setConfirmModal({ isOpen: true, orderId });
+   };
+
+   const handleConfirmCancel = async () => {
+      const orderId = confirmModal.orderId;
+      setConfirmModal({ isOpen: false, orderId: null });
+      try {
+         const res = await axios.put(`/v1/cancel/order/${orderId}`);
+         if (res?.EC === '0') {
+            toast.success('Hủy đơn hàng thành công!');
+            fetchData();
+         } else {
+            toast.error(res?.EM || 'Không thể hủy đơn hàng này');
+         }
+      } catch (error) {
+         toast.error('Có lỗi xảy ra, vui lòng thử lại!');
+      }
+   };
+
+   if (loading) {
+      return (
+         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+               <div className="w-10 h-10 rounded-full border-4 border-red-200 border-t-red-600 animate-spin" />
+               <p className="text-slate-500 text-sm">Đang tải đơn hàng...</p>
+            </div>
+         </div>
+      );
+   }
+
+   return (
+      <>
+         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50 py-10 px-4">
+            <div className="layout-container">
+               {/* Header */}
+               <div className="mb-8 text-center">
+                  <h1 className="text-3xl font-bold text-slate-800">Lịch sử mua hàng</h1>
+                  <p className="text-slate-500 mt-1 text-sm">Xem lại toàn bộ đơn hàng của bạn</p>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Sidebar */}
+                  <div className="md:col-span-1">
+                     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+                        <div className="bg-gradient-to-br from-red-500 to-rose-600 p-6 flex flex-col items-center">
+                           <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/50 flex items-center justify-center">
+                              <FiUser size={24} className="text-white" />
+                           </div>
+                           <h2 className="mt-3 text-white font-semibold text-base text-center">
+                              {userName || 'Người dùng'}
+                           </h2>
+                           <p className="text-red-100 text-xs mt-1">{orders.length} đơn hàng</p>
+                        </div>
+                        <div className="p-3">
+                           <div className="flex flex-col gap-1">
+                              <Link
+                                 to="/account"
+                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium"
+                              >
+                                 <FiUser size={16} />
+                                 <span>Thông tin cá nhân</span>
+                              </Link>
+                              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 text-red-600 font-medium text-sm">
+                                 <FiShoppingBag size={16} />
+                                 <span>Lịch sử mua hàng</span>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* Orders list */}
+                  <div className="md:col-span-2">
+                     {/* Filter tabs */}
+                     <div className="flex flex-wrap gap-2 mb-4">
+                        {[
+                           { key: 'All', label: 'Tất cả' },
+                           { key: 'Pending', label: 'Đang chờ' },
+                           { key: 'Shipped', label: 'Đang giao' },
+                           { key: 'Completed', label: 'Đã giao' },
+                           { key: 'Canceled', label: 'Đã hủy' },
+                        ].map(({ key, label }) => {
+                           const count = key === 'All' ? orders.length : orders.filter((o) => o.status === key).length;
+                           const isActive = activeFilter === key;
+                           return (
+                              <button
+                                 key={key}
+                                 onClick={() => setActiveFilter(key)}
+                                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                                    isActive
+                                       ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                                       : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                                 }`}
+                              >
+                                 {label}
+                                 <span
+                                    className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
+                                       isActive ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'
+                                    }`}
+                                 >
+                                    {count}
+                                 </span>
+                              </button>
+                           );
+                        })}
+                     </div>
+
+                     {/* Orders */}
+                     <div className="space-y-4">
+                        {(() => {
+                           const filtered =
+                              activeFilter === 'All' ? orders : orders.filter((o) => o.status === activeFilter);
+                           if (filtered.length === 0)
+                              return (
+                                 <div className="bg-white rounded-2xl shadow-md p-12 flex flex-col items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                                       <FiPackage size={28} className="text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500 font-medium">
+                                       {activeFilter === 'All'
+                                          ? 'Bạn chưa có đơn hàng nào'
+                                          : 'Không có đơn hàng nào trong mục này'}
+                                    </p>
+                                    {activeFilter === 'All' && (
+                                       <Link
+                                          to="/category/all"
+                                          className="px-5 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors"
+                                       >
+                                          Mua sắm ngay
+                                       </Link>
+                                    )}
+                                 </div>
+                              );
+                           return filtered.map((order) => {
+                              const status = statusConfig[order.status] || statusConfig.Pending;
+                              const isExpanded = expandedOrders[order.order_id];
+                              return (
+                                 <div key={order.order_id} className="bg-white rounded-2xl shadow-md overflow-hidden">
+                                    {/* Order header */}
+                                    <button
+                                       onClick={() => toggleOrder(order.order_id)}
+                                       className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors text-left"
+                                    >
+                                       <div className="flex items-center gap-4">
+                                          <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                                             <FiPackage size={18} className="text-red-500" />
+                                          </div>
+                                          <div>
+                                             <p className="font-semibold text-slate-800 text-sm">
+                                                Đơn hàng #{order.order_id}
+                                             </p>
+                                             <p className="text-xs text-slate-400 mt-0.5">
+                                                {new Date(order.order_date).toLocaleDateString('vi-VN', {
+                                                   day: '2-digit',
+                                                   month: '2-digit',
+                                                   year: 'numeric',
+                                                })}
+                                             </p>
+                                          </div>
+                                       </div>
+                                       <div className="flex items-center gap-3">
+                                          <span
+                                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}
+                                          >
+                                             <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                                             {status.label}
+                                          </span>
+                                          {isExpanded ? (
+                                             <FiChevronUp size={16} className="text-slate-400" />
+                                          ) : (
+                                             <FiChevronDown size={16} className="text-slate-400" />
+                                          )}
+                                       </div>
+                                    </button>
+
+                                    {/* Order detail (expandable) */}
+                                    {isExpanded && (
+                                       <div className="border-t border-slate-100 px-5 pb-5">
+                                          <div className="space-y-3 mt-4">
+                                             {order.order_items?.map((item, idx) => (
+                                                <div
+                                                   key={idx}
+                                                   className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
+                                                >
+                                                   <div className="flex items-center gap-3">
+                                                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold flex-shrink-0">
+                                                         {idx + 1}
+                                                      </div>
+                                                      <div>
+                                                         <p className="text-sm font-medium text-slate-700 line-clamp-1">
+                                                            {item.Product?.name}
+                                                         </p>
+                                                         <p className="text-xs text-slate-400">x{item.quantity}</p>
+                                                      </div>
+                                                   </div>
+                                                   <p className="text-sm font-semibold text-red-600 flex-shrink-0 ml-4">
+                                                      {formatVND(item.price * item.quantity)}
+                                                   </p>
+                                                </div>
+                                             ))}
+                                          </div>
+                                          <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-100">
+                                             <span className="text-sm text-slate-500 font-medium">Tổng cộng</span>
+                                             <span className="text-base font-bold text-red-600">
+                                                {formatVND(order.total_amount)}
+                                             </span>
+                                          </div>
+                                          {/* Nút hủy - chỉ hiện khi Pending */}
+                                          {order.status === 'Pending' && (
+                                             <div className="mt-4">
+                                                {order.Payment?.status === 'Success' && (
+                                                   <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
+                                                      <span className="font-bold">Lưu ý:</span> Đơn hàng này đã được
+                                                      thanh toán. Sau khi hủy, quý khách vui lòng liên hệ với Quản trị
+                                                      viên để được hỗ trợ hoàn tiền trong thời gian sớm nhất.
+                                                   </div>
+                                                )}
+                                                <button
+                                                   onClick={() => handleCancelOrder(order.order_id)}
+                                                   className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-xl text-sm font-semibold transition-all"
+                                                >
+                                                   <FiXCircle size={15} />
+                                                   Hủy đơn hàng
+                                                </button>
+                                             </div>
+                                          )}
+                                       </div>
+                                    )}
+                                 </div>
+                              );
+                           });
+                        })()}
+                     </div>
+                  </div>
+               </div>
+
+               {/* Back link */}
+               <div className="mt-8 text-center">
+                  <Link
+                     to="/account"
+                     className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm transition-colors"
+                  >
+                     <FiArrowLeft size={14} />
+                     Quay về tài khoản
+                  </Link>
+               </div>
+            </div>
+         </div>
+
+         <ConfirmModal
+            isOpen={confirmModal.isOpen}
+            title="Hủy đơn hàng"
+            message={
+               orders.find((o) => o.order_id === confirmModal.orderId)?.Payment?.status === 'Success'
+                  ? 'Bạn có chắc chắn muốn hủy đơn hàng này không? Vì đơn hàng đã được thanh toán, vui lòng liên hệ Admin để được hỗ trợ hoàn tiền sau khi hủy. Hành động này không thể hoàn tác.'
+                  : 'Bạn có chắc muốn hủy đơn hàng này không? Hành động này không thể hoàn tác.'
+            }
+            confirmLabel="Hủy đơn"
+            cancelLabel="Giữ lại"
+            confirmDanger={true}
+            onConfirm={handleConfirmCancel}
+            onCancel={() => setConfirmModal({ isOpen: false, orderId: null })}
+         />
+      </>
+   );
+}
+
+export default OrderHistory;

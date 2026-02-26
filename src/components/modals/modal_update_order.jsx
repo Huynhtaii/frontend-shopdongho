@@ -18,6 +18,7 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
             return [
                { value: 'Pending', label: 'Pending' },
                { value: 'Shipped', label: 'Shipped' },
+               { value: 'Completed', label: 'Completed' },
                { value: 'Canceled', label: 'Canceled' },
             ];
          case 'Shipped':
