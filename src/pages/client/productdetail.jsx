@@ -361,9 +361,6 @@ function ProductDetail() {
                               alt="Hướng dẫn đo cổ tay bằng thước giấy WatchStore"
                               className="w-full rounded-xl border border-gray-100 shadow-md"
                            />
-                           <p className="text-xs text-center italic text-gray-500">
-                              Chọn size mặt đồng hồ phù hợp nhất với tay - Ảnh 1
-                           </p>
                         </div>
 
                         <div className="space-y-6 pt-6 border-t border-gray-100">
@@ -379,9 +376,6 @@ function ProductDetail() {
                                     alt="Bước 1: Đo chu vi cổ tay"
                                     className="w-full rounded-xl border border-gray-100 shadow-md"
                                  />
-                                 <p className="text-xs text-center italic text-gray-500">
-                                    Chọn size mặt đồng hồ phù hợp nhất với tay - Ảnh 1
-                                 </p>
                               </div>
 
                               <div className="space-y-3">
@@ -393,9 +387,6 @@ function ProductDetail() {
                                     alt="Bước 2: So sánh size cổ tay"
                                     className="w-full rounded-xl border border-gray-100 shadow-md"
                                  />
-                                 <p className="text-xs text-center italic text-gray-500">
-                                    Chọn size mặt đồng hồ phù hợp nhất với tay - Ảnh 2
-                                 </p>
                               </div>
                            </div>
                         </div>

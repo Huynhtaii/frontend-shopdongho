@@ -1,5 +1,6 @@
 import { useEffect, useState, useContext, useCallback } from 'react';
 import { IoMdClose } from 'react-icons/io';
+import { MdOutlineAccountBalance, MdContentCopy, MdPerson, MdNumbers } from 'react-icons/md';
 import { paymentAPI, paymentCompleted } from '../../services/payment_service';
 import { toast } from 'react-toastify';
 import AuthContext from '../../context/auth.context';
@@ -9,18 +10,38 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
    const { fetchCart } = useCart();
    const [checkingPayment, setCheckingPayment] = useState(false);
+   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+
    //lấy ra userID
    const userID = localStorage.getItem('userId');
    //lấy ra email của user
    const { auth } = useContext(AuthContext);
    const userEmail = auth.user.email;
+
+   // Format time from seconds to MM:SS
+   const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+   };
+
+   const copyToClipboard = (text, label) => {
+      navigator.clipboard
+         .writeText(text)
+         .then(() => {
+            toast.info(`Đã sao chép ${label}`);
+         })
+         .catch((err) => {
+            console.error('Lỗi khi sao chép:', err);
+            toast.error('Không thể sao chép');
+         });
+   };
    const handlePayMentSuccess = useCallback(async () => {
       try {
          const res = await paymentCompleted(userID, userEmail, totalAmount, cartItem, paymentMethod);
          // Lấy order_id từ response trả về
          const order_id = res?.data?.DT?.order_id || null;
 
-         console.log('Payment response:', res);
          fetchCart();
          if (onOrderSuccess) {
             const itemsToRate = cartItem.map((item) => ({
@@ -32,30 +53,52 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
          }
          toast.success('Thanh toán thành công, vui lòng kiểm tra email!');
       } catch (error) {
-         console.error('🔥 Lỗi khi thanh toán:', error);
+         console.error('Lỗi khi thanh toán:', error);
          toast.error('Có lỗi xảy ra khi thanh toán!');
       }
    }, [userID, userEmail, totalAmount, cartItem, paymentMethod, fetchCart, onOrderSuccess]);
 
    const handleClose = useCallback(() => {
-      console.log('Closing modal...');
       if (onClose) {
          onClose();
       }
    }, [onClose]);
 
+   // Reset timer when modal opens
+   useEffect(() => {
+      if (isOpen) {
+         setTimeLeft(300);
+      }
+   }, [isOpen]);
+
+   // Countdown logic
+   useEffect(() => {
+      if (!isOpen || timeLeft <= 0) return;
+
+      const timer = setInterval(() => {
+         setTimeLeft((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(timer);
+   }, [isOpen, timeLeft]);
+
+   // Expiration logic
+   useEffect(() => {
+      if (isOpen && timeLeft === 0) {
+         toast.error('Hết thời gian thanh toán, vui lòng thử lại.');
+         onClose();
+      }
+   }, [isOpen, timeLeft, onClose]);
+
    useEffect(() => {
       if (!isOpen) return;
-      console.log('🔥 useEffect chạy');
+
       setCheckingPayment(true);
-      let checkCount = 0;
-      const maxChecks = 10;
 
       const interval = setInterval(async () => {
          try {
             const data = await paymentAPI();
             if (!data || !data.data || !data.data.length) {
-               console.log('⚠️ Không có dữ liệu giao dịch.');
                return;
             }
 
@@ -63,51 +106,28 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
             const lastPaidContent = lastPaid['Mô tả'];
             const lastPaidPrice = lastPaid['Giá trị'];
 
-            console.log('🔍 Kiểm tra giao dịch lần', checkCount + 1);
-            console.log('📜 Nội dung giao dịch gốc:', lastPaidContent);
-            console.log('📜 Nội dung mong muốn gốc:', transferContent);
-
             // Chuẩn hóa: Xóa "|" và khoảng trắng, chuyển về chữ thường
             const normalizedTransferContent = transferContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
             const normalizedLastPaidContent = lastPaidContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
 
-            console.log('🆕 Nội dung giao dịch sau khi chuẩn hóa:', normalizedLastPaidContent);
-            console.log('🆕 Nội dung mong muốn sau khi chuẩn hóa:', normalizedTransferContent);
-            console.log('✅ So khớp lần 2:', normalizedLastPaidContent.includes(normalizedTransferContent));
-            console.log('💰 Số tiền nhận được:', lastPaidPrice);
-            console.log('💰 Số tiền đủ?', lastPaidPrice >= totalAmount);
-
             if (normalizedLastPaidContent.includes(normalizedTransferContent) && lastPaidPrice >= totalAmount) {
-               console.log('🎉 Thanh toán hợp lệ, đóng modal.');
                clearInterval(interval);
                setCheckingPayment(false);
-               alert('🎉 Thanh toán thành công!');
                handlePayMentSuccess();
                onClose();
                return;
             }
-
-            checkCount++;
-            if (checkCount >= maxChecks) {
-               console.log('❌ Hết số lần kiểm tra, đóng modal.');
-               clearInterval(interval);
-               setCheckingPayment(false);
-               alert('❌ Hết thời gian kiểm tra hoặc không có thanh toán hợp lệ, vui lòng thử lại.');
-               onClose();
-            }
          } catch (error) {
-            console.error('❌ Lỗi kiểm tra thanh toán:', error);
+            console.error('Lỗi kiểm tra thanh toán:', error);
             clearInterval(interval);
             setCheckingPayment(false);
-            alert('Lỗi khi kiểm tra thanh toán!');
          }
       }, 6000);
 
       return () => {
-         console.log('⛔ Clearing interval...');
          clearInterval(interval);
       };
-   }, [isOpen, totalAmount, transferContent, handlePayMentSuccess, handleClose, onClose]);
+   }, [isOpen, totalAmount, transferContent, handlePayMentSuccess, onClose]);
 
    if (!isOpen) return null;
 
@@ -133,14 +153,18 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
                   {/* Modal header */}
                   <div className="text-center mb-6">
                      <h2 className="text-2xl font-bold text-gray-800">Thanh toán QR</h2>
-                     <p className="text-red-600 mt-2 font-bold">
+                     <p className="text-red-600 mt-4 font-bold text-lg">
                         Số tiền: {totalAmount ? totalAmount.toLocaleString('vi-VN') : '0'}đ
                      </p>
                      {/* Hiển thị mã đơn hàng */}
                      <p className="text-sm text-gray-600 mt-1">Nội dung chuyển khoản: {transferContent}</p>
                      {checkingPayment && (
-                        <div className="mt-2">
-                           <p className="text-yellow-500">⏳ Đang kiểm tra thanh toán...</p>
+                        <div className="mt-4 flex justify-center items-center gap-2">
+                           <span className="relative flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                           </span>
+                           <p className="text-blue-600 font-medium animate-pulse">Đang kiểm tra thanh toán...</p>
                         </div>
                      )}
                   </div>
@@ -148,6 +172,14 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
                   <div className="flex flex-col items-center">
                      <div className="border-2 border-gray-200 p-4 rounded-lg">
                         <img src={QR} alt="QR Payment" className="w-64 h-64 object-contain" />
+                     </div>
+                     <div className="mt-4 p-2 bg-orange-50 rounded-lg inline-block border border-orange-100 text-center">
+                        <p className="text-orange-600 font-bold mb-1 text-xs uppercase tracking-wider">
+                           Mã QR hết hạn sau:
+                        </p>
+                        <p className="text-2xl font-mono font-bold text-orange-700 leading-none">
+                           {formatTime(timeLeft)}
+                        </p>
                      </div>
                   </div>
                </div>
@@ -157,38 +189,101 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
                   {/* Bank Information */}
                   <div>
                      <div className="mb-6">
-                        <h3 className="font-semibold text-lg mb-3">Thông tin chuyển khoản</h3>
-                        <div className="space-y-2 text-gray-600">
-                           <p className="flex justify-between">
-                              <span>Ngân hàng:</span>
-                              <span className="font-medium">{process.env.REACT_APP_BANK_ID}</span>
-                           </p>
-                           <p className="flex justify-between">
-                              <span>Số tài khoản:</span>
-                              <span className="font-medium">{process.env.REACT_APP_ACCOUNT_NO}</span>
-                           </p>
-                           <p className="flex justify-between">
-                              <span>Chủ tài khoản:</span>
-                              <span className="font-medium">Công Minh</span>
-                           </p>
+                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-800 border-b pb-2">
+                           <MdOutlineAccountBalance className="text-blue-600" size={24} />
+                           Thông tin chuyển khoản
+                        </h3>
+                        <div className="space-y-3">
+                           {/* Bank Name Card */}
+                           <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 group transition-all hover:bg-white hover:border-blue-200 hover:shadow-sm">
+                              <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-full text-blue-600">
+                                 <MdOutlineAccountBalance size={20} />
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                                    Ngân hàng
+                                 </p>
+                                 <p className="font-bold text-gray-800">{process.env.REACT_APP_BANK_ID}</p>
+                              </div>
+                           </div>
+
+                           {/* Account Number Card */}
+                           <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 group transition-all hover:bg-white hover:border-blue-200 hover:shadow-sm">
+                              <div className="w-10 h-10 flex items-center justify-center bg-green-100 rounded-full text-green-600 font-bold">
+                                 <MdNumbers size={20} />
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                                    Số tài khoản
+                                 </p>
+                                 <p className="font-mono text-lg font-bold text-gray-800 tracking-wider">
+                                    {process.env.REACT_APP_ACCOUNT_NO}
+                                 </p>
+                              </div>
+                              <button
+                                 onClick={() => copyToClipboard(process.env.REACT_APP_ACCOUNT_NO, 'số tài khoản')}
+                                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                 title="Sao chép số tài khoản"
+                              >
+                                 <MdContentCopy size={20} />
+                              </button>
+                           </div>
+
+                           {/* Account Holder Card */}
+                           <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 group transition-all hover:bg-white hover:border-blue-200 hover:shadow-sm">
+                              <div className="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-full text-purple-600">
+                                 <MdPerson size={20} />
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                                    Chủ tài khoản
+                                 </p>
+                                 <p className="font-bold text-gray-800 uppercase">Nguyễn Quốc Quý</p>
+                              </div>
+                           </div>
                         </div>
                      </div>
 
                      {/* Instructions */}
-                     <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="font-semibold mb-3">Hướng dẫn thanh toán:</h3>
-                        <ol className="list-decimal list-inside space-y-2 text-gray-600">
-                           <li>Mở ứng dụng ngân hàng hoặc ví điện tử của bạn</li>
-                           <li>Quét mã QR bên cạnh</li>
-                           <li>Kiểm tra thông tin và số tiền thanh toán</li>
-                           <li>Xác nhận thanh toán</li>
-                        </ol>
+                     <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                        <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2">
+                           <div className="w-1.5 h-4 bg-blue-600 rounded-full" />
+                           Hướng dẫn thanh toán
+                        </h3>
+                        <div className="grid gap-3">
+                           {[
+                              'Mở ứng dụng ngân hàng hoặc ví điện tử',
+                              'Quét mã QR hoặc nhập thông tin thủ công',
+                              'Kiểm tra kỹ nội dung và số tiền',
+                              'Xác nhận và hoàn tất giao dịch',
+                           ].map((text, idx) => (
+                              <div key={idx} className="flex items-start gap-3">
+                                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold mt-0.5">
+                                    {idx + 1}
+                                 </div>
+                                 <p className="text-sm text-gray-600 leading-tight">{text}</p>
+                              </div>
+                           ))}
+                        </div>
                      </div>
                   </div>
 
                   {/* Note */}
-                  <div className="mt-4 text-sm text-gray-500 italic">
-                     Lưu ý: Vui lòng giữ lại biên lai thanh toán cho đến khi đơn hàng hoàn tất
+                  <div className="mt-6 flex items-start gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                     <div className="w-5 h-5 flex items-center justify-center text-amber-500 mt-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                           />
+                        </svg>
+                     </div>
+                     <p className="text-xs text-amber-700 italic leading-snug">
+                        Lưu ý: Vui lòng giữ lại biên lai thanh toán cho đến khi đơn hàng hoàn tất. Đừng đóng cửa sổ này
+                        khi hệ thống đang kiểm tra.
+                     </p>
                   </div>
                </div>
             </div>

@@ -1,13 +1,11 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AccountService from '../../services/account_service';
 import { toast } from 'react-toastify';
-import AuthContext from '../../context/auth.context';
 import { FiUser, FiPhone, FiMapPin, FiMail, FiShoppingBag, FiEdit3, FiSave } from 'react-icons/fi';
 
 function Account() {
    const id = localStorage.getItem('userId'); // FIX: bỏ useState wrapper
-   const { auth } = useContext(AuthContext);
 
    const [user, setUser] = useState({
       name: '',

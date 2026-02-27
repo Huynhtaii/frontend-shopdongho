@@ -14,6 +14,7 @@ import {
    Legend,
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
+import { Link } from 'react-router-dom';
 
 // Đăng ký các components của Chart.js
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
@@ -25,24 +26,28 @@ const Dashboard = () => {
          value: '0',
          icon: <RiMoneyDollarCircleLine size={24} />,
          color: 'bg-green-500',
+         link: '/admin/orders', // Revenue often links to orders
       },
       {
          title: 'Đơn hàng',
          value: '0',
          icon: <RiShoppingCart2Line size={24} />,
          color: 'bg-blue-500',
+         link: '/admin/orders',
       },
       {
          title: 'Sản phẩm',
          value: '0',
          icon: <RiProductHuntLine size={24} />,
          color: 'bg-yellow-500',
+         link: '/admin/products',
       },
       {
          title: 'Khách hàng',
          value: '0',
          icon: <RiUserLine size={24} />,
          color: 'bg-purple-500',
+         link: '/admin/users',
       },
    ]);
    const { formatPrice } = useFormatPrice();
@@ -211,9 +216,10 @@ const Dashboard = () => {
          {/* Stats Grid */}
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
-               <div
+               <Link
                   key={index}
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all hover:shadow-md"
+                  to={stat.link}
+                  className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all hover:shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                >
                   <div className="flex items-center justify-between">
                      <div>
@@ -224,7 +230,7 @@ const Dashboard = () => {
                         {stat.icon}
                      </div>
                   </div>
-               </div>
+               </Link>
             ))}
          </div>
 

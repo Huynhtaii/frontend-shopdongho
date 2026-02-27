@@ -15,7 +15,8 @@ const ModalAddUpdateUser = ({ editingUser, formData, handleInputChange, handleSu
                      value={formData.name}
                      onChange={handleInputChange}
                      required
-                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     disabled={!!editingUser}
+                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${editingUser ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                </div>
                <div className="mb-4">
@@ -29,7 +30,8 @@ const ModalAddUpdateUser = ({ editingUser, formData, handleInputChange, handleSu
                      value={formData.email}
                      onChange={handleInputChange}
                      required
-                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     disabled={!!editingUser}
+                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${editingUser ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                </div>
                <div className="mb-4">
@@ -57,7 +59,8 @@ const ModalAddUpdateUser = ({ editingUser, formData, handleInputChange, handleSu
                      value={formData.phone}
                      onChange={handleInputChange}
                      required
-                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     disabled={!!editingUser}
+                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${editingUser ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                </div>
                <div className="mb-4">
@@ -71,31 +74,34 @@ const ModalAddUpdateUser = ({ editingUser, formData, handleInputChange, handleSu
                      value={formData.address}
                      onChange={handleInputChange}
                      required
-                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     disabled={!!editingUser}
+                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${editingUser ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                </div>
-               <div className="mb-4">
-                  <label htmlFor="role_id" className="block text-sm font-medium text-gray-700 mb-2">
-                     Vai trò:
-                  </label>
-                  <select
-                     id="role_id"
-                     name="role_id"
-                     value={formData.role_id}
-                     onChange={handleInputChange}
-                     required
-                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                     <option value="" disabled>
-                        Chọn vai trò
-                     </option>
-                     {roles.map((role) => (
-                        <option key={role.role_id} value={role.role_id}>
-                           {role.name}
+               {!editingUser && (
+                  <div className="mb-4">
+                     <label htmlFor="role_id" className="block text-sm font-medium text-gray-700 mb-2">
+                        Vai trò:
+                     </label>
+                     <select
+                        id="role_id"
+                        name="role_id"
+                        value={formData.role_id}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     >
+                        <option value="" disabled>
+                           Chọn vai trò
                         </option>
-                     ))}
-                  </select>
-               </div>
+                        {roles.map((role) => (
+                           <option key={role.role_id} value={role.role_id}>
+                              {role.name}
+                           </option>
+                        ))}
+                     </select>
+                  </div>
+               )}
                <div className="flex justify-end gap-3">
                   <button
                      type="submit"

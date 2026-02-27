@@ -1,19 +1,24 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import ProductListSlider from './product_list_slider'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import ProductListSlider from './product_list_slider';
 import useProducts from '../../hooks/use_products';
 
 export default function ProductListTrend() {
-    const { products } = useProducts(10);
-    return (
-        <div className='layout-container !mt-6'>
-            <div className='bg-[#fe7902] flex flex-col items-center'>
-                <img src="/banner-xu-huong-home.webp" alt="" className='object-cover' />
-                <div className='w-full p-3'>
-                    <ProductListSlider products={products} />
-                </div>
-                <Link to={'/category/Xu hướng 2025'} className='rounded-md bg-white text-[#418fde] text-[14px] px-8 py-2 font-[500] mb-4 mt-1'>Khám phá xu hướng 2025</Link>
+   const { products } = useProducts(10);
+   return (
+      <div className="layout-container !mt-6">
+         <div className="bg-[#fe7902] flex flex-col items-center">
+            <img src="/banner-xu-huong-home.webp" alt="" className="object-cover" />
+            <div className="w-full p-3">
+               <ProductListSlider products={products} />
             </div>
-        </div>
-    )
+            <Link
+               to={'/category/Xu hướng 2025'}
+               className="rounded-md bg-white text-[#418fde] text-[14px] px-8 py-2 font-[500] mb-4 mt-1"
+            >
+               Khám phá xu hướng 2026
+            </Link>
+         </div>
+      </div>
+   );
 }
