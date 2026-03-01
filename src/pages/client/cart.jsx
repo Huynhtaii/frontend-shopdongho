@@ -5,17 +5,13 @@ import ProductListCart from '../../components/cart/product_list_cart';
 import Payment from '../../components/cart/payment';
 import { useCart } from '../../context/cart_context';
 import useFormatPrice from '../../hooks/use_formatPrice';
-import RatingModal from '../../components/modals/rating_modal';
 
 const Cart = () => {
    const { cartItem, totalPrice, savingsPrice } = useCart();
    const { formatPrice } = useFormatPrice();
-   const [showRating, setShowRating] = useState(false);
-   const [orderedItems, setOrderedItems] = useState([]);
 
    const handleOrderSuccess = (items) => {
-      setOrderedItems(items);
-      setShowRating(true);
+      // setShowRating(true);
    };
 
    return (
@@ -53,8 +49,6 @@ const Cart = () => {
                )}
             </div>
          </div>
-
-         <RatingModal isOpen={showRating} onClose={() => setShowRating(false)} cartItems={orderedItems} />
       </div>
    );
 };

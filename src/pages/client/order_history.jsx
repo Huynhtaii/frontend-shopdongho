@@ -4,7 +4,17 @@ import AccountService from '../../services/account_service';
 import axios from '../../utils/axios_config';
 import { toast } from 'react-toastify';
 import ConfirmModal from '../../components/modals/confirm_modal';
-import { FiUser, FiShoppingBag, FiPackage, FiChevronDown, FiChevronUp, FiArrowLeft, FiXCircle } from 'react-icons/fi';
+import RatingModal from '../../components/modals/rating_modal';
+import {
+   FiUser,
+   FiShoppingBag,
+   FiPackage,
+   FiChevronDown,
+   FiChevronUp,
+   FiArrowLeft,
+   FiXCircle,
+   FiStar,
+} from 'react-icons/fi';
 
 const statusConfig = {
    Pending: { label: 'Đang chờ xử lý', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
@@ -23,6 +33,8 @@ function OrderHistory() {
    const [expandedOrders, setExpandedOrders] = useState({});
    const [activeFilter, setActiveFilter] = useState('All');
    const [confirmModal, setConfirmModal] = useState({ isOpen: false, orderId: null });
+   const [showRating, setShowRating] = useState(false);
+   const [selectedOrder, setSelectedOrder] = useState(null);
 
    const fetchData = useCallback(async () => {
       try {
@@ -273,6 +285,54 @@ function OrderHistory() {
                                                 </button>
                                              </div>
                                           )}
+
+                                          {/* Nút Đánh giá - chỉ hiện khi Completed và chưa đánh giá */}
+                                          {order.status === 'Completed' &&
+                                             (!order.Feedbacks || order.Feedbacks.length === 0) &&
+                                             (!order.feedbacks || order.feedbacks.length === 0) && (
+                                                <div className="mt-4">
+                                                   <button
+                                                      onClick={() => {
+                                                         setSelectedOrder(order);
+                                                         setShowRating(true);
+                                                      }}
+                                                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-yellow-100"
+                                                   >
+                                                      <FiStar size={15} />
+                                                      Đánh giá ngay
+                                                   </button>
+                                                </div>
+                                             )}
+
+                                          {/* Đã đánh giá - hiện số sao */}
+                                          {order.status === 'Completed' &&
+                                             ((order.Feedbacks && order.Feedbacks.length > 0) ||
+                                                (order.feedbacks && order.feedbacks.length > 0)) && (
+                                                <div className="mt-4 flex items-center justify-center gap-3 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+                                                   <span className="text-sm font-semibold text-emerald-700">
+                                                      Cảm ơn bạn đã đánh giá!
+                                                   </span>
+                                                   <div className="flex gap-0.5">
+                                                      {[1, 2, 3, 4, 5].map((star) => {
+                                                         const currentRating =
+                                                            order.Feedbacks?.[0]?.rating ||
+                                                            order.feedbacks?.[0]?.rating ||
+                                                            0;
+                                                         return (
+                                                            <FiStar
+                                                               key={star}
+                                                               size={14}
+                                                               className={
+                                                                  star <= currentRating
+                                                                     ? 'text-yellow-400 fill-yellow-400'
+                                                                     : 'text-gray-300'
+                                                               }
+                                                            />
+                                                         );
+                                                      })}
+                                                   </div>
+                                                </div>
+                                             )}
                                        </div>
                                     )}
                                  </div>
@@ -309,6 +369,20 @@ function OrderHistory() {
             confirmDanger={true}
             onConfirm={handleConfirmCancel}
             onCancel={() => setConfirmModal({ isOpen: false, orderId: null })}
+         />
+
+         <RatingModal
+            isOpen={showRating}
+            onClose={() => {
+               setShowRating(false);
+               setSelectedOrder(null);
+            }}
+            order={selectedOrder}
+            onSuccess={() => {
+               fetchData();
+               setShowRating(false);
+               setSelectedOrder(null);
+            }}
          />
       </>
    );

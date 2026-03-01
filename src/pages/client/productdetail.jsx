@@ -179,7 +179,9 @@ function ProductDetail() {
                <div className="flex items-center gap-4 mb-4">
                   <div className="flex items-center">
                      {renderStars(product.rating)}
-                     <span className="ml-2">{product.rating}/5</span>
+                     <span className="ml-2">
+                        {product.rating}/5 ({product.Feedbacks?.length || 0} đánh giá)
+                     </span>
                   </div>
                   <div className="text-gray-500">SKU: {product.sku}</div>
                </div>
@@ -277,6 +279,16 @@ function ProductDetail() {
                >
                   Hướng dẫn chọn size
                </button>
+               <button
+                  onClick={() => setActiveTab('reviews')}
+                  className={`flex-1 py-4 text-center font-bold text-lg transition-all ${
+                     activeTab === 'reviews'
+                        ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+               >
+                  Đánh giá ({product.Feedbacks?.length || 0})
+               </button>
             </div>
 
             <div className="p-6">
@@ -344,7 +356,7 @@ function ProductDetail() {
                         </div>
                      </div>
                   </div>
-               ) : (
+               ) : activeTab === 'guide' ? (
                   <div className="animate-fadeIn max-w-4xl mx-auto">
                      <div className="text-gray-600 text-sm leading-relaxed space-y-8">
                         <p className="text-base">
@@ -388,6 +400,58 @@ function ProductDetail() {
                                     className="w-full rounded-xl border border-gray-100 shadow-md"
                                  />
                               </div>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               ) : (
+                  <div className="animate-fadeIn max-w-4xl mx-auto">
+                     <div className="flex flex-col md:flex-row gap-8 mb-10 pb-10 border-b border-gray-100">
+                        {/* Tổng quan đánh giá */}
+                        <div className="md:w-1/3 text-center md:border-r border-gray-100 pr-8">
+                           <h3 className="text-lg font-bold text-gray-800 mb-2">Đánh giá trung bình</h3>
+                           <div className="text-5xl font-black text-red-600 mb-2">{product.rating}/5</div>
+                           <div className="flex justify-center mb-2">{renderStars(product.rating)}</div>
+                           <p className="text-gray-500 text-sm">({product.Feedbacks?.length || 0} nhận xét)</p>
+                        </div>
+
+                        {/* Danh sách đánh giá chi tiết */}
+                        <div className="md:w-2/3">
+                           <div className="space-y-6">
+                              {product.Feedbacks?.length > 0 ? (
+                                 product.Feedbacks.map((fb, idx) => (
+                                    <div
+                                       key={idx}
+                                       className="bg-slate-50 p-4 rounded-xl border border-gray-100 shadow-sm transition-hover hover:border-blue-200"
+                                    >
+                                       <div className="flex justify-between items-start mb-2">
+                                          <div className="flex items-center gap-3">
+                                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
+                                                {fb.User?.name?.charAt(0) || 'U'}
+                                             </div>
+                                             <div>
+                                                <p className="font-bold text-gray-800 text-sm">
+                                                   {fb.User?.name || 'Người dùng ẩn danh'}
+                                                </p>
+                                                <div className="flex gap-0.5">{renderStars(fb.rating)}</div>
+                                             </div>
+                                          </div>
+                                          <span className="text-xs text-gray-400">
+                                             {fb.created_at ? new Date(fb.created_at).toLocaleDateString('vi-VN') : ''}
+                                          </span>
+                                       </div>
+                                       {fb.comments && (
+                                          <p className="text-gray-600 text-sm mt-3 leading-relaxed pl-[52px]">
+                                             "{fb.comments}"
+                                          </p>
+                                       )}
+                                    </div>
+                                 ))
+                              ) : (
+                                 <div className="text-center py-10 bg-gray-50 rounded-xl">
+                                    <p className="text-gray-500 italic">Sản phẩm này chưa có đánh giá nào.</p>
+                                 </div>
+                              )}
                            </div>
                         </div>
                      </div>
