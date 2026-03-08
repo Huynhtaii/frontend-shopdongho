@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RiShoppingCart2Line, RiUserLine, RiProductHuntLine, RiMoneyDollarCircleLine } from 'react-icons/ri';
+import { toast } from 'react-toastify';
 import OrderService from '../../services/order_service';
+import CategoryService from '../../services/category_service';
+import BrandService from '../../services/brand_service';
 import useFormatPrice from '../../hooks/use_formatPrice';
 import {
    Chart as ChartJS,
@@ -9,15 +12,16 @@ import {
    PointElement,
    LineElement,
    BarElement,
+   ArcElement,
    Title,
    Tooltip,
    Legend,
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Link } from 'react-router-dom';
 
 // Đăng ký các components của Chart.js
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
 
 const Dashboard = () => {
    const [stats, setStats] = useState([
@@ -67,6 +71,10 @@ const Dashboard = () => {
    // State cho dữ liệu bổ sung
    const [topProducts, setTopProducts] = useState([]);
    const [recentOrders, setRecentOrders] = useState([]);
+   const [pendingOrders, setPendingOrders] = useState([]);
+   const [approvingId, setApprovingId] = useState(null);
+   const [categoryChartData, setCategoryChartData] = useState(null);
+   const [brandChartData, setBrandChartData] = useState(null);
 
    const updateStats = useCallback(
       (stats) => {
@@ -99,15 +107,91 @@ const Dashboard = () => {
             prepareChartData(orders);
             calculateTopProducts(orders);
             setRecentOrders(orders.slice(0, 5));
+            setPendingOrders(orders.filter((o) => o.status === 'Pending'));
          }
       } catch (error) {
          console.error('Error fetching orders:', error);
       }
    }, [updateStats]);
 
+   const handleQuickAction = async (orderId, action) => {
+      setApprovingId(orderId);
+      try {
+         const newStatus = action === 'approve' ? 'Shipped' : 'Canceled';
+         const res = await OrderService.updateOrderStatus(orderId, newStatus);
+         if (res && res.EC === '0') {
+            if (action === 'approve') {
+               toast.success(`Đã duyệt đơn #${orderId} — chuyển sang Đang giao!`);
+            } else {
+               toast.info(`Đã huỷ đơn #${orderId}.`);
+            }
+            fetchOrders();
+         } else {
+            toast.error('Cập nhật thất bại, vui lòng thử lại.');
+         }
+      } catch (error) {
+         console.error('Error updating order:', error);
+         toast.error('Có lỗi xảy ra, vui lòng thử lại.');
+      } finally {
+         setApprovingId(null);
+      }
+   };
+
+   const CHART_COLORS = [
+      '#6366f1',
+      '#f59e0b',
+      '#10b981',
+      '#3b82f6',
+      '#ec4899',
+      '#8b5cf6',
+      '#14b8a6',
+      '#f97316',
+      '#ef4444',
+      '#84cc16',
+   ];
+
+   const fetchCategoryAndBrandStats = useCallback(async () => {
+      try {
+         const [catRes, brandRes] = await Promise.all([CategoryService.getAll(), BrandService.getAll()]);
+         if (catRes && catRes.EC === '0') {
+            const cats = catRes.DT.filter((c) => (c.Products?.length ?? 0) > 0);
+            setCategoryChartData({
+               labels: cats.map((c) => c.name),
+               datasets: [
+                  {
+                     data: cats.map((c) => c.Products?.length ?? 0),
+                     backgroundColor: CHART_COLORS.slice(0, cats.length),
+                     borderWidth: 2,
+                     borderColor: '#fff',
+                     hoverOffset: 10,
+                  },
+               ],
+            });
+         }
+         if (brandRes && brandRes.EC === '0') {
+            const brands = brandRes.DT.filter((b) => (b.products?.length ?? 0) > 0);
+            setBrandChartData({
+               labels: brands.map((b) => b.name),
+               datasets: [
+                  {
+                     data: brands.map((b) => b.products?.length ?? 0),
+                     backgroundColor: [...CHART_COLORS].reverse().slice(0, brands.length),
+                     borderWidth: 2,
+                     borderColor: '#fff',
+                     hoverOffset: 10,
+                  },
+               ],
+            });
+         }
+      } catch (error) {
+         console.error('Error fetching category/brand stats:', error);
+      }
+   }, []);
+
    useEffect(() => {
       fetchOrders();
-   }, [fetchOrders]);
+      fetchCategoryAndBrandStats();
+   }, [fetchOrders, fetchCategoryAndBrandStats]);
 
    const calculateTopProducts = (orders) => {
       const productSales = {};
@@ -281,6 +365,94 @@ const Dashboard = () => {
             </div>
          </div>
 
+         {/* Pending Orders Quick Review */}
+         {pendingOrders.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-amber-100 p-6">
+               <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                     <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                     </span>
+                     <h2 className="text-lg font-bold text-gray-800">Duyệt nhanh đơn hàng</h2>
+                  </div>
+                  <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                     {pendingOrders.length} đang chờ
+                  </span>
+               </div>
+               <div className="relative overflow-x-auto">
+                  {/* Loading overlay — chặn tương tác khi đang xử lý */}
+                  {approvingId && (
+                     <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-[2px] flex items-center justify-center rounded-lg">
+                        <div className="flex items-center gap-3 bg-white shadow-lg rounded-xl px-5 py-3 border border-amber-100">
+                           <span className="w-5 h-5 border-[3px] border-amber-400 border-t-transparent rounded-full animate-spin inline-block"></span>
+                           <span className="text-sm font-semibold text-gray-600">Đang xử lý...</span>
+                        </div>
+                     </div>
+                  )}
+                  <table className="w-full text-left text-sm">
+                     <thead>
+                        <tr className="text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-gray-100">
+                           <th className="pb-3 px-2">ID</th>
+                           <th className="pb-3 px-2">Khách hàng</th>
+                           <th className="pb-3 px-2">Ngày đặt</th>
+                           <th className="pb-3 px-2">Sản phẩm</th>
+                           <th className="pb-3 px-2 text-right">Tổng tiền</th>
+                           <th className="pb-3 px-2 text-center">Thao tác</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-50">
+                        {pendingOrders.map((order) => (
+                           <tr key={order.order_id} className="hover:bg-amber-50/50 transition-colors">
+                              <td className="py-3 px-2 font-bold text-blue-600">#{order.order_id}</td>
+                              <td className="py-3 px-2 font-medium text-gray-700">
+                                 {order.User?.name || `ID: ${order.user_id}`}
+                              </td>
+                              <td className="py-3 px-2 text-gray-500">
+                                 {new Date(order.order_date).toLocaleDateString('vi-VN')}
+                              </td>
+                              <td className="py-3 px-2 text-gray-500 max-w-[200px]">
+                                 <span className="truncate block">
+                                    {order.order_items
+                                       ?.map((i) => i.Product?.name)
+                                       .filter(Boolean)
+                                       .join(', ') || '—'}
+                                 </span>
+                              </td>
+                              <td className="py-3 px-2 font-bold text-gray-900 text-right">
+                                 {formatPrice(order.total_amount)}
+                              </td>
+                              <td className="py-3 px-2">
+                                 <div className="flex items-center justify-center gap-2">
+                                    <button
+                                       onClick={() => handleQuickAction(order.order_id, 'approve')}
+                                       disabled={approvingId === order.order_id}
+                                       className="flex items-center gap-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                                    >
+                                       {approvingId === order.order_id ? (
+                                          <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                       ) : (
+                                          '✓'
+                                       )}{' '}
+                                       Duyệt
+                                    </button>
+                                    <button
+                                       onClick={() => handleQuickAction(order.order_id, 'cancel')}
+                                       disabled={approvingId === order.order_id}
+                                       className="flex items-center gap-1 bg-red-100 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed text-red-600 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                                    >
+                                       ✕ Huỷ
+                                    </button>
+                                 </div>
+                              </td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+            </div>
+         )}
+
          {/* Bottom Section */}
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Top Products */}
@@ -345,6 +517,97 @@ const Dashboard = () => {
                </div>
             </div>
          </div>
+
+         {/* Category & Brand Stats */}
+         {(categoryChartData || brandChartData) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+               {/* Category Doughnut */}
+               {categoryChartData && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                     <h2 className="text-lg font-bold text-gray-800 mb-4">Sản phẩm theo danh mục</h2>
+                     <div className="flex items-center gap-6">
+                        <div className="w-[180px] h-[180px] shrink-0">
+                           <Doughnut
+                              data={categoryChartData}
+                              options={{
+                                 responsive: true,
+                                 maintainAspectRatio: false,
+                                 cutout: '65%',
+                                 plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                       callbacks: {
+                                          label: (ctx) => ` ${ctx.label}: ${ctx.raw} sản phẩm`,
+                                       },
+                                    },
+                                 },
+                              }}
+                           />
+                        </div>
+                        <div className="flex-1 space-y-2 overflow-hidden">
+                           {categoryChartData.labels.map((label, i) => (
+                              <div key={i} className="flex items-center justify-between gap-2">
+                                 <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                       className="w-2.5 h-2.5 rounded-full shrink-0"
+                                       style={{ backgroundColor: categoryChartData.datasets[0].backgroundColor[i] }}
+                                    />
+                                    <span className="text-xs text-gray-600 truncate">{label}</span>
+                                 </div>
+                                 <span className="text-xs font-bold text-gray-800 shrink-0">
+                                    {categoryChartData.datasets[0].data[i]}
+                                 </span>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+               )}
+
+               {/* Brand Doughnut */}
+               {brandChartData && (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                     <h2 className="text-lg font-bold text-gray-800 mb-4">Sản phẩm theo thương hiệu</h2>
+                     <div className="flex items-center gap-6">
+                        <div className="w-[180px] h-[180px] shrink-0">
+                           <Doughnut
+                              data={brandChartData}
+                              options={{
+                                 responsive: true,
+                                 maintainAspectRatio: false,
+                                 cutout: '65%',
+                                 plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                       callbacks: {
+                                          label: (ctx) => ` ${ctx.label}: ${ctx.raw} sản phẩm`,
+                                       },
+                                    },
+                                 },
+                              }}
+                           />
+                        </div>
+                        <div className="flex-1 space-y-2 overflow-hidden">
+                           {brandChartData.labels.map((label, i) => (
+                              <div key={i} className="flex items-center justify-between gap-2">
+                                 <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                       className="w-2.5 h-2.5 rounded-full shrink-0"
+                                       style={{ backgroundColor: brandChartData.datasets[0].backgroundColor[i] }}
+                                    />
+                                    <span className="text-xs text-gray-600 truncate">{label}</span>
+                                 </div>
+                                 <span className="text-xs font-bold text-gray-800 shrink-0">
+                                    {brandChartData.datasets[0].data[i]}
+                                 </span>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+               )}
+            </div>
+         )}
       </div>
    );
 };
