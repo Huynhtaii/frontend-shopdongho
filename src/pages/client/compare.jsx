@@ -29,7 +29,11 @@ const Compare = () => {
    ];
 
    const getBrandName = (product) => {
-      return product.brand || (product.Categories && product.Categories[0]?.name) || '-';
+      const brand = product.brand;
+      if (brand && typeof brand === 'object') {
+         return brand.name || '-';
+      }
+      return brand || (product.Categories && product.Categories[0]?.name) || '-';
    };
 
    // Logic lọc các hàng giống nhau

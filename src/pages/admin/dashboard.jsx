@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiShoppingCart2Line, RiUserLine, RiProductHuntLine, RiMoneyDollarCircleLine } from 'react-icons/ri';
 import { toast } from 'react-toastify';
 import OrderService from '../../services/order_service';
@@ -137,18 +137,21 @@ const Dashboard = () => {
       }
    };
 
-   const CHART_COLORS = [
-      '#6366f1',
-      '#f59e0b',
-      '#10b981',
-      '#3b82f6',
-      '#ec4899',
-      '#8b5cf6',
-      '#14b8a6',
-      '#f97316',
-      '#ef4444',
-      '#84cc16',
-   ];
+   const CHART_COLORS = useMemo(
+      () => [
+         '#6366f1',
+         '#f59e0b',
+         '#10b981',
+         '#3b82f6',
+         '#ec4899',
+         '#8b5cf6',
+         '#14b8a6',
+         '#f97316',
+         '#ef4444',
+         '#84cc16',
+      ],
+      [],
+   );
 
    const fetchCategoryAndBrandStats = useCallback(async () => {
       try {
@@ -186,7 +189,7 @@ const Dashboard = () => {
       } catch (error) {
          console.error('Error fetching category/brand stats:', error);
       }
-   }, []);
+   }, [CHART_COLORS]);
 
    useEffect(() => {
       fetchOrders();
