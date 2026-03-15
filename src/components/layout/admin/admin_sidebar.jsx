@@ -7,6 +7,7 @@ import {
    RiProductHuntLine,
    RiPriceTag3Line,
    RiApps2Line,
+   RiBarChartLine,
 } from 'react-icons/ri';
 
 const AdminSidebar = ({ isOpen, setIsOpen }) => {
@@ -14,6 +15,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
 
    const menuItems = [
       { path: '/admin', icon: <RiDashboardLine size={24} />, label: 'Dashboard' },
+      { path: '/admin/statistics', icon: <RiBarChartLine size={24} />, label: 'Thống kê' },
       { path: '/admin/products', icon: <RiProductHuntLine size={24} />, label: 'Sản phẩm' },
       { path: '/admin/categories', icon: <RiApps2Line size={24} />, label: 'Danh mục' },
       { path: '/admin/brands', icon: <RiPriceTag3Line size={24} />, label: 'Thương hiệu' },

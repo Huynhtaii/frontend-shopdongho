@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { useEffect, useState } from 'react';
 import ModalAddUpdateUser from '../../components/modals/modal_add_update_user';
 import { toast } from 'react-toastify';
 import { FiPlus } from 'react-icons/fi';
@@ -54,21 +53,18 @@ const UserAdmin = () => {
       setIsModalVisible(true);
    };
 
-   const handleEdit = (user) => {
-      setEditingUser(user);
-      setFormData(user);
-      setIsModalVisible(true);
-   };
-
-   const handleDelete = async (userId) => {
-      if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
+   const handleToggleStatus = async (userId) => {
+      if (window.confirm('Bạn có chắc chắn muốn thay đổi trạng thái người dùng này?')) {
          try {
-            const res = await UserService.deleteUser(userId);
-            console.log(res);
-            fetchData();
-            toast.success('Xóa người dùng thành công');
+            const res = await UserService.toggleUserStatus(userId);
+            if (res && res.EC === '0') {
+               fetchData();
+               toast.success(res.EM);
+            } else {
+               toast.error(res.EM || 'Thao tác thất bại');
+            }
          } catch (error) {
-            toast.error('Có lỗi xảy ra khi xóa người dùng');
+            toast.error('Có lỗi xảy ra');
          }
       }
    };
@@ -141,6 +137,9 @@ const UserAdmin = () => {
                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                               Vai trò
                            </th>
+                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                              Trạng thái
+                           </th>
                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
                               Thao tác
                            </th>
@@ -157,21 +156,28 @@ const UserAdmin = () => {
                               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                                  {roles?.find((role) => role.role_id === user.role_id)?.name}
                               </td>
+                              <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                 <span
+                                    className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                       user.status === 'active'
+                                          ? 'bg-green-100 text-green-700'
+                                          : 'bg-red-100 text-red-700'
+                                    }`}
+                                 >
+                                    {user.status === 'active' ? 'Hoạt động' : 'Bị khoá'}
+                                 </span>
+                              </td>
                               <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
                                  <div className="flex gap-2 justify-end">
                                     <button
-                                       className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded flex items-center gap-1 transition duration-200"
-                                       onClick={() => handleEdit(user)}
+                                       className={`${
+                                          user.status === 'active'
+                                             ? 'bg-red-500 hover:bg-red-600'
+                                             : 'bg-green-500 hover:bg-green-600'
+                                       } text-white px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200`}
+                                       onClick={() => handleToggleStatus(user.user_id)}
                                     >
-                                       <FaEdit className="sm:mr-1" />
-                                       <span className="hidden sm:inline">Sửa</span>
-                                    </button>
-                                    <button
-                                       className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1 transition duration-200"
-                                       onClick={() => handleDelete(user.user_id)}
-                                    >
-                                       <FaTrash className="sm:mr-1" />
-                                       <span className="hidden sm:inline">Xóa</span>
+                                       {user.status === 'active' ? 'Vô hiệu hoá' : 'Kích hoạt'}
                                     </button>
                                  </div>
                               </td>

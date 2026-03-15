@@ -3,13 +3,14 @@ import { useCompare } from '../../context/compare_context';
 import { useFavorite } from '../../context/favorite_context';
 import { Link, useNavigate } from 'react-router-dom';
 import useFormatPrice from '../../hooks/use_formatPrice';
+import { useCart } from '../../context/cart_context';
 import { IoTrashOutline, IoClose } from 'react-icons/io5';
 import { MdFavoriteBorder } from 'react-icons/md';
-import { toast } from 'react-toastify';
 
 const Compare = () => {
    const { compareList, removeFromCompare } = useCompare();
    const { addAndRemoveToFavorite, findFavorite } = useFavorite();
+   const { addToCart } = useCart();
    const { formatPrice } = useFormatPrice();
    const [onlyDifferences, setOnlyDifferences] = React.useState(false);
    const navigate = useNavigate();
@@ -43,6 +44,15 @@ const Compare = () => {
            return !values.every((v) => v === values[0]);
         })
       : specs;
+      
+   const handleAddToCart = (product) => {
+      const cart_item = {
+         product_id: product.product_id,
+         quantity: 1,
+         created_at: new Date().toISOString(),
+      };
+      addToCart(cart_item, product);
+   };
 
    if (compareList.length === 0) {
       return (
@@ -213,7 +223,7 @@ const Compare = () => {
                                  <div className="flex flex-col gap-3">
                                     <button
                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-3 rounded-xl transition-all shadow-lg shadow-orange-100 uppercase text-xs"
-                                       onClick={() => toast.success('Đã thêm vào giỏ hàng')}
+                                       onClick={() => handleAddToCart(product)}
                                     >
                                        MUA NGAY
                                     </button>

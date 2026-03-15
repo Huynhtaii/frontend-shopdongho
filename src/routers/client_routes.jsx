@@ -17,6 +17,8 @@ import FloatingButtons from '../components/floating_buttons';
 import Account from '../pages/client/account';
 import OrderHistory from '../pages/client/order_history';
 import Compare from '../pages/client/compare';
+import ForgotPassword from '../pages/client/forgot_password';
+import ResetPassword from '../pages/client/reset_password';
 
 const ClientLayout = ({ children }) => (
    <>
@@ -83,6 +85,8 @@ const ClientRoutes = () => {
          <Route element={<PublicRouter />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
          </Route>
 
          <Route
