@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEdit, FaTrash, FaLayerGroup } from 'react-icons/fa';
+import { FaEdit, FaEye, FaEyeSlash, FaLayerGroup } from 'react-icons/fa';
 import { FiPlus, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import CategoryService from '../../services/category_service';
@@ -16,7 +16,7 @@ const CategoryAdmin = () => {
 
    const fetchCategories = async () => {
       try {
-         const res = await CategoryService.getAll();
+         const res = await CategoryService.getAll(true);
          setCategories(res.DT || []);
       } catch {
          toast.error('Không thể tải danh sách danh mục');
@@ -52,18 +52,19 @@ const CategoryAdmin = () => {
       setShowModal(true);
    };
 
-   const handleDelete = async (id) => {
-      if (!window.confirm('Bạn có chắc chắn muốn xóa danh mục này?')) return;
+   const handleToggleStatus = async (category) => {
+      const action = category.status === 1 ? 'ẩn' : 'hiện';
+      if (!window.confirm(`Bạn có chắc chắn muốn ${action} danh mục này?`)) return;
       try {
-         const res = await CategoryService.delete(id);
+         const res = await CategoryService.delete(category.category_id);
          if (res.EC === '0') {
-            toast.success('Xóa danh mục thành công');
+            toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} danh mục thành công`);
             fetchCategories();
          } else {
-            toast.error(res.EM || 'Xóa danh mục thất bại');
+            toast.error(res.EM || `${action} danh mục thất bại`);
          }
       } catch {
-         toast.error('Có lỗi xảy ra khi xóa danh mục');
+         toast.error(`Có lỗi xảy ra khi ${action} danh mục`);
       }
    };
 
@@ -141,6 +142,7 @@ const CategoryAdmin = () => {
                            Tên danh mục
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mô tả</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                      </tr>
                   </thead>
@@ -173,6 +175,15 @@ const CategoryAdmin = () => {
                               <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
                                  {category.description || '—'}
                               </td>
+                              <td className="px-4 py-3">
+                                 <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                       category.status === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                    }`}
+                                 >
+                                    {category.status === 1 ? 'Đang hiện' : 'Đang ẩn'}
+                                 </span>
+                              </td>
                               <td className="px-4 py-3 text-right">
                                  <div className="flex gap-2 justify-end">
                                     <button
@@ -183,11 +194,24 @@ const CategoryAdmin = () => {
                                        <span className="hidden sm:inline">Sửa</span>
                                     </button>
                                     <button
-                                       onClick={() => handleDelete(category.category_id)}
-                                       className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1 text-sm transition"
+                                       onClick={() => handleToggleStatus(category)}
+                                       className={`${
+                                          category.status === 1
+                                             ? 'bg-orange-500 hover:bg-orange-600'
+                                             : 'bg-blue-500 hover:bg-blue-600'
+                                       } text-white px-2 py-1 rounded flex items-center gap-1 text-sm transition`}
                                     >
-                                       <FaTrash />
-                                       <span className="hidden sm:inline">Xóa</span>
+                                       {category.status === 1 ? (
+                                          <>
+                                             <FaEyeSlash />
+                                             <span className="hidden sm:inline">Ẩn</span>
+                                          </>
+                                       ) : (
+                                          <>
+                                             <FaEye />
+                                             <span className="hidden sm:inline">Hiện</span>
+                                          </>
+                                       )}
                                     </button>
                                  </div>
                               </td>

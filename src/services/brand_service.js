@@ -1,8 +1,9 @@
 import axios from '../utils/axios_config';
 
 const BrandService = {
-   getAll: async () => {
-      const response = await axios.get('/v1/read-all/brands');
+   getAll: async (isAdmin = false) => {
+      const url = isAdmin ? '/v1/read/brand' : '/v1/read-all/brands';
+      const response = await axios.get(url, { params: { isAdmin: isAdmin ? 'true' : 'false' } });
       return response;
    },
    getById: async (id) => {

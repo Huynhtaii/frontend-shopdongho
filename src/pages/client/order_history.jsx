@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AccountService from '../../services/account_service';
 import axios from '../../utils/axios_config';
 import { toast } from 'react-toastify';
 import ConfirmModal from '../../components/modals/confirm_modal';
 import RatingModal from '../../components/modals/rating_modal';
+import { useCart } from '../../context/cart_context';
 import {
    FiUser,
    FiShoppingBag,
@@ -35,6 +36,8 @@ function OrderHistory() {
    const [confirmModal, setConfirmModal] = useState({ isOpen: false, orderId: null });
    const [showRating, setShowRating] = useState(false);
    const [selectedOrder, setSelectedOrder] = useState(null);
+   const { addToCart } = useCart();
+   const navigate = useNavigate();
 
    const fetchData = useCallback(async () => {
       try {
@@ -75,6 +78,25 @@ function OrderHistory() {
          }
       } catch (error) {
          toast.error('Có lỗi xảy ra, vui lòng thử lại!');
+      }
+   };
+
+   const handleReorder = async (order) => {
+      try {
+         // Thêm từng sản phẩm vào giỏ hàng
+         for (const item of order.order_items) {
+            const cartItem = {
+               product_id: item.product_id,
+               quantity: item.quantity,
+            };
+            // Cần productDetail để hiển thị đúng trong UI giỏ hàng nếu là khách
+            await addToCart(cartItem, item.Product);
+         }
+         toast.success('Đã thêm các sản phẩm vào giỏ hàng');
+         navigate('/cart');
+      } catch (error) {
+         console.error('Lỗi khi mua lại:', error);
+         toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng');
       }
    };
 
@@ -266,73 +288,63 @@ function OrderHistory() {
                                                 {formatVND(order.total_amount)}
                                              </span>
                                           </div>
-                                          {/* Nút hủy - chỉ hiện khi Pending */}
-                                          {order.status === 'Pending' && (
-                                             <div className="mt-4">
-                                                {order.Payment?.status === 'Success' && (
-                                                   <div className="mb-3 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
-                                                      <span className="font-bold">Lưu ý:</span> Đơn hàng này đã được
-                                                      thanh toán. Sau khi hủy, quý khách vui lòng liên hệ với Quản trị
-                                                      viên để được hỗ trợ hoàn tiền trong thời gian sớm nhất.
-                                                   </div>
-                                                )}
+
+                                          {/* Actions area */}
+                                          <div className="mt-6 flex flex-col gap-3">
+                                             {/* Nút Hủy (Pending) */}
+                                             {order.status === 'Pending' && (
                                                 <button
                                                    onClick={() => handleCancelOrder(order.order_id)}
-                                                   className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 rounded-xl text-sm font-semibold transition-all"
+                                                   className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-red-100 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-xl text-sm font-semibold transition-all"
                                                 >
                                                    <FiXCircle size={15} />
                                                    Hủy đơn hàng
                                                 </button>
+                                             )}
+
+                                             {/* Completed: Rating and Reorder */}
+                                             {order.status === 'Completed' && (
+                                                <div className="flex flex-col gap-3">
+                                                   <button
+                                                      onClick={() => handleReorder(order)}
+                                                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-red-100"
+                                                   >
+                                                      <FiShoppingBag size={15} />
+                                                      Mua lại đơn hàng này
+                                                   </button>
+
+                                                   {(!order.Feedbacks || order.Feedbacks.length === 0) &&
+                                                   (!order.feedbacks || order.feedbacks.length === 0) ? (
+                                                      <button
+                                                         onClick={() => {
+                                                            setSelectedOrder(order);
+                                                            setShowRating(true);
+                                                         }}
+                                                         className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-amber-200 text-amber-600 hover:bg-amber-50 rounded-xl text-sm font-semibold transition-all"
+                                                      >
+                                                         <FiStar size={15} />
+                                                         Đánh giá ngay
+                                                      </button>
+                                                   ) : (
+                                                      <div className="flex items-center justify-center gap-3 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+                                                         <span className="text-sm font-semibold text-emerald-700">
+                                                            Bạn đã đánh giá {order.Feedbacks?.[0]?.rating || order.feedbacks?.[0]?.rating || 0} sao
+                                                         </span>
+                                                         <div className="flex gap-0.5 text-yellow-500">
+                                                            <FiStar size={14} className="fill-current" />
+                                                         </div>
+                                                      </div>
+                                                   )}
+                                                </div>
+                                             )}
+                                          </div>
+
+                                          {/* Pending Payment Note */}
+                                          {order.status === 'Pending' && order.Payment?.status === 'Success' && (
+                                             <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[11px] text-amber-700 leading-relaxed">
+                                                <span className="font-bold">Lưu ý:</span> Đơn hàng này đã được thanh toán. Sau khi hủy, vui lòng liên hệ Admin để được hỗ trợ hoàn tiền.
                                              </div>
                                           )}
-
-                                          {/* Nút Đánh giá - chỉ hiện khi Completed và chưa đánh giá */}
-                                          {order.status === 'Completed' &&
-                                             (!order.Feedbacks || order.Feedbacks.length === 0) &&
-                                             (!order.feedbacks || order.feedbacks.length === 0) && (
-                                                <div className="mt-4">
-                                                   <button
-                                                      onClick={() => {
-                                                         setSelectedOrder(order);
-                                                         setShowRating(true);
-                                                      }}
-                                                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-yellow-100"
-                                                   >
-                                                      <FiStar size={15} />
-                                                      Đánh giá ngay
-                                                   </button>
-                                                </div>
-                                             )}
-
-                                          {/* Đã đánh giá - hiện số sao */}
-                                          {order.status === 'Completed' &&
-                                             ((order.Feedbacks && order.Feedbacks.length > 0) ||
-                                                (order.feedbacks && order.feedbacks.length > 0)) && (
-                                                <div className="mt-4 flex items-center justify-center gap-3 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
-                                                   <span className="text-sm font-semibold text-emerald-700">
-                                                      Cảm ơn bạn đã đánh giá!
-                                                   </span>
-                                                   <div className="flex gap-0.5">
-                                                      {[1, 2, 3, 4, 5].map((star) => {
-                                                         const currentRating =
-                                                            order.Feedbacks?.[0]?.rating ||
-                                                            order.feedbacks?.[0]?.rating ||
-                                                            0;
-                                                         return (
-                                                            <FiStar
-                                                               key={star}
-                                                               size={14}
-                                                               className={
-                                                                  star <= currentRating
-                                                                     ? 'text-yellow-400 fill-yellow-400'
-                                                                     : 'text-gray-300'
-                                                               }
-                                                            />
-                                                         );
-                                                      })}
-                                                   </div>
-                                                </div>
-                                             )}
                                        </div>
                                     )}
                                  </div>

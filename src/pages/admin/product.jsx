@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ModalAddUpdateProduct from '../../components/modals/modal_add_update_product';
@@ -50,10 +50,10 @@ const ProductAdmin = () => {
 
    const fetchData = async () => {
       try {
-         const productsData = await ProductService.getAllProducts();
+         const productsData = await ProductService.getAllProducts(null, true);
          setProducts(productsData.DT);
       } catch (error) {
-         toast.error('Có lỗi xảy ra khi tải dữ liệu hoá đơn');
+         toast.error('Có lỗi xảy ra khi tải dữ liệu sản phẩm');
       }
    };
 
@@ -110,14 +110,19 @@ const ProductAdmin = () => {
       setShowModal(true);
    };
 
-   const handleDelete = async (productId) => {
-      if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
+   const handleToggleStatus = async (product) => {
+      const action = product.status === 1 ? 'ẩn' : 'hiện';
+      if (window.confirm(`Bạn có chắc chắn muốn ${action} sản phẩm này?`)) {
          try {
-            await ProductService.deleteProduct(productId);
-            toast.success('Xóa sản phẩm thành công');
-            fetchData();
+            const res = await ProductService.deleteProduct(product.product_id);
+            if (res.EC === '0') {
+               toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} sản phẩm thành công`);
+               fetchData();
+            } else {
+               toast.error(res.EM || `${action} sản phẩm thất bại`);
+            }
          } catch (error) {
-            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
+            toast.error(`Có lỗi xảy ra khi ${action} sản phẩm`);
          }
       }
    };
@@ -242,6 +247,7 @@ const ProductAdmin = () => {
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên sản phẩm</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá KM</th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                   </tr>
                </thead>
@@ -250,7 +256,7 @@ const ProductAdmin = () => {
                      <tr key={product.product_id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                            <img
-                              src={product.ProductImages[0].url}
+                              src={product.ProductImages[0]?.url}
                               alt="thumbnail"
                               className="max-w-[50px] object-cover"
                            />
@@ -260,6 +266,15 @@ const ProductAdmin = () => {
                         <td className="px-6 py-4">{formatPrice(product.price)}</td>
                         <td className="px-6 py-4">{formatPrice(product.discount_price)}</td>
                         <td className="px-6 py-4">
+                           <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                 product.status === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}
+                           >
+                              {product.status === 1 ? 'Đang hiện' : 'Đang ẩn'}
+                           </span>
+                        </td>
+                        <td className="px-6 py-4">
                            <div className="flex gap-2">
                               <button
                                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
@@ -268,10 +283,22 @@ const ProductAdmin = () => {
                                  <FaEdit /> Sửa
                               </button>
                               <button
-                                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
-                                 onClick={() => handleDelete(product.product_id)}
+                                 className={`${
+                                    product.status === 1
+                                       ? 'bg-orange-500 hover:bg-orange-600'
+                                       : 'bg-blue-500 hover:bg-blue-600'
+                                 } text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200`}
+                                 onClick={() => handleToggleStatus(product)}
                               >
-                                 <FaTrash /> Xóa
+                                 {product.status === 1 ? (
+                                    <>
+                                       <FaEyeSlash /> Ẩn
+                                    </>
+                                 ) : (
+                                    <>
+                                       <FaEye /> Hiện
+                                    </>
+                                 )}
                               </button>
                            </div>
                         </td>

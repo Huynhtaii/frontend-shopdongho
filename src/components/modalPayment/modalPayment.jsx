@@ -5,7 +5,16 @@ import { paymentAPI, paymentCompleted } from '../../services/payment_service';
 import { toast } from 'react-toastify';
 import AuthContext from '../../context/auth.context';
 import { useCart } from '../../context/cart_context';
-function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem, paymentMethod, onOrderSuccess }) {
+function ModalPayment({
+   isOpen,
+   onClose,
+   totalAmount,
+   transferContent,
+   cartItem,
+   paymentMethod,
+   onOrderSuccess,
+   onRegenerate,
+}) {
    // API DỮ LIỆU CHUYỂN TIỀN NHẬN TỪ GOOGLE SHEET
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
    const { fetchCart } = useCart();
@@ -64,12 +73,12 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
       }
    }, [onClose]);
 
-   // Reset timer when modal opens
+   // Reset timer when modal opens or transferContent changes (regeneration)
    useEffect(() => {
       if (isOpen) {
          setTimeLeft(300);
       }
-   }, [isOpen]);
+   }, [isOpen, transferContent]);
 
    // Countdown logic
    useEffect(() => {
@@ -85,10 +94,9 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
    // Expiration logic
    useEffect(() => {
       if (isOpen && timeLeft === 0) {
-         toast.error('Hết thời gian thanh toán, vui lòng thử lại.');
-         onClose();
+         toast.warning('Hết thời gian thanh toán, vui lòng tạo mã mới.');
       }
-   }, [isOpen, timeLeft, onClose]);
+   }, [isOpen, timeLeft]);
 
    useEffect(() => {
       if (!isOpen) return;
@@ -170,14 +178,59 @@ function ModalPayment({ isOpen, onClose, totalAmount, transferContent, cartItem,
                   </div>
                   {/* QR Code */}
                   <div className="flex flex-col items-center">
-                     <div className="border-2 border-gray-200 p-4 rounded-lg">
-                        <img src={QR} alt="QR Payment" className="w-64 h-64 object-contain" />
+                     <div className="relative border-2 border-gray-200 p-4 rounded-lg overflow-hidden group">
+                        <img
+                           src={QR}
+                           alt="QR Payment"
+                           className={`w-64 h-64 object-contain transition-all duration-300 ${
+                              timeLeft === 0 ? 'blur-sm grayscale opacity-40' : ''
+                           }`}
+                        />
+
+                        {timeLeft === 0 && (
+                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/20 backdrop-blur-[2px]">
+                              <p className="text-red-600 font-bold mb-3 text-center px-4 bg-white/80 py-2 rounded-lg shadow-sm border border-red-100">
+                                 Hết thời gian thanh toán
+                              </p>
+                              <button
+                                 onClick={onRegenerate}
+                                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-blue-200 active:scale-95 flex items-center gap-2 cursor-pointer"
+                              >
+                                 <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                 >
+                                    <path
+                                       strokeLinecap="round"
+                                       strokeLinejoin="round"
+                                       strokeWidth={2}
+                                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                    />
+                                 </svg>
+                                 Tạo mã mới
+                              </button>
+                           </div>
+                        )}
                      </div>
-                     <div className="mt-4 p-2 bg-orange-50 rounded-lg inline-block border border-orange-100 text-center">
-                        <p className="text-orange-600 font-bold mb-1 text-xs uppercase tracking-wider">
-                           Mã QR hết hạn sau:
+
+                     <div
+                        className={`mt-4 p-2 rounded-lg inline-block border text-center transition-all ${
+                           timeLeft === 0
+                              ? 'bg-gray-50 border-gray-200 text-gray-400'
+                              : 'bg-orange-50 border-orange-100'
+                        }`}
+                     >
+                        <p className={`font-bold mb-1 text-xs uppercase tracking-wider ${
+                           timeLeft === 0 ? 'text-gray-400' : 'text-orange-600'
+                        }`}>
+                           {timeLeft === 0 ? 'Mã đã hết hạn' : 'Mã QR hết hạn sau:'}
                         </p>
-                        <p className="text-2xl font-mono font-bold text-orange-700 leading-none">
+                        <p className={`text-2xl font-mono font-bold leading-none ${
+                           timeLeft === 0 ? 'text-gray-400' : 'text-orange-700'
+                        }`}>
                            {formatTime(timeLeft)}
                         </p>
                      </div>

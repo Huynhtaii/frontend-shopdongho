@@ -1,8 +1,9 @@
 import axios from '../utils/axios_config';
 
 const CategoryService = {
-   getAll: async () => {
-      const response = await axios.get('/v1/read-all/categories');
+   getAll: async (isAdmin = false) => {
+      const url = isAdmin ? '/v1/read/category' : '/v1/read-all/categories';
+      const response = await axios.get(url, { params: { isAdmin: isAdmin ? 'true' : 'false' } });
       return response;
    },
    getById: async (id) => {

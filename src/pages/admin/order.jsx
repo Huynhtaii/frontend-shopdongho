@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaArrowRight, FaSpinner } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import ModalUpdateOrder from '../../components/modals/modal_update_order';
 import OrderService from '../../services/order_service';
@@ -10,6 +10,7 @@ const OrderAdmin = () => {
    const [isModalVisible, setIsModalVisible] = useState(false);
    const [isDetailModalVisible, setIsDetailModalVisible] = useState(0);
    const [selectedOrder, setSelectedOrder] = useState(null);
+   const [loadingOrderId, setLoadingOrderId] = useState(null);
 
    // Filter states
    const [shippingFilter, setShippingFilter] = useState('All');
@@ -59,18 +60,6 @@ const OrderAdmin = () => {
       setIsModalVisible(true);
    };
 
-   const handleDelete = async (e, orderId) => {
-      e.stopPropagation();
-      if (window.confirm('Bạn có chắc chắn muốn xóa đơn hàng này?')) {
-         try {
-            await OrderService.deleteOrder(orderId);
-            fetchData();
-            toast.success('Xóa đơn hàng thành công');
-         } catch (error) {
-            toast.error('Có lỗi xảy ra khi xóa đơn hàng');
-         }
-      }
-   };
 
    const formatCurrency = (amount) => {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -92,12 +81,44 @@ const OrderAdmin = () => {
    };
 
    const handleUpdateStatus = async (orderId, status, paymentStatus) => {
+      setLoadingOrderId(orderId);
       try {
          await OrderService.updateOrderStatus(orderId, status, paymentStatus);
          toast.success('Cập nhật trạng thái đơn hàng thành công');
          fetchData();
       } catch (error) {
          toast.error('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng' + error);
+      } finally {
+         setLoadingOrderId(null);
+      }
+   };
+
+   const handleNextStatus = async (e, order) => {
+      e.stopPropagation();
+      let nextStatus = '';
+      let nextPaymentStatus = order.Payment?.status || 'Pending';
+
+      switch (order.status) {
+         case 'Pending':
+            nextStatus = 'Shipped';
+            break;
+         case 'Shipped':
+            nextStatus = 'Completed';
+            nextPaymentStatus = 'Success';
+            break;
+         default:
+            return;
+      }
+
+      setLoadingOrderId(order.order_id);
+      try {
+         await OrderService.updateOrderStatus(order.order_id, nextStatus, nextPaymentStatus);
+         toast.success(`Đã chuyển trạng thái sang ${nextStatus}`);
+         fetchData();
+      } catch (error) {
+         toast.error('Có lỗi xảy ra khi chuyển trạng thái: ' + error);
+      } finally {
+         setLoadingOrderId(null);
       }
    };
 
@@ -184,33 +205,60 @@ const OrderAdmin = () => {
                                  </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                 <span
-                                    className={`px-2 py-1 rounded-full text-xs ${
-                                       order.Payment?.status === 'Success'
-                                          ? 'bg-green-100 text-green-800'
-                                          : 'bg-yellow-100 text-yellow-800'
-                                    }`}
-                                 >
-                                    {order.Payment?.status || 'Pending'}
-                                 </span>
+                                 <div className="flex flex-col gap-1">
+                                    <span
+                                       className={`px-2 py-1 rounded-full text-xs w-fit ${
+                                          order.Payment?.status === 'Success'
+                                             ? 'bg-green-100 text-green-800'
+                                             : 'bg-yellow-100 text-yellow-800'
+                                       }`}
+                                    >
+                                       {order.Payment?.status || 'Pending'}
+                                    </span>
+                                    {order.Payment?.payment_method && (
+                                       <span className="text-[11px] text-gray-500 font-medium ml-1 italic">
+                                          ({order.Payment.payment_method === 'cod' ? 'COD' : 'QR'})
+                                       </span>
+                                    )}
+                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(order.total_amount)}</td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                  {order.User?.name || `ID: ${order.user_id}`}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                 <div className="flex gap-2">
+                                 <div className="flex gap-2 justify-center items-center">
+                                    <div className="w-9 h-9 flex items-center justify-center">
+                                       {(order.status === 'Pending' || order.status === 'Shipped') && (
+                                          <button
+                                             className={`${
+                                                loadingOrderId === order.order_id
+                                                   ? 'bg-blue-300'
+                                                   : 'bg-blue-500 hover:bg-blue-600'
+                                             } text-white p-2 rounded flex items-center justify-center transition duration-200 w-full h-full`}
+                                             onClick={(e) => handleNextStatus(e, order)}
+                                             disabled={loadingOrderId === order.order_id}
+                                             title={order.status === 'Pending' ? 'Giao hàng' : 'Hoàn thành'}
+                                          >
+                                             {loadingOrderId === order.order_id ? (
+                                                <FaSpinner className="animate-spin" />
+                                             ) : (
+                                                <FaArrowRight />
+                                             )}
+                                          </button>
+                                       )}
+                                    </div>
                                     <button
-                                       className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
+                                       className={`${
+                                          loadingOrderId === order.order_id
+                                             ? 'bg-green-300'
+                                             : 'bg-green-500 hover:bg-green-600'
+                                       } text-white p-2 rounded flex items-center justify-center transition duration-200 w-9 h-9`}
                                        onClick={(e) => handleEdit(e, order)}
+                                       disabled={loadingOrderId === order.order_id}
+                                       title="Chỉnh sửa"
                                     >
-                                       <FaEdit /> Cập nhật
-                                    </button>
-                                    <button
-                                       className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
-                                       onClick={(e) => handleDelete(e, order.order_id)}
-                                    >
-                                       <FaTrash /> Xóa
+                                       <FaEdit />
                                     </button>
                                  </div>
                               </td>
@@ -219,7 +267,28 @@ const OrderAdmin = () => {
                               <tr>
                                  <td colSpan="7" className="px-6 py-4 bg-gray-50">
                                     <div className="text-sm text-gray-600">
-                                       <div className="font-semibold mb-2 subrayado">Chi tiết đơn hàng:</div>
+                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200">
+                                          <div>
+                                             <div className="font-semibold mb-1 text-blue-700">Thông tin khách hàng</div>
+                                             <p>
+                                                <span className="font-medium text-gray-500">Người nhận:</span>{' '}
+                                                <span className="text-gray-800 font-semibold">{order.User?.name || 'N/A'}</span>
+                                             </p>
+                                             <p>
+                                                <span className="font-medium text-gray-500">Số điện thoại:</span>{' '}
+                                                <span className="text-gray-800 font-semibold">{order.User?.phone || 'N/A'}</span>
+                                             </p>
+                                          </div>
+                                          <div>
+                                             <div className="font-semibold mb-1 text-blue-700">Địa chỉ giao hàng</div>
+                                             <p className="text-gray-800 italic leading-snug">
+                                                {order.User?.address || 'Chưa cập nhật địa chỉ'}
+                                             </p>
+                                          </div>
+                                       </div>
+                                       <div className="font-semibold mb-2 subrayado uppercase text-[11px] tracking-wider text-gray-800">
+                                          Danh sách sản phẩm
+                                       </div>
                                        <table className="w-full">
                                           <thead>
                                              <tr className="border-b border-gray-300">

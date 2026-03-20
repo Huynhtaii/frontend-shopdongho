@@ -168,9 +168,10 @@ const Statistics = () => {
                <div className="flex items-center gap-2">
                   <div className="text-3xl font-bold text-gray-900">
                      {stats?.revenueStats?.length > 1
-                        ? (((stats.revenueStats[stats.revenueStats.length - 1].revenue -
-                             stats.revenueStats[stats.revenueStats.length - 2].revenue) /
-                             (stats.revenueStats[stats.revenueStats.length - 2].revenue || 1)) *
+                        ? (
+                             ((stats.revenueStats[stats.revenueStats.length - 1].revenue -
+                                stats.revenueStats[stats.revenueStats.length - 2].revenue) /
+                                (stats.revenueStats[stats.revenueStats.length - 2].revenue || 1)) *
                              100
                           ).toFixed(1)
                         : '0.0'}
@@ -225,7 +226,7 @@ const Statistics = () => {
          {/* Feedback Trends */}
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-               <h2 className="text-lg font-bold text-green-700 mb-4">Sản phẩm được yêu thích nhất</h2>
+               <h2 className="text-lg font-bold text-green-700 mb-4">Chi tiết sản phẩm bán chạy</h2>
                <div className="space-y-4">
                   {stats?.topRated?.map((item, i) => (
                      <div key={i} className="flex items-center justify-between p-3 bg-green-50/50 rounded-lg">
@@ -286,9 +287,7 @@ const Statistics = () => {
                         <tr key={i} className="hover:bg-gray-50 transition-colors">
                            <td className="py-4 px-4 font-medium text-gray-700">{item.Product?.name}</td>
                            <td className="py-4 px-4 text-center font-bold text-gray-900">{item.totalSold}</td>
-                           <td className="py-4 px-4 text-right font-bold text-blue-600">
-                              {formatPrice(item.revenue)}
-                           </td>
+                           <td className="py-4 px-4 text-right font-bold text-blue-600">{formatPrice(item.revenue)}</td>
                         </tr>
                      ))}
                   </tbody>

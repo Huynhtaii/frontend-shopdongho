@@ -1,9 +1,9 @@
 import axios from '../utils/axios_config';
 
 const ProductService = {
-   getAllProducts: async (limit = null) => {
-      const url = '/v1/read-all/products';
-      const response = await axios.get(url, { params: { limit } });
+   getAllProducts: async (limit = null, isAdmin = false) => {
+      const url = isAdmin ? '/v1/read/product' : '/v1/read-all/products';
+      const response = await axios.get(url, { params: { limit, isAdmin: isAdmin ? 'true' : 'false' } });
       return response;
    },
    getProductByCategory: async (name) => {

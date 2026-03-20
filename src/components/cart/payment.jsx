@@ -17,6 +17,7 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
    const [paymentMethod, setPaymentMethod] = useState('cod');
    const [userOrder, setUserOrder] = useState(null);
    const [isModalOpen, setIsModalOpen] = useState(false);
+   const [transferContent, setTransferContent] = useState('');
    const [loading, setLoading] = useState(false);
    const { formatPrice } = useFormatPrice();
 
@@ -79,11 +80,19 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
          if (paymentMethod === 'cod') {
             handleOrderCodSuccess();
          } else {
-            const transferContent = createTransferContent();
+            const content = createTransferContent();
+            setTransferContent(content);
             setIsModalOpen(true);
-            console.log('Transfer content:', transferContent);
+            console.log('Transfer content:', content);
          }
       }
+   };
+
+   const handleRegenerateQR = () => {
+      const newContent = createTransferContent();
+      setTransferContent(newContent);
+      console.log('Regenerated Transfer content:', newContent);
+      return newContent;
    };
 
    const handleCloseModal = () => {
@@ -165,9 +174,10 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
                isOpen={isModalOpen}
                onClose={handleCloseModal}
                totalAmount={totalPrice}
-               transferContent={createTransferContent()}
+               transferContent={transferContent}
                paymentMethod={paymentMethod}
                onOrderSuccess={onOrderSuccess}
+               onRegenerate={handleRegenerateQR}
             />
          )}
       </div>

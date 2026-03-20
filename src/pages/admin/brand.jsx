@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEdit, FaTrash, FaTag } from 'react-icons/fa';
+import { FaEdit, FaEye, FaEyeSlash, FaTag } from 'react-icons/fa';
 import { FiPlus, FiX } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import BrandService from '../../services/brand_service';
@@ -15,7 +15,7 @@ const BrandAdmin = () => {
 
    const fetchBrands = async () => {
       try {
-         const res = await BrandService.getAll();
+         const res = await BrandService.getAll(true);
          setBrands(res.DT || []);
       } catch {
          toast.error('Không thể tải danh sách thương hiệu');
@@ -43,18 +43,19 @@ const BrandAdmin = () => {
       setShowModal(true);
    };
 
-   const handleDelete = async (id) => {
-      if (!window.confirm('Bạn có chắc chắn muốn xóa thương hiệu này?')) return;
+   const handleToggleStatus = async (brand) => {
+      const action = brand.status === 1 ? 'ẩn' : 'hiện';
+      if (!window.confirm(`Bạn có chắc chắn muốn ${action} thương hiệu này?`)) return;
       try {
-         const res = await BrandService.delete(id);
+         const res = await BrandService.delete(brand.brand_id);
          if (res.EC === '0') {
-            toast.success('Xóa thương hiệu thành công');
+            toast.success(`${action.charAt(0).toUpperCase() + action.slice(1)} thương hiệu thành công`);
             fetchBrands();
          } else {
-            toast.error(res.EM || 'Xóa thương hiệu thất bại');
+            toast.error(res.EM || `${action} thương hiệu thất bại`);
          }
       } catch {
-         toast.error('Có lỗi xảy ra khi xóa thương hiệu');
+         toast.error(`Có lỗi xảy ra khi ${action} thương hiệu`);
       }
    };
 
@@ -121,6 +122,7 @@ const BrandAdmin = () => {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Xuất xứ</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mô tả</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số SP</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                      </tr>
                   </thead>
@@ -159,6 +161,15 @@ const BrandAdmin = () => {
                                     {brand.products?.length ?? 0} SP
                                  </span>
                               </td>
+                              <td className="px-4 py-3">
+                                 <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                       brand.status === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                    }`}
+                                 >
+                                    {brand.status === 1 ? 'Đang hiện' : 'Đang ẩn'}
+                                 </span>
+                              </td>
                               <td className="px-4 py-3 text-right">
                                  <div className="flex gap-2 justify-end">
                                     <button
@@ -169,11 +180,24 @@ const BrandAdmin = () => {
                                        <span className="hidden sm:inline">Sửa</span>
                                     </button>
                                     <button
-                                       onClick={() => handleDelete(brand.brand_id)}
-                                       className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1 text-sm transition"
+                                       onClick={() => handleToggleStatus(brand)}
+                                       className={`${
+                                          brand.status === 1
+                                             ? 'bg-orange-500 hover:bg-orange-600'
+                                             : 'bg-blue-500 hover:bg-blue-600'
+                                       } text-white px-2 py-1 rounded flex items-center gap-1 text-sm transition`}
                                     >
-                                       <FaTrash />
-                                       <span className="hidden sm:inline">Xóa</span>
+                                       {brand.status === 1 ? (
+                                          <>
+                                             <FaEyeSlash />
+                                             <span className="hidden sm:inline">Ẩn</span>
+                                          </>
+                                       ) : (
+                                          <>
+                                             <FaEye />
+                                             <span className="hidden sm:inline">Hiện</span>
+                                          </>
+                                       )}
                                     </button>
                                  </div>
                               </td>
