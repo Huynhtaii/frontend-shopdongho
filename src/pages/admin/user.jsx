@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import ModalAddUpdateUser from '../../components/modals/modal_add_update_user';
+import ModalUserOrders from '../../components/modals/modal_user_orders';
 import { toast } from 'react-toastify';
-import { FiPlus } from 'react-icons/fi';
+import { FiPlus, FiEye } from 'react-icons/fi';
 import UserService from '../../services/user_service';
 import RoleService from '../../services/role_service';
 
@@ -10,6 +11,9 @@ const UserAdmin = () => {
    const [isModalVisible, setIsModalVisible] = useState(false);
    const [editingUser, setEditingUser] = useState(null);
    const [roles, setRoles] = useState([]);
+   const [isOrdersModalVisible, setIsOrdersModalVisible] = useState(false);
+   const [selectedUser, setSelectedUser] = useState(null);
+   const [userOrders, setUserOrders] = useState([]);
    const [formData, setFormData] = useState({
       name: '',
       email: '',
@@ -99,6 +103,20 @@ const UserAdmin = () => {
          [name]: value,
       }));
    };
+   const handleViewOrders = async (user) => {
+      try {
+         const res = await UserService.getUserWithOrders(user.user_id);
+         if (res && res.EC === '0') {
+            setSelectedUser(res.DT);
+            setUserOrders(res.DT.orders || []);
+            setIsOrdersModalVisible(true);
+         } else {
+            toast.error(res?.EM || 'Không thể lấy dữ liệu đơn hàng');
+         }
+      } catch (error) {
+         toast.error('Có lỗi xảy ra khi tải đơn hàng');
+      }
+   };
 
    return (
       <div className="p-4 sm:p-6">
@@ -179,6 +197,12 @@ const UserAdmin = () => {
                                     >
                                        {user.status === 'active' ? 'Vô hiệu hoá' : 'Kích hoạt'}
                                     </button>
+                                    <button
+                                       className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition duration-200 flex items-center gap-1"
+                                       onClick={() => handleViewOrders(user)}
+                                    >
+                                       <FiEye /> Xem đơn hàng
+                                    </button>
                                  </div>
                               </td>
                            </tr>
@@ -198,6 +222,14 @@ const UserAdmin = () => {
                handleSubmit={handleSubmit}
                setIsModalVisible={setIsModalVisible}
                roles={roles}
+            />
+         )}
+
+         {isOrdersModalVisible && (
+            <ModalUserOrders
+               user={selectedUser}
+               orders={userOrders}
+               onClose={() => setIsOrdersModalVisible(false)}
             />
          )}
       </div>

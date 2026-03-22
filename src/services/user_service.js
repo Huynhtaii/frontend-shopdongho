@@ -54,6 +54,11 @@ const UserService = {
    toggleUserStatus(id) {
       return axios.put(`/v1/user/toggle-status/${id}`);
    },
+   getUserWithOrders: (id) => {
+      const url = `/v1/read/account-user/${id}`;
+      const response = axios.get(url);
+      return response;
+   },
 };
 
 export default UserService;

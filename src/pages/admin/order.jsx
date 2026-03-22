@@ -75,6 +75,8 @@ const OrderAdmin = () => {
             return 'bg-red-100 text-red-800';
          case 'canceled':
             return 'bg-red-100 text-red-800';
+         case 'faileddelivery':
+            return 'bg-orange-100 text-orange-800';
          default:
             return 'bg-gray-100 text-gray-800';
       }
@@ -141,6 +143,7 @@ const OrderAdmin = () => {
                      <option value="Shipped">Shipped</option>
                      <option value="Completed">Completed</option>
                      <option value="Canceled">Canceled</option>
+                     <option value="FailedDelivery">Failed delivery</option>
                   </select>
                </div>
 
@@ -248,18 +251,22 @@ const OrderAdmin = () => {
                                           </button>
                                        )}
                                     </div>
-                                    <button
-                                       className={`${
-                                          loadingOrderId === order.order_id
-                                             ? 'bg-green-300'
-                                             : 'bg-green-500 hover:bg-green-600'
-                                       } text-white p-2 rounded flex items-center justify-center transition duration-200 w-9 h-9`}
-                                       onClick={(e) => handleEdit(e, order)}
-                                       disabled={loadingOrderId === order.order_id}
-                                       title="Chỉnh sửa"
-                                    >
-                                       <FaEdit />
-                                    </button>
+                                    {order.status !== 'Completed' &&
+                                       order.status !== 'Canceled' &&
+                                       order.status !== 'FailedDelivery' && (
+                                          <button
+                                             className={`${
+                                                loadingOrderId === order.order_id
+                                                   ? 'bg-green-300'
+                                                   : 'bg-green-500 hover:bg-green-600'
+                                             } text-white p-2 rounded flex items-center justify-center transition duration-200 w-9 h-9`}
+                                             onClick={(e) => handleEdit(e, order)}
+                                             disabled={loadingOrderId === order.order_id}
+                                             title="Chỉnh sửa"
+                                          >
+                                             <FaEdit />
+                                          </button>
+                                       )}
                                  </div>
                               </td>
                            </tr>

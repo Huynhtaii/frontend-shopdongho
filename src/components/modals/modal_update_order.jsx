@@ -20,16 +20,20 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                { value: 'Shipped', label: 'Shipped' },
                { value: 'Completed', label: 'Completed' },
                { value: 'Canceled', label: 'Canceled' },
+               { value: 'FailedDelivery', label: 'Failed delivery' },
             ];
          case 'Shipped':
             return [
                { value: 'Shipped', label: 'Shipped' },
                { value: 'Completed', label: 'Completed' },
+               { value: 'FailedDelivery', label: 'Failed delivery' },
             ];
          case 'Completed':
             return [{ value: 'Completed', label: 'Completed' }];
          case 'Canceled':
             return [{ value: 'Canceled', label: 'Canceled' }];
+         case 'FailedDelivery':
+            return [{ value: 'FailedDelivery', label: 'Failed delivery' }];
          default:
             return [{ value: current, label: current }];
       }
@@ -65,7 +69,11 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                   <select
                      value={status}
                      onChange={(e) => setStatus(e.target.value)}
-                     disabled={currentStatus === 'Completed' || currentStatus === 'Canceled'}
+                     disabled={
+                        currentStatus === 'Completed' ||
+                        currentStatus === 'Canceled' ||
+                        currentStatus === 'FailedDelivery'
+                     }
                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                      {availableStatuses.map((opt) => (
@@ -75,7 +83,9 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                      ))}
                   </select>
                   <p className="mt-1.5 text-[10px] text-gray-500 italic">
-                     {currentStatus === 'Completed' || currentStatus === 'Canceled'
+                     {currentStatus === 'Completed' ||
+                     currentStatus === 'Canceled' ||
+                     currentStatus === 'FailedDelivery'
                         ? 'Đơn hàng đã kết thúc, không thể thay đổi trạng thái.'
                         : 'Trạng thái đơn hàng chỉ có thể cập nhật theo tiến trình.'}
                   </p>
