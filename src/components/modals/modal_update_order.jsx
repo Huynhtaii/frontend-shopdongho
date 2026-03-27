@@ -29,11 +29,19 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                { value: 'FailedDelivery', label: 'Failed delivery' },
             ];
          case 'Completed':
-            return [{ value: 'Completed', label: 'Completed' }];
+            return [
+               { value: 'Completed', label: 'Completed' },
+               { value: 'Returned to shop', label: 'Returned to shop' },
+            ];
          case 'Canceled':
             return [{ value: 'Canceled', label: 'Canceled' }];
          case 'FailedDelivery':
-            return [{ value: 'FailedDelivery', label: 'Failed delivery' }];
+            return [
+               { value: 'FailedDelivery', label: 'Failed delivery' },
+               { value: 'Returned to shop', label: 'Returned to shop' },
+            ];
+         case 'Returned to shop':
+            return [{ value: 'Returned to shop', label: 'Returned to shop' }];
          default:
             return [{ value: current, label: current }];
       }
@@ -68,11 +76,16 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                   </label>
                   <select
                      value={status}
-                     onChange={(e) => setStatus(e.target.value)}
+                     onChange={(e) => {
+                        const newStatus = e.target.value;
+                        setStatus(newStatus);
+                        if (newStatus === 'Returned to shop' && paymentStatus === 'Success') {
+                           setPaymentStatus('RefundPending');
+                        }
+                     }}
                      disabled={
-                        currentStatus === 'Completed' ||
                         currentStatus === 'Canceled' ||
-                        currentStatus === 'FailedDelivery'
+                        currentStatus === 'Returned to shop'
                      }
                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
@@ -83,9 +96,8 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                      ))}
                   </select>
                   <p className="mt-1.5 text-[10px] text-gray-500 italic">
-                     {currentStatus === 'Completed' ||
-                     currentStatus === 'Canceled' ||
-                     currentStatus === 'FailedDelivery'
+                     {currentStatus === 'Canceled' ||
+                     currentStatus === 'Returned to shop'
                         ? 'Đơn hàng đã kết thúc, không thể thay đổi trạng thái.'
                         : 'Trạng thái đơn hàng chỉ có thể cập nhật theo tiến trình.'}
                   </p>
@@ -103,6 +115,8 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                      <option value="Pending">Pending (Chờ thanh toán)</option>
                      <option value="Success">Success (Đã thanh toán)</option>
                      <option value="Failed">Failed (Thanh toán thất bại)</option>
+                     <option value="RefundPending">Refund Pending (Chờ hoàn tiền)</option>
+                     <option value="Refunded">Refunded (Đã hoàn tiền)</option>
                   </select>
                </div>
 

@@ -8,7 +8,9 @@ const UserFooter = () => {
       <div className="bg-footer py-14">
          <div className="layout-container text-white flex gap-10 text-[15px] flex-col sm:flex-col md:flex-col lg:flex-row xl:flex-row">
             <div className="flex flex-col gap-3 w-full sm:w-full md:w-full lg:w-[23%] xl:w-[23%] 2xl:w-[23%]">
-               <img src="/logo-watchstore.webp" alt="" className="w-[280px] h-auto" />
+               <div className="w-[280px] h-[80px] overflow-hidden">
+                  <img src="/logo-w2.webp" alt="" className="w-full h-auto -translate-y-14 -translate-x-6" />
+               </div>
                <h1 className="text-2xl mt-1">Cửa hàng WatchStore</h1>
                <p>Cửa hàng uy tín và chất lượng, cam kết mang đến những trải nghiệm mua sắm tiện lợi và hiện đại</p>
                <p>Mã số thuế: 12345678999</p>

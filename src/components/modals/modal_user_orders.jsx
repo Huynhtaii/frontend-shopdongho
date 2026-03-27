@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FiX } from 'react-icons/fi';
 
 const ModalUserOrders = ({ user, orders, onClose }) => {
-   const formatVND = (amount) =>
-      new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+   const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+   const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
    const statusConfig = {
       Pending: { label: 'Đang chờ xử lý', color: 'bg-amber-100 text-amber-700' },
       Shipped: { label: 'Đang giao hàng', color: 'bg-blue-100 text-blue-700' },
       Completed: { label: 'Đã giao hàng', color: 'bg-emerald-100 text-emerald-700' },
       Canceled: { label: 'Đã hủy', color: 'bg-red-100 text-red-600' },
+   };
+
+   const toggleExpand = (orderId) => {
+      setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
    };
 
    return (
@@ -60,33 +65,121 @@ const ModalUserOrders = ({ user, orders, onClose }) => {
                                  color: 'bg-gray-100 text-gray-600',
                               };
                               return (
-                                 <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                                       #{order.order_id}
-                                    </td>
-                                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                                       {new Date(order.order_date).toLocaleDateString('vi-VN')}
-                                    </td>
-                                    <td className="px-4 py-4 text-sm text-gray-600">
-                                       <div className="max-w-xs truncate">
-                                          {order.order_items?.map((item, idx) => (
-                                             <div key={idx} className="truncate">
-                                                {item.Product?.name} (x{item.quantity})
+                                 <React.Fragment key={order.order_id}>
+                                    <tr
+                                       onClick={() => toggleExpand(order.order_id)}
+                                       className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    >
+                                       <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                                          #{order.order_id}
+                                       </td>
+                                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                                          {new Date(order.order_date).toLocaleDateString('vi-VN')}
+                                       </td>
+                                       <td className="px-4 py-4 text-sm text-gray-600">
+                                          <div className="max-w-xs truncate">
+                                             {order.order_items?.map((item, idx) => (
+                                                <div key={idx} className="truncate">
+                                                   {item.Product?.name} (x{item.quantity})
+                                                </div>
+                                             ))}
+                                          </div>
+                                       </td>
+                                       <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-red-600">
+                                          {formatVND(order.total_amount)}
+                                       </td>
+                                       <td className="px-4 py-4 whitespace-nowrap text-center text-sm">
+                                          <span
+                                             className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase ${status.color}`}
+                                          >
+                                             {status.label}
+                                          </span>
+                                       </td>
+                                    </tr>
+                                    {expandedOrderId === order.order_id && (
+                                       <tr>
+                                          <td colSpan="5" className="px-6 py-4 bg-gray-50">
+                                             <div className="text-sm text-gray-600 w-full">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200">
+                                                   <div>
+                                                      <div className="font-semibold mb-1 text-blue-700">
+                                                         Thông tin khách hàng
+                                                      </div>
+                                                      <p>
+                                                         <span className="font-medium text-gray-500">Người nhận:</span>{' '}
+                                                         <span className="text-gray-800 font-semibold">
+                                                            {user?.name || 'N/A'}
+                                                         </span>
+                                                      </p>
+                                                      <p>
+                                                         <span className="font-medium text-gray-500">
+                                                            Số điện thoại:
+                                                         </span>{' '}
+                                                         <span className="text-gray-800 font-semibold">
+                                                            {user?.phone || 'N/A'}
+                                                         </span>
+                                                      </p>
+                                                   </div>
+                                                   <div>
+                                                      <div className="font-semibold mb-1 text-blue-700">
+                                                         Địa chỉ giao hàng
+                                                      </div>
+                                                      <p className="text-gray-800 italic leading-snug">
+                                                         {user?.address || 'Chưa cập nhật địa chỉ'}
+                                                      </p>
+                                                   </div>
+                                                </div>
+                                                <div className="font-semibold mb-2 uppercase text-[11px] tracking-wider text-gray-800">
+                                                   Danh sách sản phẩm
+                                                </div>
+                                                <table className="w-full">
+                                                   <thead>
+                                                      <tr className="border-b border-gray-300">
+                                                         <th className="text-left py-2 font-medium">Sản phẩm</th>
+                                                         <th className="text-center py-2 font-medium">Số lượng</th>
+                                                         <th className="text-right py-2 font-medium">Đơn giá</th>
+                                                         <th className="text-right py-2 font-medium">Thành tiền</th>
+                                                      </tr>
+                                                   </thead>
+                                                   <tbody>
+                                                      {order.order_items?.map((item) => (
+                                                         <tr
+                                                            key={item.order_item_id}
+                                                            className="border-b border-gray-100"
+                                                         >
+                                                            <td className="py-2">
+                                                               <div className="flex items-center gap-2">
+                                                                  <img
+                                                                     src={
+                                                                        item.Product?.ProductImages?.[0]?.url ||
+                                                                        'https://via.placeholder.com/100'
+                                                                     }
+                                                                     alt={item.Product?.name}
+                                                                     className="w-8 h-8 object-cover rounded border"
+                                                                  />
+                                                                  <span className="text-gray-700">
+                                                                     {item.Product?.name || 'Sản phẩm không xác định'}
+                                                                  </span>
+                                                               </div>
+                                                            </td>
+                                                            <td className="py-2 px-2 text-center text-gray-700">
+                                                               x{item.quantity}
+                                                            </td>
+                                                            <td className="py-2 text-right text-gray-700">
+                                                               {formatVND(item.price)}
+                                                            </td>
+                                                            <td className="py-2 text-right font-medium text-gray-800">
+                                                               {formatVND(item.price * item.quantity)}
+                                                            </td>
+                                                         </tr>
+                                                      ))}
+                                                   </tbody>
+                                                </table>
                                              </div>
-                                          ))}
-                                       </div>
-                                    </td>
-                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-red-600">
-                                       {formatVND(order.total_amount)}
-                                    </td>
-                                    <td className="px-4 py-4 whitespace-nowrap text-center text-sm">
-                                       <span
-                                          className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase ${status.color}`}
-                                       >
-                                          {status.label}
-                                       </span>
-                                    </td>
-                                 </tr>
+                                          </td>
+                                       </tr>
+                                    )}
+                                 </React.Fragment>
                               );
                            })}
                         </tbody>

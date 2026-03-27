@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEdit, FaArrowRight, FaSpinner } from 'react-icons/fa';
+import { FaEdit, FaArrowRight, FaSpinner, FaUndo, FaCheck } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import ModalUpdateOrder from '../../components/modals/modal_update_order';
 import OrderService from '../../services/order_service';
@@ -54,12 +54,30 @@ const OrderAdmin = () => {
       setIsDetailModalVisible(isDetailModalVisible === order.order_id ? 0 : order.order_id);
    };
 
+   const handleRefundSuccess = async (e, order) => {
+      e.stopPropagation();
+      setLoadingOrderId(order.order_id);
+      try {
+         const res = await OrderService.updateOrderStatus(order.order_id, null, 'Refunded');
+         if (res?.EC === '0') {
+            toast.success('Đã xác nhận hoàn tiền thành công!');
+            fetchData();
+         } else {
+            toast.error(res?.EM || 'Lỗi khi cập nhật trạng thái hoàn tiền');
+         }
+      } catch (error) {
+         console.error('Lỗi khi hoàn tiền:', error);
+         toast.error('Có lỗi xảy ra, vui lòng thử lại!');
+      } finally {
+         setLoadingOrderId(null);
+      }
+   };
+
    const handleEdit = (e, order) => {
       e.stopPropagation();
       setSelectedOrder(order);
       setIsModalVisible(true);
    };
-
 
    const formatCurrency = (amount) => {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -77,6 +95,8 @@ const OrderAdmin = () => {
             return 'bg-red-100 text-red-800';
          case 'faileddelivery':
             return 'bg-orange-100 text-orange-800';
+         case 'returned to shop':
+            return 'bg-purple-100 text-purple-800';
          default:
             return 'bg-gray-100 text-gray-800';
       }
@@ -107,6 +127,9 @@ const OrderAdmin = () => {
          case 'Shipped':
             nextStatus = 'Completed';
             nextPaymentStatus = 'Success';
+            break;
+         case 'FailedDelivery':
+            nextStatus = 'Returned to shop';
             break;
          default:
             return;
@@ -144,6 +167,7 @@ const OrderAdmin = () => {
                      <option value="Completed">Completed</option>
                      <option value="Canceled">Canceled</option>
                      <option value="FailedDelivery">Failed delivery</option>
+                     <option value="Returned to shop">Returned to shop</option>
                   </select>
                </div>
 
@@ -158,6 +182,8 @@ const OrderAdmin = () => {
                      <option value="Pending">Pending</option>
                      <option value="Success">Success</option>
                      <option value="Failed">Failed</option>
+                     <option value="RefundPending">Refund Pending</option>
+                     <option value="Refunded">Refunded</option>
                   </select>
                </div>
             </div>
@@ -211,9 +237,11 @@ const OrderAdmin = () => {
                                  <div className="flex flex-col gap-1">
                                     <span
                                        className={`px-2 py-1 rounded-full text-xs w-fit ${
-                                          order.Payment?.status === 'Success'
+                                          order.Payment?.status === 'Success' || order.Payment?.status === 'Refunded'
                                              ? 'bg-green-100 text-green-800'
-                                             : 'bg-yellow-100 text-yellow-800'
+                                             : order.Payment?.status === 'RefundPending'
+                                               ? 'bg-orange-100 text-orange-800'
+                                               : 'bg-yellow-100 text-yellow-800'
                                        }`}
                                     >
                                        {order.Payment?.status || 'Pending'}
@@ -232,7 +260,9 @@ const OrderAdmin = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                                  <div className="flex gap-2 justify-center items-center">
                                     <div className="w-9 h-9 flex items-center justify-center">
-                                       {(order.status === 'Pending' || order.status === 'Shipped') && (
+                                       {(order.status === 'Pending' ||
+                                          order.status === 'Shipped' ||
+                                          order.status === 'FailedDelivery') && (
                                           <button
                                              className={`${
                                                 loadingOrderId === order.order_id
@@ -241,7 +271,13 @@ const OrderAdmin = () => {
                                              } text-white p-2 rounded flex items-center justify-center transition duration-200 w-full h-full`}
                                              onClick={(e) => handleNextStatus(e, order)}
                                              disabled={loadingOrderId === order.order_id}
-                                             title={order.status === 'Pending' ? 'Giao hàng' : 'Hoàn thành'}
+                                             title={
+                                                order.status === 'Pending'
+                                                   ? 'Giao hàng'
+                                                   : order.status === 'Shipped'
+                                                     ? 'Hoàn thành'
+                                                     : 'Chuyển về cửa hàng'
+                                             }
                                           >
                                              {loadingOrderId === order.order_id ? (
                                                 <FaSpinner className="animate-spin" />
@@ -250,10 +286,44 @@ const OrderAdmin = () => {
                                              )}
                                           </button>
                                        )}
+                                       {order.Payment?.status === 'RefundPending' && (
+                                          <button
+                                             className={`${
+                                                loadingOrderId === order.order_id
+                                                   ? 'bg-green-300'
+                                                   : 'bg-green-500 hover:bg-green-600'
+                                             } text-white px-3 py-1 rounded flex items-center justify-center transition duration-200 h-9 w-auto whitespace-nowrap text-xs font-bold`}
+                                             onClick={(e) => handleRefundSuccess(e, order)}
+                                             disabled={loadingOrderId === order.order_id}
+                                             title="Xác nhận đã hoàn tiền"
+                                          >
+                                             {loadingOrderId === order.order_id ? (
+                                                <FaSpinner className="animate-spin mx-4" />
+                                             ) : (
+                                                <>
+                                                   <FaCheck className="mr-1.5" />
+                                                   Hoàn tiền
+                                                </>
+                                             )}
+                                          </button>
+                                       )}
                                     </div>
-                                    {order.status !== 'Completed' &&
+                                    {order.status === 'Completed' ? (
+                                       <button
+                                          className={`${
+                                             loadingOrderId === order.order_id
+                                                ? 'bg-red-300'
+                                                : 'bg-red-500 hover:bg-red-600'
+                                          } text-white p-2 rounded flex items-center justify-center transition duration-200 w-9 h-9`}
+                                          onClick={(e) => handleEdit(e, order)}
+                                          disabled={loadingOrderId === order.order_id}
+                                          title="Hoàn tiền / Trả hàng"
+                                       >
+                                          <FaUndo />
+                                       </button>
+                                    ) : (
                                        order.status !== 'Canceled' &&
-                                       order.status !== 'FailedDelivery' && (
+                                       order.status !== 'Returned to shop' && (
                                           <button
                                              className={`${
                                                 loadingOrderId === order.order_id
@@ -266,7 +336,8 @@ const OrderAdmin = () => {
                                           >
                                              <FaEdit />
                                           </button>
-                                       )}
+                                       )
+                                    )}
                                  </div>
                               </td>
                            </tr>
@@ -276,14 +347,20 @@ const OrderAdmin = () => {
                                     <div className="text-sm text-gray-600">
                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200">
                                           <div>
-                                             <div className="font-semibold mb-1 text-blue-700">Thông tin khách hàng</div>
+                                             <div className="font-semibold mb-1 text-blue-700">
+                                                Thông tin khách hàng
+                                             </div>
                                              <p>
                                                 <span className="font-medium text-gray-500">Người nhận:</span>{' '}
-                                                <span className="text-gray-800 font-semibold">{order.User?.name || 'N/A'}</span>
+                                                <span className="text-gray-800 font-semibold">
+                                                   {order.User?.name || 'N/A'}
+                                                </span>
                                              </p>
                                              <p>
                                                 <span className="font-medium text-gray-500">Số điện thoại:</span>{' '}
-                                                <span className="text-gray-800 font-semibold">{order.User?.phone || 'N/A'}</span>
+                                                <span className="text-gray-800 font-semibold">
+                                                   {order.User?.phone || 'N/A'}
+                                                </span>
                                              </p>
                                           </div>
                                           <div>
