@@ -53,7 +53,7 @@ const ProductCartItem = ({ item }) => {
          </div>
          <IoIosCloseCircle
             size={18}
-            className="absolute top-1 left-1 text-gray-300 cursor-pointer"
+            className="absolute top-1 left-1 text-gray-300 cursor-pointer z-[9999]"
             onClick={() => deleteCartItem(item.cart_item_id)}
          />
       </div>

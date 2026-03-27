@@ -445,6 +445,16 @@ function ProductDetail() {
                                              "{fb.comments}"
                                           </p>
                                        )}
+                                       {fb.image && (
+                                          <div className="mt-3 pl-[52px]">
+                                             <img
+                                                src={fb.image}
+                                                alt="Review"
+                                                className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                                onClick={() => window.open(fb.image, '_blank')}
+                                             />
+                                          </div>
+                                       )}
                                     </div>
                                  ))
                               ) : (
