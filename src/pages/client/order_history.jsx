@@ -22,6 +22,8 @@ const statusConfig = {
    Shipped: { label: 'Đang giao hàng', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-400' },
    Completed: { label: 'Đã giao hàng', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-400' },
    Canceled: { label: 'Đã hủy', color: 'bg-red-100 text-red-600', dot: 'bg-red-400' },
+   FailedDelivery: { label: 'Giao thất bại', color: 'bg-orange-100 text-orange-700', dot: 'bg-orange-400' },
+   'Returned to shop': { label: 'Trả hàng', color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-400' },
 };
 
 const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -161,6 +163,8 @@ function OrderHistory() {
                            { key: 'Pending', label: 'Đang chờ' },
                            { key: 'Shipped', label: 'Đang giao' },
                            { key: 'Completed', label: 'Đã giao' },
+                           { key: 'FailedDelivery', label: 'Thất bại' },
+                           { key: 'Returned to shop', label: 'Trả hàng' },
                            { key: 'Canceled', label: 'Đã hủy' },
                         ].map(({ key, label }) => {
                            const count = key === 'All' ? orders.length : orders.filter((o) => o.status === key).length;
@@ -343,6 +347,21 @@ function OrderHistory() {
                                           {order.status === 'Pending' && order.Payment?.status === 'Success' && (
                                              <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[11px] text-amber-700 leading-relaxed">
                                                 <span className="font-bold">Lưu ý:</span> Đơn hàng này đã được thanh toán. Sau khi hủy, vui lòng liên hệ Admin để được hỗ trợ hoàn tiền.
+                                             </div>
+                                          )}
+
+                                          {(order.status === 'FailedDelivery' || order.status === 'Returned to shop') && (
+                                             <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-[11px] text-red-700 leading-relaxed">
+                                                <span className="font-bold text-[13px] block mb-1">
+                                                   Đơn hàng giao không thành công.
+                                                </span>{' '}
+                                                {order.Payment?.status === 'Refunded'
+                                                   ? 'Shop đã hoàn tiền thành công cho bạn.'
+                                                   : order.Payment?.status === 'RefundPending'
+                                                     ? 'Shop đang tiến hành hoàn tiền cho bạn.'
+                                                     : order.Payment?.status === 'Success'
+                                                       ? 'Shop sẽ chủ động liên hệ để hỗ trợ hoàn tiền cho bạn.'
+                                                       : 'Đơn hàng đã được ghi nhận giao thất bại.'}
                                              </div>
                                           )}
                                        </div>

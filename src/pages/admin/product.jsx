@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FaEdit, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEdit, FaEye, FaEyeSlash, FaStar } from 'react-icons/fa';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import ModalAddUpdateProduct from '../../components/modals/modal_add_update_product';
+import ModalProductFeedback from '../../components/modals/ModalProductFeedback';
 import ProductService from '../../services/product_service';
 import useFormatPrice from '../../hooks/use_formatPrice';
 import Pagination from '../../components/pagination';
@@ -10,7 +11,9 @@ import Pagination from '../../components/pagination';
 const ProductAdmin = () => {
    const [products, setProducts] = useState([]);
    const [showModal, setShowModal] = useState(false);
+   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
    const [selectedProduct, setSelectedProduct] = useState(null);
+   const [selectedProductForFeedback, setSelectedProductForFeedback] = useState(null);
    const [formData, setFormData] = useState({
       name: '',
       description: '',
@@ -108,6 +111,11 @@ const ProductAdmin = () => {
          })),
       );
       setShowModal(true);
+   };
+
+   const handleShowFeedback = (product) => {
+      setSelectedProductForFeedback(product);
+      setShowFeedbackModal(true);
    };
 
    const handleToggleStatus = async (product) => {
@@ -245,6 +253,7 @@ const ProductAdmin = () => {
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ảnh</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã SP</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên sản phẩm</th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Danh mục</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá KM</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
@@ -263,6 +272,7 @@ const ProductAdmin = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{product.sku}</td>
                         <td className="px-6 py-4">{product.name}</td>
+                        <td className="px-6 py-4">{product.Categories && product.Categories.length > 0 ? product.Categories[0].name : 'Không có'}</td>
                         <td className="px-6 py-4">{formatPrice(product.price)}</td>
                         <td className="px-6 py-4">{formatPrice(product.discount_price)}</td>
                         <td className="px-6 py-4">
@@ -275,30 +285,35 @@ const ProductAdmin = () => {
                            </span>
                         </td>
                         <td className="px-6 py-4">
-                           <div className="flex gap-2">
+                           <div className="flex items-center gap-3">
                               <button
-                                 className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200"
+                                 className="group p-2 bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:scale-110"
                                  onClick={() => handleEdit(product)}
+                                 title="Chỉnh sửa sản phẩm"
                               >
-                                 <FaEdit /> Sửa
+                                 <FaEdit size={16} />
                               </button>
                               <button
-                                 className={`${
+                                 className={`group p-2 transition-all duration-300 rounded-xl shadow-sm hover:shadow-md hover:scale-110 ${
                                     product.status === 1
-                                       ? 'bg-orange-500 hover:bg-orange-600'
-                                       : 'bg-blue-500 hover:bg-blue-600'
-                                 } text-white px-3 py-1 rounded flex items-center gap-1 transition duration-200`}
+                                       ? 'bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white'
+                                       : 'bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white'
+                                 }`}
                                  onClick={() => handleToggleStatus(product)}
+                                 title={product.status === 1 ? 'Ẩn sản phẩm' : 'Hiện sản phẩm'}
                               >
                                  {product.status === 1 ? (
-                                    <>
-                                       <FaEyeSlash /> Ẩn
-                                    </>
+                                    <FaEyeSlash size={16} />
                                  ) : (
-                                    <>
-                                       <FaEye /> Hiện
-                                    </>
+                                    <FaEye size={16} />
                                  )}
+                              </button>
+                              <button
+                                 className="group p-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:scale-110"
+                                 onClick={() => handleShowFeedback(product)}
+                                 title="Xem đánh giá sản phẩm"
+                              >
+                                 <FaStar className="text-blue-500 group-hover:text-white transition-colors duration-300" size={16} />
                               </button>
                            </div>
                         </td>
@@ -320,6 +335,12 @@ const ProductAdmin = () => {
                handleRemoveImage={handleRemoveImage}
                handleSubmit={handleSubmit}
                previewImages={previewImages}
+            />
+         )}
+         {showFeedbackModal && (
+            <ModalProductFeedback
+               product={selectedProductForFeedback}
+               onClose={() => setShowFeedbackModal(false)}
             />
          )}
       </div>

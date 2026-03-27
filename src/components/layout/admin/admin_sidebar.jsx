@@ -8,6 +8,7 @@ import {
    RiPriceTag3Line,
    RiApps2Line,
    RiBarChartLine,
+   RiStarLine,
 } from 'react-icons/ri';
 
 const AdminSidebar = ({ isOpen, setIsOpen }) => {
@@ -20,6 +21,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       { path: '/admin/categories', icon: <RiApps2Line size={24} />, label: 'Danh mục' },
       { path: '/admin/brands', icon: <RiPriceTag3Line size={24} />, label: 'Thương hiệu' },
       { path: '/admin/orders', icon: <RiShoppingCart2Line size={24} />, label: 'Đơn hàng' },
+      { path: '/admin/feedbacks', icon: <RiStarLine size={24} />, label: 'Đánh giá' },
       { path: '/admin/users', icon: <RiUserLine size={24} />, label: 'Người dùng' },
       { path: '/admin/chat', icon: <RiMessage2Line size={24} />, label: 'Tin nhắn' },
    ];
@@ -32,11 +34,9 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
          >
             {/* Logo */}
             <Link to="/" className="h-16 flex items-center justify-center border-b border-gray-700">
-               <img
-                  src="/logo-watchstore.webp"
-                  alt="Logo"
-                  className={`${isOpen ? 'w-40' : 'w-12'} transition-all duration-300`}
-               />
+               <div className="w-[230px] h-[80px] overflow-hidden">
+                  <img src="/logo-w2.webp" alt="" className="w-full h-auto -translate-y-9" />
+               </div>
             </Link>
 
             {/* Menu Items */}

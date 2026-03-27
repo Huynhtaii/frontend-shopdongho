@@ -10,6 +10,7 @@ import { PrivateRouteAdmin } from './private_route';
 import BrandAdmin from '../pages/admin/brand';
 import CategoryAdmin from '../pages/admin/category';
 import Statistics from '../pages/admin/statistics';
+import FeedbackAdmin from '../pages/admin/feedback';
 
 const AdminRoutes = () => {
    return (
@@ -76,6 +77,14 @@ const AdminRoutes = () => {
                element={
                   <AdminLayout>
                      <CategoryAdmin />
+                  </AdminLayout>
+               }
+            />
+            <Route
+               path="feedbacks"
+               element={
+                  <AdminLayout>
+                     <FeedbackAdmin />
                   </AdminLayout>
                }
             />

@@ -7,6 +7,18 @@ const FeedbackService = {
       });
       return response;
    },
+   getAllFeedbacks: async () => {
+      const response = await axios.get('/v1/read-all/feedbacks');
+      return response;
+   },
+   toggleFeedbackStatus: async (id) => {
+      const response = await axios.put(`/v1/update/feedback-status/${id}`);
+      return response;
+   },
+   getFeedbacksByProductId: async (id) => {
+      const response = await axios.get(`/v1/read/feedbacks/${id}`);
+      return response;
+   },
 };
 
 export default FeedbackService;

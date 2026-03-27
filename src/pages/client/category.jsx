@@ -27,7 +27,7 @@ const Category = () => {
       const fetchProducts = async () => {
          const limit = 10;
          const data = await ProductService.getProductByCategoriesWithPaginate(page, limit, categoryName, filter);
-         if (data && data.EC === 0 && data.DT) {
+         if (data && (data.EC === 0 || data.EC === '0') && data.DT) {
             setProducts(data.DT.product || []);
             setTotalPages(data.DT.totalPages || 0);
          } else {
