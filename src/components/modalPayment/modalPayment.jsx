@@ -19,6 +19,7 @@ function ModalPayment({
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
    const { fetchCart } = useCart();
    const [checkingPayment, setCheckingPayment] = useState(false);
+   const [isFinalizing, setIsFinalizing] = useState(false);
    const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
 
    //lấy ra userID
@@ -97,45 +98,47 @@ function ModalPayment({
          toast.warning('Hết thời gian thanh toán, vui lòng tạo mã mới.');
       }
    }, [isOpen, timeLeft]);
+    useEffect(() => {
+       if (!isOpen) {
+          setIsFinalizing(false);
+          return;
+       }
 
-   useEffect(() => {
-      if (!isOpen) return;
+       setCheckingPayment(true);
 
-      setCheckingPayment(true);
+       const interval = setInterval(async () => {
+          try {
+             const data = await paymentAPI();
+             if (!data || !data.data || !data.data.length) {
+                return;
+             }
 
-      const interval = setInterval(async () => {
-         try {
-            const data = await paymentAPI();
-            if (!data || !data.data || !data.data.length) {
-               return;
-            }
+             const lastPaid = data.data[data.data.length - 1];
+             const lastPaidContent = lastPaid['Mô tả'];
+             const lastPaidPrice = lastPaid['Giá trị'];
 
-            const lastPaid = data.data[data.data.length - 1];
-            const lastPaidContent = lastPaid['Mô tả'];
-            const lastPaidPrice = lastPaid['Giá trị'];
+             // Chuẩn hóa: Xóa "|" và khoảng trắng, chuyển về chữ thường
+             const normalizedTransferContent = transferContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
+             const normalizedLastPaidContent = lastPaidContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
 
-            // Chuẩn hóa: Xóa "|" và khoảng trắng, chuyển về chữ thường
-            const normalizedTransferContent = transferContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
-            const normalizedLastPaidContent = lastPaidContent.replace(/\|/g, '').replace(/\s+/g, '').toLowerCase();
+             if (normalizedLastPaidContent.includes(normalizedTransferContent) && lastPaidPrice >= totalAmount) {
+                clearInterval(interval);
+                setCheckingPayment(false);
+                setIsFinalizing(true);
+                await handlePayMentSuccess();
+                onClose();
+                return;
+             }
+          } catch (error) {
+             console.error('Lỗi kiểm tra thanh toán:', error);
+             // Không xóa interval để thử lại
+          }
+       }, 6000);
 
-            if (normalizedLastPaidContent.includes(normalizedTransferContent) && lastPaidPrice >= totalAmount) {
-               clearInterval(interval);
-               setCheckingPayment(false);
-               handlePayMentSuccess();
-               onClose();
-               return;
-            }
-         } catch (error) {
-            console.error('Lỗi kiểm tra thanh toán:', error);
-            clearInterval(interval);
-            setCheckingPayment(false);
-         }
-      }, 6000);
-
-      return () => {
-         clearInterval(interval);
-      };
-   }, [isOpen, totalAmount, transferContent, handlePayMentSuccess, onClose]);
+       return () => {
+          clearInterval(interval);
+       };
+    }, [isOpen, totalAmount, transferContent, handlePayMentSuccess, onClose]);
 
    if (!isOpen) return null;
 
@@ -146,7 +149,15 @@ function ModalPayment({
          <div className="absolute inset-0 bg-black opacity-50 pointer-events-auto" onClick={handleClose} />
 
          {/* Modal content */}
-         <div className="relative bg-white rounded-lg p-6 w-[800px] max-w-[95%] z-[9999]">
+         <div className="relative bg-white rounded-lg p-6 w-[800px] max-w-[95%] z-[9999] overflow-hidden">
+            {/* Loading Overlay khi đang xử lý đơn hàng sau thanh toán */}
+            {isFinalizing && (
+               <div className="absolute inset-0 z-[10000] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center animate-fadeIn">
+                  <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                  <h3 className="text-xl font-bold text-gray-800">Đã nhận được thanh toán!</h3>
+                  <p className="text-gray-500 mt-2">Đang khởi tạo đơn hàng cho bạn, vui lòng đợi trong giây lát...</p>
+               </div>
+            )}
             {/* Close button */}
             <button
                onClick={handleClose}

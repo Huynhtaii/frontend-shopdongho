@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AccountService from '../../services/account_service';
 import axios from '../../utils/axios_config';
+import OrderService from '../../services/order_service';
 import { toast } from 'react-toastify';
 import ConfirmModal from '../../components/modals/confirm_modal';
 import RatingModal from '../../components/modals/rating_modal';
@@ -18,12 +19,13 @@ import {
 } from 'react-icons/fi';
 
 const statusConfig = {
-   Pending: { label: 'Đang chờ xử lý', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
+   Pending: { label: 'Chờ xác nhận', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-400' },
    Shipped: { label: 'Đang giao hàng', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-400' },
-   Completed: { label: 'Đã giao hàng', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-400' },
+   Completed: { label: 'Hoàn thành', color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-400' },
    Canceled: { label: 'Đã hủy', color: 'bg-red-100 text-red-600', dot: 'bg-red-400' },
    FailedDelivery: { label: 'Giao thất bại', color: 'bg-orange-100 text-orange-700', dot: 'bg-orange-400' },
-   'Returned to shop': { label: 'Trả hàng', color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-400' },
+   'Returned to shop': { label: 'Đã trả hàng', color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-400' },
+   ReturnRequested: { label: 'Yêu cầu trả hàng', color: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-400' },
 };
 
 const formatVND = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -102,6 +104,21 @@ function OrderHistory() {
       }
    };
 
+   const handleRequestReturn = async (orderId) => {
+      if (!window.confirm('Bạn có chắc chắn muốn gửi yêu cầu hoàn trả cho đơn hàng này không?')) return;
+      try {
+         const res = await OrderService.updateOrderStatus(orderId, 'ReturnRequested', null);
+         if (res?.EC === '0') {
+            toast.success('Gửi yêu cầu hoàn trả thành công! Vui lòng chờ shop phê duyệt.');
+            fetchData();
+         } else {
+            toast.error(res?.EM || 'Không thể gửi yêu cầu hoàn trả');
+         }
+      } catch (error) {
+         toast.error('Có lỗi xảy ra, vui lòng thử lại!');
+      }
+   };
+
    if (loading) {
       return (
          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -160,9 +177,9 @@ function OrderHistory() {
                      <div className="flex flex-wrap gap-2 mb-4">
                         {[
                            { key: 'All', label: 'Tất cả' },
-                           { key: 'Pending', label: 'Đang chờ' },
+                           { key: 'Pending', label: 'Chờ xác nhận' },
                            { key: 'Shipped', label: 'Đang giao' },
-                           { key: 'Completed', label: 'Đã giao' },
+                           { key: 'Completed', label: 'Hoàn thành' },
                            { key: 'FailedDelivery', label: 'Thất bại' },
                            { key: 'Returned to shop', label: 'Trả hàng' },
                            { key: 'Canceled', label: 'Đã hủy' },
@@ -173,7 +190,7 @@ function OrderHistory() {
                               <button
                                  key={key}
                                  onClick={() => setActiveFilter(key)}
-                                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                                 className={`inline-flex items-center z-[9999] gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                                     isActive
                                        ? 'bg-red-600 text-white shadow-md shadow-red-200'
                                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
@@ -317,6 +334,14 @@ function OrderHistory() {
                                                       Mua lại đơn hàng này
                                                    </button>
 
+                                                   <button
+                                                      onClick={() => handleRequestReturn(order.order_id)}
+                                                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-semibold transition-all shadow-md"
+                                                   >
+                                                      <FiPackage size={15} />
+                                                      Yêu cầu hoàn trả hàng
+                                                   </button>
+
                                                    {(!order.Feedbacks || order.Feedbacks.length === 0) &&
                                                    (!order.feedbacks || order.feedbacks.length === 0) ? (
                                                       <button
@@ -332,7 +357,11 @@ function OrderHistory() {
                                                    ) : (
                                                       <div className="flex items-center justify-center gap-3 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
                                                          <span className="text-sm font-semibold text-emerald-700">
-                                                            Bạn đã đánh giá {order.Feedbacks?.[0]?.rating || order.feedbacks?.[0]?.rating || 0} sao
+                                                            Bạn đã đánh giá{' '}
+                                                            {order.Feedbacks?.[0]?.rating ||
+                                                               order.feedbacks?.[0]?.rating ||
+                                                               0}{' '}
+                                                            sao
                                                          </span>
                                                          <div className="flex gap-0.5 text-yellow-500">
                                                             <FiStar size={14} className="fill-current" />
@@ -343,25 +372,69 @@ function OrderHistory() {
                                              )}
                                           </div>
 
-                                          {/* Pending Payment Note */}
-                                          {order.status === 'Pending' && order.Payment?.status === 'Success' && (
-                                             <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[11px] text-amber-700 leading-relaxed">
-                                                <span className="font-bold">Lưu ý:</span> Đơn hàng này đã được thanh toán. Sau khi hủy, vui lòng liên hệ Admin để được hỗ trợ hoàn tiền.
+                                          {/* Note cho đơn đang giao */}
+                                          {order.status === 'Shipped' && (
+                                             <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-blue-700 leading-relaxed">
+                                                <span className="font-bold">Thông tin:</span> Đơn hàng đang được vận
+                                                chuyển. Vui lòng để ý điện thoại, shipper sẽ liên hệ với bạn sớm.
                                              </div>
                                           )}
 
-                                          {(order.status === 'FailedDelivery' || order.status === 'Returned to shop') && (
+                                          {/* Note cho đơn đang yêu cầu trả hàng */}
+                                          {order.status === 'ReturnRequested' && (
+                                             <div className="mt-4 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-[11px] text-indigo-700 leading-relaxed">
+                                                <span className="font-bold">Yêu cầu trả hàng:</span> Hệ thống đã ghi
+                                                nhận yêu cầu của bạn. Shop đang xem xét và sẽ phản hồi trong thời gian
+                                                sớm nhất.
+                                             </div>
+                                          )}
+
+                                          {/* Note cho đơn đã hủy */}
+                                          {order.status === 'Canceled' && (
+                                             <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600 leading-relaxed">
+                                                <span className="font-bold">Đơn hàng đã hủy.</span>{' '}
+                                                {order.Payment?.status === 'Refunded'
+                                                   ? 'Tiền đã được hoàn trả thành công về tài khoản của bạn.'
+                                                   : order.Payment?.status === 'RefundPending'
+                                                     ? 'Đơn hàng đang trong quá trình hoàn tiền. Vui lòng kiểm tra tài khoản sau 1-3 ngày làm việc.'
+                                                     : order.Payment?.status === 'Success'
+                                                       ? 'Vui lòng liên hệ Admin để được hỗ trợ hoàn tiền cho đơn hàng đã thanh toán này.'
+                                                       : 'Cảm ơn bạn đã quan tâm đến sản phẩm của shop.'}
+                                             </div>
+                                          )}
+
+                                          {/* Pending Payment Note */}
+                                          {order.status === 'Pending' && order.Payment?.status === 'Success' && (
+                                             <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-[11px] text-amber-700 leading-relaxed">
+                                                <span className="font-bold">Lưu ý:</span> Đơn hàng đã được thanh toán và
+                                                đang chờ Shop xác nhận. Bạn có thể liên hệ trực tiếp với Shop để được xử
+                                                lý nhanh hơn.
+                                             </div>
+                                          )}
+
+                                          {(order.status === 'FailedDelivery' ||
+                                             order.status === 'Returned to shop') && (
                                              <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-[11px] text-red-700 leading-relaxed">
                                                 <span className="font-bold text-[13px] block mb-1">
-                                                   Đơn hàng giao không thành công.
+                                                   Thông tin đơn hàng:
                                                 </span>{' '}
-                                                {order.Payment?.status === 'Refunded'
-                                                   ? 'Shop đã hoàn tiền thành công cho bạn.'
-                                                   : order.Payment?.status === 'RefundPending'
-                                                     ? 'Shop đang tiến hành hoàn tiền cho bạn.'
-                                                     : order.Payment?.status === 'Success'
-                                                       ? 'Shop sẽ chủ động liên hệ để hỗ trợ hoàn tiền cho bạn.'
-                                                       : 'Đơn hàng đã được ghi nhận giao thất bại.'}
+                                                {order.status === 'Returned to shop'
+                                                   ? 'Sản phẩm đã được trả về shop thành công.'
+                                                   : 'Đơn hàng giao không thành công.'}{' '}
+                                                {order.Payment?.status === 'Refunded' ? (
+                                                   'Tiền đã được hoàn trả thành công.'
+                                                ) : order.Payment?.status === 'RefundPending' ? (
+                                                   <>
+                                                      <p className="font-semibold mb-1">
+                                                         Shop đang thực hiện hoàn tiền cho bạn.
+                                                      </p>
+                                                      <p>Vui lòng chờ xác nhận từ ngân hàng/ví điện tử của bạn.</p>
+                                                   </>
+                                                ) : order.Payment?.status === 'Success' ? (
+                                                   'Vui lòng liên hệ shop để nhận thông tin về việc hoàn trả tiền.'
+                                                ) : (
+                                                   'Đơn hàng sẽ được xử lý theo quy định của shop.'
+                                                )}
                                              </div>
                                           )}
                                        </div>

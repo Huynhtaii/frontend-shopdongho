@@ -16,32 +16,36 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
       switch (current) {
          case 'Pending':
             return [
-               { value: 'Pending', label: 'Pending' },
-               { value: 'Shipped', label: 'Shipped' },
-               { value: 'Completed', label: 'Completed' },
-               { value: 'Canceled', label: 'Canceled' },
-               { value: 'FailedDelivery', label: 'Failed delivery' },
+               { value: 'Pending', label: 'Chờ xác nhận' },
+               { value: 'Shipped', label: 'Đang giao hàng' },
+               { value: 'Canceled', label: 'Hủy đơn hàng' },
             ];
          case 'Shipped':
             return [
-               { value: 'Shipped', label: 'Shipped' },
-               { value: 'Completed', label: 'Completed' },
-               { value: 'FailedDelivery', label: 'Failed delivery' },
+               { value: 'Shipped', label: 'Đang giao hàng' },
+               { value: 'Completed', label: 'Hoàn thành' },
+               { value: 'FailedDelivery', label: 'Giao hàng thất bại' },
             ];
          case 'Completed':
             return [
-               { value: 'Completed', label: 'Completed' },
-               { value: 'Returned to shop', label: 'Returned to shop' },
+               { value: 'Completed', label: 'Hoàn thành' },
+               { value: 'Returned to shop', label: 'Trả hàng (Hoàn tiền)' },
             ];
          case 'Canceled':
-            return [{ value: 'Canceled', label: 'Canceled' }];
+            return [{ value: 'Canceled', label: 'Đã hủy' }];
          case 'FailedDelivery':
             return [
-               { value: 'FailedDelivery', label: 'Failed delivery' },
-               { value: 'Returned to shop', label: 'Returned to shop' },
+               { value: 'FailedDelivery', label: 'Giao hàng thất bại' },
+               { value: 'Returned to shop', label: 'Chuyển về kho' },
             ];
          case 'Returned to shop':
-            return [{ value: 'Returned to shop', label: 'Returned to shop' }];
+            return [{ value: 'Returned to shop', label: 'Đã trả hàng' }];
+         case 'ReturnRequested':
+            return [
+               { value: 'ReturnRequested', label: 'Đang yêu cầu trả hàng' },
+               { value: 'Returned to shop', label: 'Duyệt trả hàng (Hoàn tiền)' },
+               { value: 'Completed', label: 'Từ chối trả hàng (Hoàn thành)' },
+            ];
          default:
             return [{ value: current, label: current }];
       }
@@ -79,14 +83,17 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                      onChange={(e) => {
                         const newStatus = e.target.value;
                         setStatus(newStatus);
-                        if (newStatus === 'Returned to shop' && paymentStatus === 'Success') {
-                           setPaymentStatus('RefundPending');
+                        // Tự động gợi ý trạng thái thanh toán
+                        if (newStatus === 'Completed') {
+                           setPaymentStatus('Success');
+                        } else if (newStatus === 'Returned to shop' || newStatus === 'Canceled') {
+                           // Nếu đã thanh toán rồi mới Hủy/Trả thì gợi ý Chờ hoàn tiền
+                           if (paymentStatus === 'Success') {
+                              setPaymentStatus('RefundPending');
+                           }
                         }
                      }}
-                     disabled={
-                        currentStatus === 'Canceled' ||
-                        currentStatus === 'Returned to shop'
-                     }
+                     disabled={currentStatus === 'Canceled' || currentStatus === 'Returned to shop'}
                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                      {availableStatuses.map((opt) => (
@@ -96,29 +103,41 @@ const ModalUpdateOrder = ({ show, handleClose, orderId, currentStatus, currentPa
                      ))}
                   </select>
                   <p className="mt-1.5 text-[10px] text-gray-500 italic">
-                     {currentStatus === 'Canceled' ||
-                     currentStatus === 'Returned to shop'
+                     {currentStatus === 'Canceled' || currentStatus === 'Returned to shop'
                         ? 'Đơn hàng đã kết thúc, không thể thay đổi trạng thái.'
-                        : 'Trạng thái đơn hàng chỉ có thể cập nhật theo tiến trình.'}
+                        : 'Trạng thái đơn hàng chỉ có thể cập nhật theo đúng luồng nghiệp vụ.'}
                   </p>
                </div>
 
-               <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                     Trạng thái thanh toán
-                  </label>
-                  <select
-                     value={paymentStatus}
-                     onChange={(e) => setPaymentStatus(e.target.value)}
-                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white transition-all"
-                  >
-                     <option value="Pending">Pending (Chờ thanh toán)</option>
-                     <option value="Success">Success (Đã thanh toán)</option>
-                     <option value="Failed">Failed (Thanh toán thất bại)</option>
-                     <option value="RefundPending">Refund Pending (Chờ hoàn tiền)</option>
-                     <option value="Refunded">Refunded (Đã hoàn tiền)</option>
-                  </select>
-               </div>
+                <div>
+                   <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                      Trạng thái thanh toán
+                   </label>
+                   <div className="flex items-center gap-3 px-4 py-3 border border-gray-200 rounded-lg bg-gray-50">
+                      <span
+                         className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            paymentStatus === 'Success' || paymentStatus === 'Refunded'
+                               ? 'bg-green-100 text-green-800'
+                               : paymentStatus === 'RefundPending'
+                                 ? 'bg-orange-100 text-orange-800'
+                                 : 'bg-yellow-100 text-yellow-800'
+                         }`}
+                      >
+                         {paymentStatus === 'Pending'
+                            ? 'Chờ thanh toán'
+                            : paymentStatus === 'Success'
+                              ? 'Thanh toán thành công'
+                              : paymentStatus === 'Failed'
+                                ? 'Thanh toán thất bại'
+                                : paymentStatus === 'RefundPending'
+                                  ? 'Chờ hoàn tiền'
+                                  : 'Đã hoàn tiền'}
+                      </span>
+                      <span className="text-[10px] text-gray-400 italic font-medium">
+                         (Hệ thống sẽ tự động cập nhật)
+                      </span>
+                   </div>
+                </div>
 
                {/* Footer */}
                <div className="flex justify-end gap-3 pt-4">

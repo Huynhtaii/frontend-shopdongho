@@ -84,21 +84,61 @@ const OrderAdmin = () => {
    };
 
    const getStatusBadgeClass = (status) => {
-      switch (status.toLowerCase()) {
-         case 'completed':
+      switch (status) {
+         case 'Completed':
             return 'bg-green-100 text-green-800';
-         case 'pending':
+         case 'Pending':
             return 'bg-yellow-100 text-yellow-800';
-         case 'shipped':
+         case 'Shipped':
+            return 'bg-blue-100 text-blue-800';
+         case 'Canceled':
             return 'bg-red-100 text-red-800';
-         case 'canceled':
-            return 'bg-red-100 text-red-800';
-         case 'faileddelivery':
+         case 'FailedDelivery':
             return 'bg-orange-100 text-orange-800';
-         case 'returned to shop':
+         case 'Returned to shop':
             return 'bg-purple-100 text-purple-800';
+         case 'ReturnRequested':
+            return 'bg-indigo-100 text-indigo-800';
          default:
             return 'bg-gray-100 text-gray-800';
+      }
+   };
+
+   const getStatusLabel = (status) => {
+      switch (status) {
+         case 'Pending':
+            return 'Chờ xác nhận';
+         case 'Shipped':
+            return 'Đang giao hàng';
+         case 'Completed':
+            return 'Hoàn thành';
+         case 'Canceled':
+            return 'Đã hủy';
+         case 'FailedDelivery':
+            return 'Giao thất bại';
+         case 'Returned to shop':
+            return 'Trả hàng';
+         case 'ReturnRequested':
+            return 'Đang yêu cầu trả hàng';
+         default:
+            return status;
+      }
+   };
+
+   const getPaymentStatusLabel = (status) => {
+      switch (status) {
+         case 'Pending':
+            return 'Chờ thanh toán';
+         case 'Success':
+            return 'Đã thanh toán';
+         case 'Failed':
+            return 'Thất bại';
+         case 'RefundPending':
+            return 'Chờ hoàn tiền';
+         case 'Refunded':
+            return 'Đã hoàn tiền';
+         default:
+            return status;
       }
    };
 
@@ -126,9 +166,12 @@ const OrderAdmin = () => {
             break;
          case 'Shipped':
             nextStatus = 'Completed';
-            nextPaymentStatus = 'Success';
+            // Không tự động set Success, để logic backend hoặc admin manual xử lý
             break;
          case 'FailedDelivery':
+            nextStatus = 'Returned to shop';
+            break;
+         case 'ReturnRequested':
             nextStatus = 'Returned to shop';
             break;
          default:
@@ -137,8 +180,11 @@ const OrderAdmin = () => {
 
       setLoadingOrderId(order.order_id);
       try {
-         await OrderService.updateOrderStatus(order.order_id, nextStatus, nextPaymentStatus);
-         toast.success(`Đã chuyển trạng thái sang ${nextStatus}`);
+         await OrderService.updateOrderStatus(order.order_id, nextStatus, null);
+         const successMsg = nextStatus === 'Returned to shop' && order.status === 'ReturnRequested' 
+            ? 'Đã duyệt yêu cầu trả hàng và chuyển sang Chờ hoàn tiền'
+            : `Đã chuyển trạng thái sang ${getStatusLabel(nextStatus)}`;
+         toast.success(successMsg);
          fetchData();
       } catch (error) {
          toast.error('Có lỗi xảy ra khi chuyển trạng thái: ' + error);
@@ -162,12 +208,13 @@ const OrderAdmin = () => {
                      onChange={(e) => setShippingFilter(e.target.value)}
                   >
                      <option value="All">Tất cả</option>
-                     <option value="Pending">Pending</option>
-                     <option value="Shipped">Shipped</option>
-                     <option value="Completed">Completed</option>
-                     <option value="Canceled">Canceled</option>
-                     <option value="FailedDelivery">Failed delivery</option>
-                     <option value="Returned to shop">Returned to shop</option>
+                     <option value="Pending">Chờ xác nhận</option>
+                     <option value="Shipped">Đang giao</option>
+                     <option value="Completed">Hoàn thành</option>
+                     <option value="Canceled">Đã hủy</option>
+                     <option value="FailedDelivery">Giao thất bại</option>
+                     <option value="Returned to shop">Trả hàng</option>
+                     <option value="ReturnRequested">Yêu cầu trả hàng</option>
                   </select>
                </div>
 
@@ -179,11 +226,11 @@ const OrderAdmin = () => {
                      onChange={(e) => setPaymentFilter(e.target.value)}
                   >
                      <option value="All">Tất cả</option>
-                     <option value="Pending">Pending</option>
-                     <option value="Success">Success</option>
-                     <option value="Failed">Failed</option>
-                     <option value="RefundPending">Refund Pending</option>
-                     <option value="Refunded">Refunded</option>
+                     <option value="Pending">Chờ thanh toán</option>
+                     <option value="Success">Đã thanh toán</option>
+                     <option value="Failed">Thất bại</option>
+                     <option value="RefundPending">Chờ hoàn tiền</option>
+                     <option value="Refunded">Đã hoàn tiền</option>
                   </select>
                </div>
             </div>
@@ -230,7 +277,7 @@ const OrderAdmin = () => {
                                  <span
                                     className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(order.status)}`}
                                  >
-                                    {order.status}
+                                    {getStatusLabel(order.status)}
                                  </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -244,7 +291,7 @@ const OrderAdmin = () => {
                                                : 'bg-yellow-100 text-yellow-800'
                                        }`}
                                     >
-                                       {order.Payment?.status || 'Pending'}
+                                       {getPaymentStatusLabel(order.Payment?.status || 'Pending')}
                                     </span>
                                     {order.Payment?.payment_method && (
                                        <span className="text-[11px] text-gray-500 font-medium ml-1 italic">
@@ -262,25 +309,30 @@ const OrderAdmin = () => {
                                     <div className="w-9 h-9 flex items-center justify-center">
                                        {(order.status === 'Pending' ||
                                           order.status === 'Shipped' ||
-                                          order.status === 'FailedDelivery') && (
+                                          order.status === 'FailedDelivery' ||
+                                          order.status === 'ReturnRequested') && (
                                           <button
                                              className={`${
                                                 loadingOrderId === order.order_id
-                                                   ? 'bg-blue-300'
-                                                   : 'bg-blue-500 hover:bg-blue-600'
+                                                   ? order.status === 'ReturnRequested' ? 'bg-indigo-300' : 'bg-blue-300'
+                                                   : order.status === 'ReturnRequested' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-blue-500 hover:bg-blue-600'
                                              } text-white p-2 rounded flex items-center justify-center transition duration-200 w-full h-full`}
                                              onClick={(e) => handleNextStatus(e, order)}
                                              disabled={loadingOrderId === order.order_id}
                                              title={
                                                 order.status === 'Pending'
-                                                   ? 'Giao hàng'
+                                                   ? 'Duyệt / Giao hàng'
                                                    : order.status === 'Shipped'
                                                      ? 'Hoàn thành'
-                                                     : 'Chuyển về cửa hàng'
+                                                     : order.status === 'ReturnRequested'
+                                                       ? 'Duyệt yêu cầu trả hàng'
+                                                       : 'Chuyển về cửa hàng'
                                              }
                                           >
                                              {loadingOrderId === order.order_id ? (
                                                 <FaSpinner className="animate-spin" />
+                                             ) : order.status === 'ReturnRequested' ? (
+                                                <FaCheck />
                                              ) : (
                                                 <FaArrowRight />
                                              )}
@@ -308,7 +360,27 @@ const OrderAdmin = () => {
                                           </button>
                                        )}
                                     </div>
-                                    {order.status === 'Completed' ? (
+                                    {/* Ẩn nút edit hoàn toàn nếu đã hoàn thành và thanh toán xong */}
+                                    {!(order.status === 'Completed' && order.Payment?.status === 'Success') &&
+                                       order.status !== 'Canceled' &&
+                                       order.status !== 'Returned to shop' &&
+                                       order.status !== 'ReturnRequested' && (
+                                          <button
+                                             className={`${
+                                                loadingOrderId === order.order_id
+                                                   ? 'bg-green-300'
+                                                   : 'bg-green-500 hover:bg-green-600'
+                                             } text-white p-2 rounded flex items-center justify-center transition duration-200 w-9 h-9`}
+                                             onClick={(e) => handleEdit(e, order)}
+                                             disabled={loadingOrderId === order.order_id}
+                                             title="Chỉnh sửa chi tiết"
+                                          >
+                                             <FaEdit />
+                                          </button>
+                                       )}
+
+                                    {/* Hiển thị nút Hoàn tiền/Trả hàng đặc biệt khi đã Completed nhưng chưa Success (COD) hoặc khi muốn hủy thủ công */}
+                                    {order.status === 'Completed' && order.Payment?.status !== 'Success' && (
                                        <button
                                           className={`${
                                              loadingOrderId === order.order_id
@@ -321,22 +393,6 @@ const OrderAdmin = () => {
                                        >
                                           <FaUndo />
                                        </button>
-                                    ) : (
-                                       order.status !== 'Canceled' &&
-                                       order.status !== 'Returned to shop' && (
-                                          <button
-                                             className={`${
-                                                loadingOrderId === order.order_id
-                                                   ? 'bg-green-300'
-                                                   : 'bg-green-500 hover:bg-green-600'
-                                             } text-white p-2 rounded flex items-center justify-center transition duration-200 w-9 h-9`}
-                                             onClick={(e) => handleEdit(e, order)}
-                                             disabled={loadingOrderId === order.order_id}
-                                             title="Chỉnh sửa"
-                                          >
-                                             <FaEdit />
-                                          </button>
-                                       )
                                     )}
                                  </div>
                               </td>

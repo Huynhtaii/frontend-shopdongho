@@ -39,7 +39,22 @@ function Account() {
       fetchData();
    }, [fetchData]);
 
+   const validatePhone = (phone) => {
+      const phoneRegex = /^(0)[1-9][0-9]{8}$/;
+      return phoneRegex.test(phone);
+   };
+
    const handleUpdateInfo = async () => {
+      if (!user.phone) {
+         toast.error('Số điện thoại không được để trống');
+         return;
+      }
+
+      if (!validatePhone(user.phone)) {
+         toast.error('Số điện thoại không hợp lệ (Phải có 10 chữ số và bắt đầu bằng 0)');
+         return;
+      }
+
       setSaving(true);
       try {
          const response = await AccountService.updateInforAccount(id, user);

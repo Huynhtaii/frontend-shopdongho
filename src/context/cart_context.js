@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import CartService from '../services/cart_service';
 import { toast } from 'react-toastify';
 import AuthContext from './auth.context';
@@ -13,6 +13,7 @@ export const CartProvider = ({ children }) => {
    const [savingsPrice, setSavingsPrice] = useState(0); //số tiền tiết kiệm được
    const { auth } = useContext(AuthContext);
    const user_id = localStorage.getItem('userId');
+   const prevAuthRef = useRef(false); // track previous auth state
 
    const fetchCart = useCallback(async () => {
       if (!auth.isAuthenticated) {
@@ -50,9 +51,52 @@ export const CartProvider = ({ children }) => {
       }
    }, [auth.isAuthenticated, user_id]);
 
+   // Merge guest cart into account cart when user just logged in
+   const mergeGuestCart = useCallback(async (uid) => {
+      const guestCart = JSON.parse(localStorage.getItem('guestCart')) || [];
+      if (guestCart.length === 0) return;
+
+      // Fetch current account cart items to check for duplicates
+      const response = await CartService.getCartByUserId(uid);
+      const accountItems = response.EC === '0' ? (response.DT[0]?.CartItems || []) : [];
+
+      for (const guestItem of guestCart) {
+         const existing = accountItems.find((ai) => ai.product_id === guestItem.product_id);
+         if (existing) {
+            // Product already in account cart → increase quantity
+            await CartService.updateQuantityCartItem(existing.cart_item_id, existing.quantity + guestItem.quantity);
+         } else {
+            // New product → add to account cart
+            await CartService.createCartItem(uid, {
+               product_id: guestItem.product_id,
+               quantity: guestItem.quantity,
+            });
+         }
+      }
+
+      // Clear guest cart after merge
+      localStorage.removeItem('guestCart');
+      toast.success('Đã đồng bộ giỏ hàng khách vào tài khoản!');
+      await fetchCart();
+   }, [fetchCart]);
+
+   // Detect login transition: guest → authenticated
    useEffect(() => {
-      fetchCart();
-   }, [auth.isAuthenticated, fetchCart]);
+      const wasAuthenticated = prevAuthRef.current;
+      prevAuthRef.current = auth.isAuthenticated;
+
+      if (!wasAuthenticated && auth.isAuthenticated && user_id) {
+         // User just logged in — merge guest cart first, then fetchCart
+         const guestCart = JSON.parse(localStorage.getItem('guestCart')) || [];
+         if (guestCart.length > 0) {
+            mergeGuestCart(user_id);
+         } else {
+            fetchCart();
+         }
+      } else {
+         fetchCart();
+      }
+   }, [auth.isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
    const addToCart = async (cart_item, productDetail) => {
       if (!auth.isAuthenticated) {
