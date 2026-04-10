@@ -12,10 +12,11 @@ const useProductByCategory = (name = '') => {
             try {
                 setLoading(true);
                 const data = await ProductService.getProductByCategory(category);
-                setProducts(data.DT);
+                setProducts(Array.isArray(data?.DT) ? data.DT : []);
                 setError(null);
             } catch (err) {
                 setError(err.message || "Có lỗi xảy ra khi tải sản phẩm");
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
