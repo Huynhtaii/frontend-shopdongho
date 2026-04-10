@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AccountService from '../../services/account_service';
 import axios from '../../utils/axios_config';
-import OrderService from '../../services/order_service';
 import { toast } from 'react-toastify';
 import ConfirmModal from '../../components/modals/confirm_modal';
 import RatingModal from '../../components/modals/rating_modal';
@@ -101,21 +100,6 @@ function OrderHistory() {
       } catch (error) {
          console.error('Lỗi khi mua lại:', error);
          toast.error('Có lỗi xảy ra khi thêm vào giỏ hàng');
-      }
-   };
-
-   const handleRequestReturn = async (orderId) => {
-      if (!window.confirm('Bạn có chắc chắn muốn gửi yêu cầu hoàn trả cho đơn hàng này không?')) return;
-      try {
-         const res = await OrderService.updateOrderStatus(orderId, 'ReturnRequested', null);
-         if (res?.EC === '0') {
-            toast.success('Gửi yêu cầu hoàn trả thành công! Vui lòng chờ shop phê duyệt.');
-            fetchData();
-         } else {
-            toast.error(res?.EM || 'Không thể gửi yêu cầu hoàn trả');
-         }
-      } catch (error) {
-         toast.error('Có lỗi xảy ra, vui lòng thử lại!');
       }
    };
 
@@ -332,14 +316,6 @@ function OrderHistory() {
                                                    >
                                                       <FiShoppingBag size={15} />
                                                       Mua lại đơn hàng này
-                                                   </button>
-
-                                                   <button
-                                                      onClick={() => handleRequestReturn(order.order_id)}
-                                                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-semibold transition-all shadow-md"
-                                                   >
-                                                      <FiPackage size={15} />
-                                                      Yêu cầu hoàn trả hàng
                                                    </button>
 
                                                    {(!order.Feedbacks || order.Feedbacks.length === 0) &&

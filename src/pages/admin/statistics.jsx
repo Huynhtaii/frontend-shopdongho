@@ -15,7 +15,7 @@ import {
    Legend,
    Filler,
 } from 'chart.js';
-import { Line } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
@@ -62,17 +62,13 @@ const Statistics = () => {
          labels,
          datasets: [
             {
-               fill: true,
                label: 'Doanh thu (VNĐ)',
                data: revenue,
+               backgroundColor: 'rgba(59, 130, 246, 0.8)',
                borderColor: 'rgb(59, 130, 246)',
-               backgroundColor: 'rgba(59, 130, 246, 0.1)',
-               tension: 0.4,
-               pointRadius: 5,
-               pointHitRadius: 10,
-               pointBackgroundColor: '#fff',
-               pointBorderWidth: 2,
-               borderWidth: 3,
+               borderWidth: 1,
+               borderRadius: 6,
+               hoverBackgroundColor: 'rgba(59, 130, 246, 1)',
             },
          ],
       });
@@ -104,32 +100,6 @@ const Statistics = () => {
                </h1>
                <p className="text-gray-500 text-sm">Phân tích chuyên sâu về tình hình kinh doanh</p>
             </div>
-            <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
-               <button
-                  onClick={() => handleFilterChange('day')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                     filterType === 'day' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'
-                  }`}
-               >
-                  Theo Ngày
-               </button>
-               <button
-                  onClick={() => handleFilterChange('month')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                     filterType === 'month' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'
-                  }`}
-               >
-                  Theo Tháng
-               </button>
-               <button
-                  onClick={() => handleFilterChange('year')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                     filterType === 'year' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'
-                  }`}
-               >
-                  Theo Năm
-               </button>
-            </div>
             <button
                onClick={() => fetchStats()}
                className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
@@ -138,7 +108,69 @@ const Statistics = () => {
             </button>
          </div>
 
-         {/* Overview Key Metrics */}
+         {/* Global Performance Header */}
+         <div className="bg-gradient-to-r from-emerald-600 to-teal-700 h-32 rounded-2xl relative overflow-hidden shadow-lg mb-4">
+            <div className="absolute inset-0 opacity-10">
+               <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
+               </svg>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-between px-8">
+               <div>
+                  <h2 className="text-emerald-50 text-xs font-bold uppercase tracking-widest mb-1 opacity-80">Tổng doanh thu hệ thống</h2>
+                  <div className="text-4xl font-black text-white">{formatPrice(stats?.totalOverallRevenue || 0)}</div>
+               </div>
+               <div className="flex gap-8">
+                  <div className="hidden md:block bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                     <div className="text-emerald-50 text-[10px] uppercase font-bold mb-1 opacity-70 text-right">Tổng đơn hàng</div>
+                     <div className="text-white font-black text-xl text-right">{stats?.totalCompletedOrders || 0}</div>
+                  </div>
+                  <div className="hidden md:block bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                     <div className="text-emerald-50 text-[10px] uppercase font-bold mb-1 opacity-70 text-right">Giá trị TB đơn (AOV)</div>
+                     <div className="text-white font-black text-xl text-right">
+                        {formatPrice(
+                           stats?.totalOverallRevenue && stats?.totalCompletedOrders
+                              ? stats.totalOverallRevenue / stats.totalCompletedOrders
+                              : 0,
+                        )}
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+
+         {/* Filter Section (Moved below Global Stats) */}
+         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+            <span className="text-sm font-bold text-gray-500 uppercase tracking-tight">Bộ lọc phân tích định kỳ:</span>
+            <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
+               <button
+                  onClick={() => handleFilterChange('day')}
+                  className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                     filterType === 'day' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                  }`}
+               >
+                  Theo Ngày
+               </button>
+               <button
+                  onClick={() => handleFilterChange('month')}
+                  className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                     filterType === 'month' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                  }`}
+               >
+                  Theo Tháng
+               </button>
+               <button
+                  onClick={() => handleFilterChange('year')}
+                  className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
+                     filterType === 'year' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+                  }`}
+               >
+                  Theo Năm
+               </button>
+            </div>
+         </div>
+
+         {/* Periodic Metrics Section */}
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
                <div className="flex items-center gap-3 text-blue-600 mb-2">
@@ -163,7 +195,7 @@ const Statistics = () => {
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
                <div className="flex items-center gap-3 text-green-600 mb-2">
                   <RiBarChartLine size={24} />
-                  <span className="text-sm font-semibold uppercase tracking-wider">Tăng trưởng doanh thu</span>
+                  <span className="text-sm font-semibold uppercase tracking-wider">Tăng trưởng</span>
                </div>
                <div className="flex items-center gap-2">
                   <div className="text-3xl font-bold text-gray-900">
@@ -196,16 +228,18 @@ const Statistics = () => {
             </h2>
             <div className="h-[400px]">
                {revenueChartData && (
-                  <Line
+                  <Bar
                      data={revenueChartData}
                      options={{
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                           legend: { display: false },
+                           legend: {
+                              display: false,
+                           },
                            tooltip: {
                               callbacks: {
-                                 label: (ctx) => `Doanh thu: ${formatPrice(ctx.raw)}`,
+                                 label: (context) => `Doanh thu: ${formatPrice(context.raw)}`,
                               },
                            },
                         },
@@ -213,7 +247,7 @@ const Statistics = () => {
                            y: {
                               beginAtZero: true,
                               ticks: {
-                                 callback: (v) => formatPrice(v),
+                                 callback: (value) => formatPrice(value),
                               },
                            },
                         },

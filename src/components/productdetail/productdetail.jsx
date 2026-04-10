@@ -14,7 +14,7 @@ function ProductDetail() {
     image: "/images/casio-ae1200.jpg",
     sold: 1522,
     rating: 4.9,
-    stock: true,
+    stock: 20,
   };
 
   return (
@@ -66,21 +66,28 @@ function ProductDetail() {
               <span className="text-gray-500 w-24">Xuất xứ:</span>
               <span>{product.origin}</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 mb-2">
               <span className="text-gray-500 w-24">Tình trạng:</span>
               <span
-                className={product.stock ? "text-green-600" : "text-red-600"}
+                className={product.stock > 0 ? "text-green-600 font-bold" : "text-red-600 font-bold"}
               >
-                {product.stock ? "Còn hàng" : "Hết hàng"}
+                {product.stock > 0 ? "Còn hàng" : "Hết hàng"}
               </span>
+            </div>
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-gray-500 w-24">Kho hàng:</span>
+              <span className="text-gray-700 font-medium">{product.stock} sản phẩm có sẵn</span>
             </div>
           </div>
 
           {/* Buttons */}
           <div className="flex gap-4">
-            <button className="flex-1 bg-red-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-red-700">
+            <button 
+              disabled={product.stock <= 0}
+              className={`flex-1 ${product.stock > 0 ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed'} text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-colors`}
+            >
               <RiShoppingCart2Line size={20} />
-              Mua ngay
+              {product.stock > 0 ? "Mua ngay" : "Hết hàng"}
             </button>
             <button className="w-12 h-12 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50">
               <RiHeartLine size={20} />

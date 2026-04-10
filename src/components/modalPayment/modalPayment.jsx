@@ -14,6 +14,7 @@ function ModalPayment({
    paymentMethod,
    onOrderSuccess,
    onRegenerate,
+   shippingInfo,
 }) {
    // API DỮ LIỆU CHUYỂN TIỀN NHẬN TỪ GOOGLE SHEET
    // https://script.google.com/macros/s/AKfycbzNwXKfnWU0IOQv-ALzNJ_E-83PHGRi9F345WpeM2RE72olHfCJrUz01ySOiTVM0QaO/exec
@@ -48,25 +49,30 @@ function ModalPayment({
    };
    const handlePayMentSuccess = useCallback(async () => {
       try {
-         const res = await paymentCompleted(userID, userEmail, totalAmount, cartItem, paymentMethod);
-         // Lấy order_id từ response trả về
-         const order_id = res?.data?.DT?.order_id || null;
+         const res = await paymentCompleted(userID, userEmail, totalAmount, cartItem, paymentMethod, shippingInfo);
+         
+         if (res && res.EC === 0) {
+            // Lấy order_id từ response trả về (res đã là body từ axios interceptor)
+            const order_id = res.DT?.order_id || null;
 
-         fetchCart();
-         if (onOrderSuccess) {
-            const itemsToRate = cartItem.map((item) => ({
-               product_id: item.product_id,
-               productData: item.productData,
-               order_id,
-            }));
-            onOrderSuccess(itemsToRate);
+            fetchCart();
+            if (onOrderSuccess) {
+               const itemsToRate = cartItem.map((item) => ({
+                  product_id: item.product_id,
+                  productData: item.productData,
+                  order_id,
+               }));
+               onOrderSuccess(itemsToRate);
+            }
+            toast.success('Thanh toán thành công, vui lòng kiểm tra email!');
+         } else {
+            toast.error(res?.EM || 'Có lỗi xảy ra khi thanh toán!');
          }
-         toast.success('Thanh toán thành công, vui lòng kiểm tra email!');
       } catch (error) {
          console.error('Lỗi khi thanh toán:', error);
          toast.error('Có lỗi xảy ra khi thanh toán!');
       }
-   }, [userID, userEmail, totalAmount, cartItem, paymentMethod, fetchCart, onOrderSuccess]);
+   }, [userID, userEmail, totalAmount, cartItem, paymentMethod, shippingInfo, fetchCart, onOrderSuccess]);
 
    const handleClose = useCallback(() => {
       if (onClose) {

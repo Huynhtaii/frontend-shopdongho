@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import FeedbackService from '../../services/feedback_service';
 import Pagination from '../../components/pagination';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { IoMdClose } from 'react-icons/io';
 
 const FeedbackAdmin = () => {
    const [feedbacks, setFeedbacks] = useState([]);
    const [currentPage, setCurrentPage] = useState(1);
+   const [lightbox, setLightbox] = useState({ isOpen: false, images: [], index: 0 });
    const itemsPerPage = 10;
 
    const fetchData = async () => {
@@ -29,21 +31,27 @@ const FeedbackAdmin = () => {
    const totalPages = Math.ceil(feedbacks.length / itemsPerPage);
    const paginatedFeedbacks = feedbacks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-   const handleToggleStatus = async (id, currentStatus) => {
-      const action = currentStatus === 1 ? 'hiện' : 'ẩn';
-      if (window.confirm(`Bạn có chắc chắn muốn ${action} đánh giá này?`)) {
-         try {
-            const res = await FeedbackService.toggleFeedbackStatus(id);
-            if (res && res.EC === '0') {
-               toast.success(res.EM);
-               fetchData();
-            } else {
-               toast.error(res?.EM || 'Thao tác thất bại');
-            }
-         } catch (error) {
-            toast.error('Có lỗi xảy ra');
-         }
-      }
+   const openLightbox = (imageString, index = 0) => {
+      const images = imageString ? imageString.split(', ').filter(Boolean) : [];
+      setLightbox({ isOpen: true, images, index });
+   };
+
+   const closeLightbox = () => setLightbox({ ...lightbox, isOpen: false });
+
+   const nextImage = (e) => {
+      e.stopPropagation();
+      setLightbox((prev) => ({
+         ...prev,
+         index: (prev.index + 1) % prev.images.length,
+      }));
+   };
+
+   const prevImage = (e) => {
+      e.stopPropagation();
+      setLightbox((prev) => ({
+         ...prev,
+         index: (prev.index - 1 + prev.images.length) % prev.images.length,
+      }));
    };
 
    return (
@@ -57,14 +65,30 @@ const FeedbackAdmin = () => {
                <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Đánh giá lúc</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Sản phẩm</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Khách hàng</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Số sao</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Bình luận</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Ảnh đính kèm</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Tình trạng</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Thao tác</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Đánh giá lúc
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Sản phẩm
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Khách hàng
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Số sao
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Bình luận
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Ảnh đính kèm
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Tình trạng
+                        </th>
+                        {/* <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">
+                           Thao tác
+                        </th> */}
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -72,11 +96,16 @@ const FeedbackAdmin = () => {
                         paginatedFeedbacks.map((fb) => (
                            <tr key={fb.feedback_id} className="hover:bg-gray-50">
                               <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                                 {new Date(fb.created_at).toLocaleDateString('vi-VN')} {new Date(fb.created_at).toLocaleTimeString('vi-VN')}
+                                 {new Date(fb.created_at).toLocaleDateString('vi-VN')}{' '}
+                                 {new Date(fb.created_at).toLocaleTimeString('vi-VN')}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-800 font-medium">
                                  <div className="flex items-center gap-2">
-                                    <img src={fb.Product?.ProductImages?.[0]?.url || 'https://via.placeholder.com/40'} alt="sp" className="w-8 h-8 rounded border object-cover" />
+                                    <img
+                                       src={fb.Product?.ProductImages?.[0]?.url || 'https://via.placeholder.com/40'}
+                                       alt="sp"
+                                       className="w-8 h-8 rounded border object-cover"
+                                    />
                                     <span>{fb.Product?.name || 'Sản phẩm đã xoá'}</span>
                                  </div>
                               </td>
@@ -89,36 +118,47 @@ const FeedbackAdmin = () => {
                               <td className="px-4 py-3 text-sm text-center font-bold text-yellow-500 whitespace-nowrap">
                                  {fb.rating} ★
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" title={fb.comments}>
+                              <td
+                                 className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate"
+                                 title={fb.comments}
+                              >
                                  {fb.comments || <span className="italic text-gray-400">Không có bình luận</span>}
                               </td>
                               <td className="px-4 py-3 text-center">
                                  {fb.image ? (
-                                    <a href={fb.image} target="_blank" rel="noreferrer">
-                                       <img src={fb.image} alt="feedback" className="w-10 h-10 object-cover rounded mx-auto border hover:opacity-80 transition" />
-                                    </a>
+                                    <div className="flex justify-center -space-x-4 hover:space-x-1 transition-all">
+                                       {fb.image
+                                          .split(', ')
+                                          .map((img, idx) => (
+                                             <div
+                                                key={idx}
+                                                className="relative group cursor-pointer"
+                                                onClick={() => openLightbox(fb.image, idx)}
+                                             >
+                                                <img
+                                                   src={img}
+                                                   alt={`feedback-${idx}`}
+                                                   className="w-10 h-10 object-cover rounded border-2 border-white shadow-sm group-hover:scale-110 transition-transform"
+                                                />
+                                                {idx === 2 && fb.image.split(', ').length > 3 && (
+                                                   <div className="absolute inset-0 bg-black/40 rounded flex items-center justify-center text-[10px] text-white font-bold">
+                                                      +{fb.image.split(', ').length - 3}
+                                                   </div>
+                                                )}
+                                             </div>
+                                          ))
+                                          .slice(0, 3)}
+                                    </div>
                                  ) : (
                                     <span className="text-gray-400 text-xs italic">Không có</span>
                                  )}
                               </td>
                               <td className="px-4 py-3 text-center text-sm">
-                                 <span className={`px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${fb.is_resolved === 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                 <span
+                                    className={`px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ${fb.is_resolved === 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
+                                 >
                                     {fb.is_resolved === 1 ? 'Đã ẩn' : 'Hiển thị'}
                                  </span>
-                              </td>
-                              <td className="px-4 py-3 text-right text-sm">
-                                 <div className="flex justify-end">
-                                    <button
-                                       className={`${
-                                          fb.is_resolved === 1
-                                             ? 'bg-blue-500 hover:bg-blue-600'
-                                             : 'bg-orange-500 hover:bg-orange-600'
-                                       } text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition duration-200 whitespace-nowrap`}
-                                       onClick={() => handleToggleStatus(fb.feedback_id, fb.is_resolved)}
-                                    >
-                                       {fb.is_resolved === 1 ? <><FaEye /> Hiện lại</> : <><FaEyeSlash /> Ẩn đi</>}
-                                    </button>
-                                 </div>
                               </td>
                            </tr>
                         ))
@@ -133,8 +173,52 @@ const FeedbackAdmin = () => {
                </table>
             </div>
          </div>
-         
+
          <Pagination page={currentPage} totalPages={totalPages} setPage={setCurrentPage} />
+
+         {/* Lightbox Modal */}
+         {lightbox.isOpen && (
+            <div
+               className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4 animate-fadeIn"
+               onClick={closeLightbox}
+            >
+               <button
+                  className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+                  onClick={closeLightbox}
+               >
+                  <IoMdClose size={32} />
+               </button>
+
+               {lightbox.images.length > 1 && (
+                  <>
+                     <button
+                        className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
+                        onClick={prevImage}
+                     >
+                        <FaChevronLeft size={24} />
+                     </button>
+                     <button
+                        className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
+                        onClick={nextImage}
+                     >
+                        <FaChevronRight size={24} />
+                     </button>
+                  </>
+               )}
+
+               <div className="max-w-4xl max-h-[80vh] flex flex-col items-center gap-4">
+                  <img
+                     src={lightbox.images[lightbox.index]}
+                     alt="Full feedback"
+                     className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-zoomIn"
+                     onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="text-white font-medium bg-black/50 px-4 py-2 rounded-full text-sm">
+                     {lightbox.index + 1} / {lightbox.images.length}
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 };

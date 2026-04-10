@@ -41,6 +41,7 @@ const ProductService = {
       formData.append('brand_id', data.brand_id);
       formData.append('category_id', data.category_id);
       formData.append('sku', data.sku);
+      formData.append('stock', data.stock !== undefined && data.stock !== '' ? data.stock : 20);
 
       // Thêm các thông số kỹ thuật mới
       formData.append('origin', data.origin || '');

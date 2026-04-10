@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { RiShoppingCart2Line, RiHeartLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
-import { FaStar } from 'react-icons/fa';
+import { FaStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { IoMdClose } from 'react-icons/io';
 import ProductService from '../../services/product_service';
 import { useFavorite } from '../../context/favorite_context';
 import { useCart } from '../../context/cart_context';
@@ -24,6 +25,7 @@ function ProductDetail() {
    const [isFavorite, setIsFavorite] = useState(findFavorite(product?.product_id));
    const [activeTab, setActiveTab] = useState('specs');
    const [thumbsSwiper, setThumbsSwiper] = useState(null);
+   const [lightbox, setLightbox] = useState({ isOpen: false, images: [], index: 0 });
    const { id } = useParams();
 
    const { formatPrice } = useFormatPrice();
@@ -104,6 +106,29 @@ function ProductDetail() {
          created_at: new Date().toISOString(),
       };
       addToCart(cart_item, product);
+   };
+
+   const openLightbox = (imageString, index = 0) => {
+      const images = imageString ? imageString.split(', ').filter(Boolean) : [];
+      setLightbox({ isOpen: true, images, index });
+   };
+
+   const closeLightbox = () => setLightbox({ ...lightbox, isOpen: false });
+
+   const nextLightboxImage = (e) => {
+      e.stopPropagation();
+      setLightbox((prev) => ({
+         ...prev,
+         index: (prev.index + 1) % prev.images.length,
+      }));
+   };
+
+   const prevLightboxImage = (e) => {
+      e.stopPropagation();
+      setLightbox((prev) => ({
+         ...prev,
+         index: (prev.index - 1 + prev.images.length) % prev.images.length,
+      }));
    };
 
    return (
@@ -207,9 +232,19 @@ function ProductDetail() {
                      <span className="text-gray-500 w-24">Danh mục:</span>
                      <span>{product.Categories[0]?.name}</span>
                   </div>
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-4 mb-2">
                      <span className="text-gray-500 w-24">Mô tả:</span>
-                     <span>{product.description}</span>
+                     <span className="truncate max-w-[300px]" title={product.description}>{product.description}</span>
+                  </div>
+                  <div className="flex items-center gap-4 mb-2">
+                     <span className="text-gray-500 w-24">Tình trạng:</span>
+                     <span className={`font-bold ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {product.stock > 0 ? 'Còn hàng' : 'Hết hàng'}
+                     </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                     <span className="text-gray-500 w-24">Kho hàng:</span>
+                     <span className="text-gray-700 font-medium">{product.stock} sản phẩm có sẵn</span>
                   </div>
                </div>
 
@@ -217,10 +252,13 @@ function ProductDetail() {
                <div className="flex gap-4">
                   <button
                      onClick={handleAddToCart}
-                     className="flex-1 bg-red-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-red-700 transition-colors"
+                     disabled={product.stock <= 0}
+                     className={`flex-1 ${
+                        product.stock > 0 ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-400 cursor-not-allowed text-gray-200'
+                     } text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-colors`}
                   >
                      <RiShoppingCart2Line size={20} />
-                     Thêm vào giỏ hàng
+                     {product.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
                   </button>
                   <button
                      onClick={() => {
@@ -446,13 +484,16 @@ function ProductDetail() {
                                           </p>
                                        )}
                                        {fb.image && (
-                                          <div className="mt-3 pl-[52px]">
-                                             <img
-                                                src={fb.image}
-                                                alt="Review"
-                                                className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm hover:scale-105 transition-transform cursor-pointer"
-                                                onClick={() => window.open(fb.image, '_blank')}
-                                             />
+                                          <div className="mt-3 pl-[52px] flex flex-wrap gap-2">
+                                             {fb.image.split(', ').map((img, idx) => (
+                                                <img
+                                                   key={idx}
+                                                   src={img}
+                                                   alt={`Review ${idx}`}
+                                                   className="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                                                   onClick={() => openLightbox(fb.image, idx)}
+                                                />
+                                             ))}
                                           </div>
                                        )}
                                     </div>
@@ -472,6 +513,50 @@ function ProductDetail() {
          <div className="mt-12">
             <ProductListSlider title="Sản phẩm đã xem" products={products} />
          </div>
+
+         {/* Lightbox Modal */}
+         {lightbox.isOpen && (
+            <div
+               className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4 animate-fadeIn"
+               onClick={closeLightbox}
+            >
+               <button
+                  className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+                  onClick={closeLightbox}
+               >
+                  <IoMdClose size={32} />
+               </button>
+
+               {lightbox.images.length > 1 && (
+                  <>
+                     <button
+                        className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
+                        onClick={prevLightboxImage}
+                     >
+                        <FaChevronLeft size={24} />
+                     </button>
+                     <button
+                        className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all"
+                        onClick={nextLightboxImage}
+                     >
+                        <FaChevronRight size={24} />
+                     </button>
+                  </>
+               )}
+
+               <div className="max-w-4xl max-h-[80vh] flex flex-col items-center gap-4">
+                  <img
+                     src={lightbox.images[lightbox.index]}
+                     alt="Full feedback"
+                     className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-zoomIn"
+                     onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="text-white font-medium bg-black/50 px-4 py-2 rounded-full text-sm">
+                     {lightbox.index + 1} / {lightbox.images.length}
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 }

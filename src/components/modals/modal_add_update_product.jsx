@@ -88,6 +88,20 @@ const ModalAddUpdateProduct = ({
                                  {formData.sku || 'Tự động tạo'}
                               </div>
                            </div>
+                           <div>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">
+                                 Số lượng tồn kho
+                              </label>
+                              <input
+                                 type="number"
+                                 name="stock"
+                                 value={formData.stock ?? ''}
+                                 onChange={handleInputChange}
+                                 min="0"
+                                 className="w-full px-4 py-2 text-sm rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+                                 placeholder="Ví dụ: 20"
+                              />
+                           </div>
                            <div className="relative">
                               <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">
                                  Giá gốc (VNĐ)

@@ -35,6 +35,7 @@ const ProductAdmin = () => {
       case_size: '',
       case_thickness: '',
       utilities: '',
+      stock: 20,
    });
    const { formatPrice } = useFormatPrice();
 
@@ -87,6 +88,7 @@ const ProductAdmin = () => {
          case_size: '',
          case_thickness: '',
          utilities: '',
+         stock: 20,
       });
       setPreviewImages([]);
       setShowModal(true);
@@ -102,6 +104,7 @@ const ProductAdmin = () => {
          category_id: categoryId,
          images: [], // Reset images to empty when starting edit, but we'll show previews from ProductImages
          keptImageIds: product.ProductImages.map((img) => img.product_image_id),
+         stock: product.stock || 0,
       });
       setPreviewImages(
          product.ProductImages.map((img) => ({
@@ -256,6 +259,7 @@ const ProductAdmin = () => {
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Danh mục</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Giá KM</th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kho hàng</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
                   </tr>
@@ -275,6 +279,16 @@ const ProductAdmin = () => {
                         <td className="px-6 py-4">{product.Categories && product.Categories.length > 0 ? product.Categories[0].name : 'Không có'}</td>
                         <td className="px-6 py-4">{formatPrice(product.price)}</td>
                         <td className="px-6 py-4">{formatPrice(product.discount_price)}</td>
+                        <td className="px-6 py-4">
+                           <div className="flex flex-col">
+                              <span className={`font-bold ${product.stock <= 5 ? 'text-red-600' : 'text-gray-800'}`}>
+                                 {product.stock}
+                              </span>
+                              {product.stock <= 5 && (
+                                 <span className="text-[10px] text-red-500 font-medium uppercase">Sắp hết hàng</span>
+                              )}
+                           </div>
+                        </td>
                         <td className="px-6 py-4">
                            <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FaStar, FaTimes } from 'react-icons/fa';
+import { FaStar, FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { IoMdClose } from 'react-icons/io';
 import FeedbackService from '../../services/feedback_service';
 import { toast } from 'react-toastify';
 
 const ModalProductFeedback = ({ product, onClose }) => {
    const [feedbacks, setFeedbacks] = useState([]);
    const [loading, setLoading] = useState(true);
+   const [lightbox, setLightbox] = useState({ isOpen: false, images: [], index: 0 });
 
    const fetchFeedbacks = useCallback(async () => {
       setLoading(true);
@@ -23,6 +25,29 @@ const ModalProductFeedback = ({ product, onClose }) => {
          setLoading(false);
       }
    }, [product]);
+
+   const openLightbox = (imageString, index = 0) => {
+      const images = imageString ? imageString.split(', ').filter(Boolean) : [];
+      setLightbox({ isOpen: true, images, index });
+   };
+
+   const closeLightbox = () => setLightbox({ ...lightbox, isOpen: false });
+
+   const nextLightboxImage = (e) => {
+      e.stopPropagation();
+      setLightbox((prev) => ({
+         ...prev,
+         index: (prev.index + 1) % prev.images.length,
+      }));
+   };
+
+   const prevLightboxImage = (e) => {
+      e.stopPropagation();
+      setLightbox((prev) => ({
+         ...prev,
+         index: (prev.index - 1 + prev.images.length) % prev.images.length,
+      }));
+   };
 
    useEffect(() => {
       if (product) {
@@ -93,14 +118,17 @@ const ModalProductFeedback = ({ product, onClose }) => {
                         </p>
 
                         {fb.image && (
-                           <div className="mt-2">
-                              <img
-                                 src={fb.image}
-                                 alt="Feedback detail"
-                                 className="max-h-40 rounded-lg shadow-sm border border-gray-100 hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
-                                 onClick={() => window.open(fb.image, '_blank')}
-                                 title="Xem ảnh gốc"
-                              />
+                           <div className="mt-2 flex flex-wrap gap-2">
+                              {fb.image.split(', ').map((img, idx) => (
+                                 <img
+                                    key={idx}
+                                    src={img}
+                                    alt={`Feedback ${idx}`}
+                                    className="w-20 h-20 object-cover rounded-lg shadow-sm border border-gray-100 hover:scale-[1.05] transition-transform duration-200 cursor-pointer"
+                                    onClick={() => openLightbox(fb.image, idx)}
+                                    title="Xem ảnh chi tiết"
+                                 />
+                              ))}
                            </div>
                         )}
                      </div>
@@ -130,6 +158,50 @@ const ModalProductFeedback = ({ product, onClose }) => {
                </button>
             </div>
          </div>
+
+         {/* Lightbox Modal */}
+         {lightbox.isOpen && (
+            <div
+               className="fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4 animate-fadeIn"
+               onClick={closeLightbox}
+            >
+               <button
+                  className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+                  onClick={closeLightbox}
+               >
+                  <IoMdClose size={32} />
+               </button>
+
+               {lightbox.images.length > 1 && (
+                  <>
+                     <button
+                        className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all shadow-lg"
+                        onClick={prevLightboxImage}
+                     >
+                        <FaChevronLeft size={24} />
+                     </button>
+                     <button
+                        className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all shadow-lg"
+                        onClick={nextLightboxImage}
+                     >
+                        <FaChevronRight size={24} />
+                     </button>
+                  </>
+               )}
+
+               <div className="max-w-4xl max-h-[80vh] flex flex-col items-center gap-4">
+                  <img
+                     src={lightbox.images[lightbox.index]}
+                     alt="Full feedback"
+                     className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-zoomIn"
+                     onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="text-white font-medium bg-black/50 px-4 py-2 rounded-full text-sm">
+                     {lightbox.index + 1} / {lightbox.images.length}
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 };

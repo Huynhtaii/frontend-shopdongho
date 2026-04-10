@@ -9,32 +9,42 @@ const RatingModal = ({ isOpen, onClose, order, onSuccess }) => {
    const [hoveredStar, setHoveredStar] = useState(0);
    const [submitting, setSubmitting] = useState(false);
    const [comment, setComment] = useState('');
-   const [image, setImage] = useState(null);
-   const [imagePreview, setImagePreview] = useState(null);
+   const [images, setImages] = useState([]);
+   const [imagePreviews, setImagePreviews] = useState([]);
 
    const user_id = localStorage.getItem('userId');
 
    if (!isOpen || !order) return null;
 
    const handleImageChange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
+      const files = Array.from(e.target.files);
+      if (files.length + images.length > 10) {
+         toast.warning('Bạn chỉ có thể tải lên tối đa 10 hình ảnh');
+         return;
+      }
+
+      const newImages = [...images];
+
+      files.forEach((file) => {
          if (file.size > 5 * 1024 * 1024) {
-            toast.error('Kích thước ảnh không được vượt quá 5MB');
+            toast.error(`Ảnh ${file.name} vượt quá 5MB`);
             return;
          }
-         setImage(file);
+
+         newImages.push(file);
          const reader = new FileReader();
          reader.onloadend = () => {
-            setImagePreview(reader.result);
+            setImagePreviews((prev) => [...prev, reader.result]);
          };
          reader.readAsDataURL(file);
-      }
+      });
+
+      setImages(newImages);
    };
 
-   const removeImage = () => {
-      setImage(null);
-      setImagePreview(null);
+   const removeImage = (index) => {
+      setImages((prev) => prev.filter((_, i) => i !== index));
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
    };
 
    const handleSubmit = async () => {
@@ -55,8 +65,10 @@ const RatingModal = ({ isOpen, onClose, order, onSuccess }) => {
                   formData.append('product_id', item.product_id);
                   formData.append('user_id', parseInt(user_id));
                   formData.append('order_id', order.order_id);
-                  if (image) {
-                     formData.append('image', image);
+                  if (images && images.length > 0) {
+                     images.forEach((img) => {
+                        formData.append('image', img);
+                     });
                   }
 
                   await FeedbackService.create(formData);
@@ -72,8 +84,8 @@ const RatingModal = ({ isOpen, onClose, order, onSuccess }) => {
          // Reset state
          setRating(0);
          setComment('');
-         setImage(null);
-         setImagePreview(null);
+         setImages([]);
+         setImagePreviews([]);
       } catch (error) {
          console.error('Final handleSubmit error:', error);
          const errorMessage = error.response?.data?.EM || 'Lỗi khi gửi đánh giá. Vui lòng thử lại sau.';
@@ -147,30 +159,34 @@ const RatingModal = ({ isOpen, onClose, order, onSuccess }) => {
                   </div>
 
                   <div>
-                     <label className="block text-sm font-semibold text-gray-700 mb-2 text-left">Thêm hình ảnh</label>
-                     {!imagePreview ? (
-                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-red-300 transition-all">
-                           <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400">
-                              <FaCamera size={24} className="mb-2" />
-                              <p className="text-xs">Nhấn để tải ảnh lên (tối đa 5MB)</p>
+                     <label className="block text-sm font-semibold text-gray-700 mb-2 text-left">
+                        Thêm hình ảnh ({imagePreviews.length}/10)
+                     </label>
+                     <div className="flex flex-wrap gap-3">
+                        {imagePreviews.map((preview, index) => (
+                           <div key={index} className="relative w-24 h-24">
+                              <img
+                                 src={preview}
+                                 alt={`Preview ${index}`}
+                                 className="w-full h-full object-cover rounded-xl border border-gray-200 shadow-sm"
+                              />
+                              <button
+                                 type="button"
+                                 onClick={() => removeImage(index)}
+                                 className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md z-10"
+                              >
+                                 <FaTimes size={12} />
+                              </button>
                            </div>
-                           <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                        </label>
-                     ) : (
-                        <div className="relative inline-block mt-2">
-                           <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="w-32 h-32 object-cover rounded-xl border border-gray-200 shadow-sm"
-                           />
-                           <button
-                              onClick={removeImage}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
-                           >
-                              <FaTimes size={12} />
-                           </button>
-                        </div>
-                     )}
+                        ))}
+                        {imagePreviews.length < 10 && (
+                           <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-red-300 transition-all bg-slate-50">
+                              <FaCamera size={24} className="text-gray-400" />
+                              <span className="text-[10px] text-gray-400 mt-1">Thêm ảnh</span>
+                              <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageChange} />
+                           </label>
+                        )}
+                     </div>
                   </div>
                </div>
 

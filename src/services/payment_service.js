@@ -14,8 +14,8 @@ const paymentAPI = async () => {
       throw error;
    }
 };
-const paymentCompleted = async (userId, userEmail, totalAmount, cartItem, paymentMethod) => {
-   console.log(userId, userEmail, totalAmount, cartItem);
+const paymentCompleted = async (userId, userEmail, totalAmount, cartItem, paymentMethod, shippingInfo) => {
+   console.log(userId, userEmail, totalAmount, cartItem, shippingInfo);
 
    try {
       const url = '/v1/update-payment';
@@ -25,6 +25,7 @@ const paymentCompleted = async (userId, userEmail, totalAmount, cartItem, paymen
          totalAmount: totalAmount,
          cartItem: cartItem,
          paymentMethod,
+         shippingInfo,
       });
       return response;
    } catch (error) {

@@ -9,6 +9,9 @@ import { useCart } from '../../context/cart_context';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../../context/auth.context';
 import { useContext } from 'react';
+import address_service from '../../services/address_service';
+import ModalAddressSelector from '../../components/modals/ModalAddressSelector';
+import { RiMapPinLine } from 'react-icons/ri';
 
 const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
    const { fetchCart } = useCart();
@@ -19,6 +22,8 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [transferContent, setTransferContent] = useState('');
    const [loading, setLoading] = useState(false);
+   const [selectedAddress, setSelectedAddress] = useState(null);
+   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
    const { formatPrice } = useFormatPrice();
 
    // Lấy id tài khoản đã đăng nhập
@@ -35,12 +40,24 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
       }
    }, [user_id]);
 
+   const fetchAddresses = useCallback(async () => {
+      try {
+         const res = await address_service.getUserAddresses(user_id);
+         if (res.EC === 0 && res.DT.length > 0) {
+            const defaultAddr = res.DT.find((a) => a.is_default) || res.DT[0];
+            setSelectedAddress(defaultAddr);
+         }
+      } catch (error) {
+         console.error('Fetch addresses error:', error);
+      }
+   }, [user_id]);
+
    useEffect(() => {
       if (user_id) {
          fetchUser();
+         fetchAddresses();
       }
-      console.log('>>>>>>>>>>>>>>>check cartItem', cartItem);
-   }, [cartItem, fetchUser, user_id]);
+   }, [fetchAddresses, fetchUser, user_id]);
 
    // Hàm tạo nội dung chuyển khoản với phút và giây
    const createTransferContent = () => {
@@ -60,11 +77,8 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
    };
 
    const handleValidateForm = () => {
-      if (!userOrder.name || !userOrder.phone || !userOrder.email || !userOrder.address) {
-         toast.warning('Bạn sẽ được chuyển hướng về trang tài khoản để cập nhật thông tin sau 4 giây');
-         setTimeout(() => {
-            navigate('/account');
-         }, 4000);
+      if (!selectedAddress) {
+         toast.warning('Vui lòng chọn hoặc thêm địa chỉ nhận hàng!');
          return false;
       }
       return true;
@@ -103,20 +117,38 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
    const handleOrderCodSuccess = async () => {
       setLoading(true);
       try {
-         const res = await paymentCompleted(user_id, userOrder.email, totalPrice, cartItem, paymentMethod);
-         // Lấy order_id từ response trả về
-         const order_id = res?.data?.DT?.order_id || null;
-         // Lưu lại cartItem kèm order_id trước khi clear
-         const itemsToRate = cartItem.map((item) => ({
-            product_id: item.product_id,
-            productData: item.productData,
-            order_id,
-         }));
-         fetchCart();
-         if (onOrderSuccess) {
-            onOrderSuccess(itemsToRate);
+         const shippingInfo = {
+            name: selectedAddress.recipient_name,
+            phone: selectedAddress.recipient_phone,
+            email: selectedAddress.recipient_email || userOrder.email,
+            address: selectedAddress.address,
+         };
+         const res = await paymentCompleted(
+            user_id,
+            shippingInfo.email,
+            totalPrice,
+            cartItem,
+            paymentMethod,
+            shippingInfo,
+         );
+         
+         if (res && res.EC === 0) {
+            // Lấy order_id từ response trả về (res đã là body từ axios interceptor)
+            const order_id = res.DT?.order_id || null;
+            // Lưu lại cartItem kèm order_id trước khi clear
+            const itemsToRate = cartItem.map((item) => ({
+               product_id: item.product_id,
+               productData: item.productData,
+               order_id,
+            }));
+            fetchCart();
+            if (onOrderSuccess) {
+               onOrderSuccess(itemsToRate);
+            }
+            toast.success('Đặt hàng thành công, vui lòng kiểm tra email!');
+         } else {
+            toast.error(res?.EM || 'Có lỗi xảy ra khi đặt hàng!');
          }
-         toast.success('Đặt hàng thành công, vui lòng kiểm tra email!');
       } catch (error) {
          console.error('🔥 Lỗi khi đặt hàng:', error);
          toast.error('Có lỗi xảy ra khi đặt hàng!');
@@ -127,23 +159,42 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
 
    return (
       <div className="flex flex-col">
-         <div className="mt-5 border-b pb-5">
-            <div className="flex gap-3 mb-3">
-               <h3 className="text-[14px] text-gray-500 font-[500]">
-                  *Thông tin được lấy từ tài khoản của bạn, vui lòng nhập đầy đủ thông tin để đặt hàng <br /> (có thể
-                  thay đổi hoặc bổ sung ở trang tài khoản)*
-               </h3>
+         <div className="mt-5 border-b pb-6">
+            <div className="flex items-center justify-between mb-4">
+               <div className="flex items-center gap-2 text-blue-600 font-bold">
+                  <RiMapPinLine size={20} />
+                  <h3 className="text-[16px] uppercase tracking-tight">Địa chỉ nhận hàng</h3>
+               </div>
+               <button
+                  onClick={() => setIsAddressModalOpen(true)}
+                  className="text-blue-500 text-sm font-semibold hover:underline bg-blue-50 px-3 py-1 rounded-full transition-all"
+               >
+                  {selectedAddress ? 'Thay đổi' : 'Thêm địa chỉ'}
+               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-               <p className="border rounded-md p-2 text-sm">{userOrder?.name || 'Chưa có tên'}</p>
-               <p className="border rounded-md p-2 text-sm">{userOrder?.phone || 'Chưa có số điện thoại'}</p>
-            </div>
-            <div className="mb-3">
-               <p className="border rounded-md p-2 text-sm">{userOrder?.email || 'Chưa có email'}</p>
-            </div>
-            <div className="mb-3">
-               <p className="border rounded-md p-2 text-sm">{userOrder?.address || 'Chưa có địa chỉ'}</p>
-            </div>
+
+            {selectedAddress ? (
+               <div className="bg-gray-50/50 p-4 rounded-xl border border-dashed border-gray-200">
+                  <div className="flex items-center gap-3 mb-2">
+                     <span className="font-bold text-gray-800">{selectedAddress.recipient_name}</span>
+                     <span className="text-gray-300">|</span>
+                     <span className="text-gray-600 font-medium">{selectedAddress.recipient_phone}</span>
+                  </div>
+                  <div className="text-sm text-gray-500 leading-relaxed mb-1">{selectedAddress.address}</div>
+                  {selectedAddress.is_default && (
+                     <span className="text-[10px] text-red-500 font-bold border border-red-500 px-2 py-0.5 rounded uppercase">
+                        Mặc định
+                     </span>
+                  )}
+               </div>
+            ) : (
+               <div
+                  className="text-center py-6 border-2 border-dashed border-gray-100 rounded-xl cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all"
+                  onClick={() => setIsAddressModalOpen(true)}
+               >
+                  <p className="text-gray-400 text-sm italic">Bấm để thêm địa chỉ giao hàng</p>
+               </div>
+            )}
          </div>
          <div className="flex justify-between border-b py-5">
             <h3 className="text-[14px] font-[600]">Cần thanh toán:</h3>
@@ -178,8 +229,25 @@ const Payment = ({ totalPrice, cartItem, onOrderSuccess }) => {
                paymentMethod={paymentMethod}
                onOrderSuccess={onOrderSuccess}
                onRegenerate={handleRegenerateQR}
+               shippingInfo={{
+                  name: selectedAddress.recipient_name,
+                  phone: selectedAddress.recipient_phone,
+                  email: selectedAddress.recipient_email || userOrder.email,
+                  address: selectedAddress.address,
+               }}
             />
          )}
+
+         <ModalAddressSelector
+            isOpen={isAddressModalOpen}
+            onClose={() => setIsAddressModalOpen(false)}
+            userId={user_id}
+            currentAddressId={selectedAddress?.id}
+            onSelect={(addr) => {
+               setSelectedAddress(addr);
+               setIsAddressModalOpen(false);
+            }}
+         />
       </div>
    );
 };

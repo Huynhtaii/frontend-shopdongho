@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import OrderService from '../../services/order_service';
 import CategoryService from '../../services/category_service';
 import BrandService from '../../services/brand_service';
+import ProductService from '../../services/product_service';
 import useFormatPrice from '../../hooks/use_formatPrice';
 import {
    Chart as ChartJS,
@@ -70,8 +71,8 @@ const Dashboard = () => {
 
    // State cho dữ liệu bổ sung
    const [topProducts, setTopProducts] = useState([]);
-   const [recentOrders, setRecentOrders] = useState([]);
    const [pendingOrders, setPendingOrders] = useState([]);
+   const [lowStockProducts, setLowStockProducts] = useState([]);
    const [approvingId, setApprovingId] = useState(null);
    const [categoryChartData, setCategoryChartData] = useState(null);
    const [brandChartData, setBrandChartData] = useState(null);
@@ -106,20 +107,35 @@ const Dashboard = () => {
             updateStats(response.DT.stats);
             prepareChartData(orders);
             calculateTopProducts(orders);
-            setRecentOrders(orders.slice(0, 5));
             setPendingOrders(orders.filter((o) => o.status === 'Pending'));
          }
       } catch (error) {
          console.error('Error fetching orders:', error);
       }
    }, [updateStats]);
+   
+   const fetchLowStockProducts = useCallback(async () => {
+      try {
+         const response = await ProductService.getAllProducts(null, true);
+         if (response.EC === '0') {
+            const allProducts = response.DT;
+            // Filter products with stock <= 5
+            const lowStock = allProducts
+               .filter((p) => (p.stock ?? 0) <= 5)
+               .sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0));
+            setLowStockProducts(lowStock.slice(0, 10)); // Show top 10 low stock
+         }
+      } catch (error) {
+         console.error('Error fetching low stock products:', error);
+      }
+   }, []);
 
    const handleQuickAction = async (orderId, action) => {
       setApprovingId(orderId);
       try {
          const newStatus = action === 'approve' ? 'Shipped' : 'Canceled';
          const res = await OrderService.updateOrderStatus(orderId, newStatus);
-         if (res && res.EC === '0') {
+         if (res && Number(res.EC) === 0) {
             if (action === 'approve') {
                toast.success(`Đã duyệt đơn #${orderId} — chuyển sang Đang giao!`);
             } else {
@@ -127,7 +143,7 @@ const Dashboard = () => {
             }
             fetchOrders();
          } else {
-            toast.error('Cập nhật thất bại, vui lòng thử lại.');
+            toast.error(res?.EM || 'Cập nhật thất bại, vui lòng thử lại.');
          }
       } catch (error) {
          console.error('Error updating order:', error);
@@ -194,7 +210,8 @@ const Dashboard = () => {
    useEffect(() => {
       fetchOrders();
       fetchCategoryAndBrandStats();
-   }, [fetchOrders, fetchCategoryAndBrandStats]);
+      fetchLowStockProducts();
+   }, [fetchOrders, fetchCategoryAndBrandStats, fetchLowStockProducts]);
 
    const calculateTopProducts = (orders) => {
       const productSales = {};
@@ -278,19 +295,6 @@ const Dashboard = () => {
             ],
          },
       });
-   };
-
-   const getStatusClass = (status) => {
-      switch (status.toLowerCase()) {
-         case 'completed':
-            return 'bg-green-100 text-green-700';
-         case 'pending':
-            return 'bg-yellow-100 text-yellow-700';
-         case 'shipped':
-            return 'bg-blue-100 text-blue-700';
-         default:
-            return 'bg-red-100 text-red-700';
-      }
    };
 
    return (
@@ -481,40 +485,86 @@ const Dashboard = () => {
                </div>
             </div>
 
-            {/* Recent Orders */}
+            {/* Low Stock Products */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6 overflow-hidden">
-               <h2 className="text-lg font-bold text-gray-800 mb-4">Đơn hàng mới nhất</h2>
+               <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-800">Sản phẩm sắp hết hàng</h2>
+                  <Link
+                     to="/admin/products"
+                     className="text-blue-600 text-xs font-bold hover:underline flex items-center gap-1"
+                  >
+                     Xem tất cả →
+                  </Link>
+               </div>
                <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                      <thead>
                         <tr className="text-gray-400 font-bold uppercase text-[10px] tracking-wider border-b border-gray-50">
-                           <th className="pb-3 px-2">ID</th>
-                           <th className="pb-3 px-2">Khách hàng</th>
-                           <th className="pb-3 px-2">Ngày</th>
-                           <th className="pb-3 px-2">Tổng</th>
-                           <th className="pb-3 px-2">Trạng thái</th>
+                           <th className="pb-3 px-2">Sản phẩm</th>
+                           <th className="pb-3 px-2">SKU</th>
+                           <th className="pb-3 px-2 text-center">Số lượng</th>
+                           <th className="pb-3 px-2 text-center">Trạng thái</th>
+                           <th className="pb-3 px-2 text-right">Thao tác</th>
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-gray-50">
-                        {recentOrders.map((order) => (
-                           <tr key={order.order_id} className="hover:bg-gray-50 transition-colors">
-                              <td className="py-4 px-2 font-bold text-blue-600">#{order.order_id}</td>
-                              <td className="py-4 px-2 font-medium text-gray-700">
-                                 {order.User?.name || `ID: ${order.user_id}`}
-                              </td>
-                              <td className="py-4 px-2 text-gray-500">
-                                 {new Date(order.order_date).toLocaleDateString('vi-VN')}
-                              </td>
-                              <td className="py-4 px-2 font-bold text-gray-900">{formatPrice(order.total_amount)}</td>
-                              <td className="py-4 px-2">
-                                 <span
-                                    className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${getStatusClass(order.status)}`}
-                                 >
-                                    {order.status}
-                                 </span>
+                        {lowStockProducts.length > 0 ? (
+                           lowStockProducts.map((product) => (
+                              <tr key={product.product_id} className="hover:bg-gray-50 transition-colors">
+                                 <td className="py-4 px-2">
+                                    <div className="flex items-center gap-3">
+                                       <img
+                                          src={product.ProductImages?.[0]?.url}
+                                          alt=""
+                                          className="w-10 h-10 rounded-lg object-cover bg-gray-50"
+                                       />
+                                       <div className="max-w-[150px]">
+                                          <p className="font-bold text-gray-800 truncate">{product.name}</p>
+                                          <p className="text-[10px] text-gray-400 truncate">{product.brand?.name}</p>
+                                       </div>
+                                    </div>
+                                 </td>
+                                 <td className="py-4 px-2 font-mono text-xs text-gray-500">{product.sku}</td>
+                                 <td className="py-4 px-2 text-center">
+                                    <span
+                                       className={`font-bold text-lg ${
+                                          (product.stock ?? 0) === 0 ? 'text-red-600' : 'text-amber-600'
+                                       }`}
+                                    >
+                                       {product.stock ?? 0}
+                                    </span>
+                                 </td>
+                                 <td className="py-4 px-2 text-center">
+                                    <span
+                                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                          (product.stock ?? 0) === 0
+                                             ? 'bg-red-100 text-red-700'
+                                             : 'bg-amber-100 text-amber-700'
+                                       }`}
+                                    >
+                                       {(product.stock ?? 0) === 0 ? 'Hết hàng' : 'Sắp hết'}
+                                    </span>
+                                 </td>
+                                 <td className="py-4 px-2 text-right">
+                                    <Link
+                                       to="/admin/products"
+                                       className="bg-gray-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+                                    >
+                                       Nhập hàng
+                                    </Link>
+                                 </td>
+                              </tr>
+                           ))
+                        ) : (
+                           <tr>
+                              <td colSpan="5" className="py-12 text-center text-gray-400">
+                                 <div className="flex flex-col items-center gap-2">
+                                    <RiProductHuntLine size={32} className="text-gray-200" />
+                                    <p>Tất cả sản phẩm đều đủ hàng</p>
+                                 </div>
                               </td>
                            </tr>
-                        ))}
+                        )}
                      </tbody>
                   </table>
                </div>
