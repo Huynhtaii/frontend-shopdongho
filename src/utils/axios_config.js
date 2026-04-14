@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 
 const instance = axios.create({
    baseURL: process.env.REACT_APP_API_URL,
-   timeout: 5000,
+   timeout: 15000,
    headers: {
       'Content-Type': 'application/json',
    },

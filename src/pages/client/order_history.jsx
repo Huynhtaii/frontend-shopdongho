@@ -15,6 +15,7 @@ import {
    FiArrowLeft,
    FiXCircle,
    FiStar,
+   FiMapPin,
 } from 'react-icons/fi';
 
 const statusConfig = {
@@ -141,12 +142,21 @@ function OrderHistory() {
                            <div className="flex flex-col gap-1">
                               <Link
                                  to="/account"
+                                 state={{ tab: 'profile' }}
                                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium"
                               >
                                  <FiUser size={16} />
                                  <span>Thông tin cá nhân</span>
                               </Link>
-                              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 text-red-600 font-medium text-sm">
+                              <Link
+                                 to="/account"
+                                 state={{ tab: 'addresses' }}
+                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium"
+                              >
+                                 <FiMapPin size={16} />
+                                 <span>Sổ địa chỉ</span>
+                              </Link>
+                              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 text-red-600 font-medium text-sm shadow-sm ring-1 ring-red-100/50">
                                  <FiShoppingBag size={16} />
                                  <span>Lịch sử mua hàng</span>
                               </div>

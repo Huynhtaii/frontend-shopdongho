@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import AccountService from '../../services/account_service';
 import { toast } from 'react-toastify';
 import { FiUser, FiPhone, FiMapPin, FiMail, FiShoppingBag, FiEdit3, FiSave } from 'react-icons/fi';
@@ -8,6 +8,7 @@ import ModalAddressSelector from '../../components/modals/ModalAddressSelector';
 
 function Account() {
    const id = localStorage.getItem('userId'); // FIX: bỏ useState wrapper
+   const location = useLocation();
 
    const [user, setUser] = useState({
       name: '',
@@ -18,7 +19,7 @@ function Account() {
    const [loading, setLoading] = useState(true);
    const [saving, setSaving] = useState(false);
    const [isEditing, setIsEditing] = useState(false);
-   const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'addresses'
+   const [activeTab, setActiveTab] = useState(location.state?.tab || 'profile'); // 'profile' or 'addresses'
    const [addresses, setAddresses] = useState([]);
    const [addressLoading, setAddressLoading] = useState(false);
    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);

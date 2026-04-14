@@ -105,27 +105,45 @@ const ModalUserOrders = ({ user, orders, onClose }) => {
                                                       <div className="font-semibold mb-1 text-blue-700">
                                                          Thông tin khách hàng
                                                       </div>
-                                                      <p>
-                                                         <span className="font-medium text-gray-500">Người nhận:</span>{' '}
-                                                         <span className="text-gray-800 font-semibold">
-                                                            {user?.name || 'N/A'}
-                                                         </span>
-                                                      </p>
-                                                      <p>
-                                                         <span className="font-medium text-gray-500">
-                                                            Số điện thoại:
-                                                         </span>{' '}
-                                                         <span className="text-gray-800 font-semibold">
-                                                            {user?.phone || 'N/A'}
-                                                         </span>
-                                                      </p>
+                                                      <div className="space-y-1">
+                                                         <p>
+                                                            <span className="font-medium text-gray-500 text-xs">
+                                                               Tài khoản đặt:
+                                                            </span>{' '}
+                                                            <span className="text-gray-600 italic font-medium">
+                                                               {order.User?.name || user?.name || 'Guest'}
+                                                            </span>
+                                                         </p>
+                                                         <p>
+                                                            <span className="font-medium text-gray-500 text-xs">
+                                                               Người nhận:
+                                                            </span>{' '}
+                                                            <span className="text-gray-800 font-bold">
+                                                               {order.shipping_name || user?.name || 'N/A'}
+                                                            </span>
+                                                         </p>
+                                                         <p>
+                                                            <span className="font-medium text-gray-500 text-xs">
+                                                               Số điện thoại nhận:
+                                                            </span>{' '}
+                                                            <span className="text-gray-800 font-semibold">
+                                                               {order.shipping_phone || user?.phone || 'N/A'}
+                                                            </span>
+                                                         </p>
+                                                      </div>
                                                    </div>
                                                    <div>
                                                       <div className="font-semibold mb-1 text-blue-700">
                                                          Địa chỉ giao hàng
                                                       </div>
-                                                      <p className="text-gray-800 italic leading-snug">
-                                                         {user?.address || 'Chưa cập nhật địa chỉ'}
+                                                      <p className="text-gray-800 italic leading-snug p-2 bg-blue-50/50 rounded border border-blue-100">
+                                                         {order.shipping_address ||
+                                                            user?.address ||
+                                                            'Chưa cập nhật địa chỉ'}
+                                                      </p>
+                                                      <p className="mt-1 text-[11px] text-gray-400 font-medium">
+                                                         Email nhận:{' '}
+                                                         {order.shipping_email || user?.email || 'N/A'}
                                                       </p>
                                                    </div>
                                                 </div>

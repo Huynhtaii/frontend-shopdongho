@@ -145,11 +145,17 @@ const OrderAdmin = () => {
    const handleUpdateStatus = async (orderId, status, paymentStatus) => {
       setLoadingOrderId(orderId);
       try {
-         await OrderService.updateOrderStatus(orderId, status, paymentStatus);
-         toast.success('Cập nhật trạng thái đơn hàng thành công');
-         fetchData();
+         const res = await OrderService.updateOrderStatus(orderId, status, paymentStatus);
+         if (res && +res.EC === 0) {
+            toast.success('Cập nhật trạng thái đơn hàng thành công');
+            fetchData();
+         } else {
+            console.error('Lỗi từ backend khi cập nhật trạng thái:', res);
+            toast.error(res?.EM || 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng');
+         }
       } catch (error) {
-         toast.error('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng' + error);
+         console.error('Lỗi mạng/hệ thống khi cập nhật trạng thái:', error);
+         toast.error('Có lỗi xảy ra khi cập nhật trạng thái đơn hàng: ' + error.message);
       } finally {
          setLoadingOrderId(null);
       }
@@ -165,7 +171,6 @@ const OrderAdmin = () => {
             break;
          case 'Shipped':
             nextStatus = 'Completed';
-            // Không tự động set Success, để logic backend hoặc admin manual xử lý
             break;
          case 'FailedDelivery':
             nextStatus = 'Returned to shop';
@@ -179,15 +184,21 @@ const OrderAdmin = () => {
 
       setLoadingOrderId(order.order_id);
       try {
-         await OrderService.updateOrderStatus(order.order_id, nextStatus, null);
-         const successMsg =
-            nextStatus === 'Returned to shop' && order.status === 'ReturnRequested'
-               ? 'Đã duyệt yêu cầu trả hàng và chuyển sang Chờ hoàn tiền'
-               : `Đã chuyển trạng thái sang ${getStatusLabel(nextStatus)}`;
-         toast.success(successMsg);
-         fetchData();
+         const res = await OrderService.updateOrderStatus(order.order_id, nextStatus, null);
+         if (res && +res.EC === 0) {
+            const successMsg =
+               nextStatus === 'Returned to shop' && order.status === 'ReturnRequested'
+                  ? 'Đã duyệt yêu cầu trả hàng và chuyển sang Chờ hoàn tiền'
+                  : `Đã chuyển trạng thái sang ${getStatusLabel(nextStatus)}`;
+            toast.success(successMsg);
+            fetchData();
+         } else {
+            console.error('Lỗi từ backend khi chuyển trạng thái:', res);
+            toast.error(res?.EM || 'Có lỗi xảy ra khi chuyển trạng thái');
+         }
       } catch (error) {
-         toast.error('Có lỗi xảy ra khi chuyển trạng thái: ' + error);
+         console.error('Lỗi mạng/hệ thống khi chuyển trạng thái:', error);
+         toast.error('Có lỗi xảy ra khi chuyển trạng thái: ' + error.message);
       } finally {
          setLoadingOrderId(null);
       }
