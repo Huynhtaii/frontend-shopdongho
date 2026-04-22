@@ -5,11 +5,12 @@ const getSocketURL = () => {
    let apiUrl = process.env.REACT_APP_API_URL || 'https://api.watchstore.io.vn/api';
    console.log('Original API URL from Env:', apiUrl);
    
-   // Fix lỗi nếu bị dính double https://
-   apiUrl = apiUrl.replace('https://https://', 'https://');
+   // Thay thế https://https:// nếu có
+   apiUrl = apiUrl.replace(/^https:\/\/https:\/\//, 'https://');
    
-   // Loại bỏ '/api' từ URL nếu có
-   const socketUrl = apiUrl.replace('/api', '');
+   // CHỈ loại bỏ '/api' ở CUỐI cùng của URL để tránh bị xóa nhầm subdomain api.
+   const socketUrl = apiUrl.replace(/\/api$/, '');
+   
    console.log('Final Socket URL to connect:', socketUrl);
    return socketUrl;
 };
