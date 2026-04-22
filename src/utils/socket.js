@@ -2,9 +2,16 @@ import { io } from 'socket.io-client';
 
 // Tạo base URL cho socket
 const getSocketURL = () => {
-   const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:6969/api';
+   let apiUrl = process.env.REACT_APP_API_URL || 'https://api.watchstore.io.vn/api';
+   console.log('Original API URL from Env:', apiUrl);
+   
+   // Fix lỗi nếu bị dính double https://
+   apiUrl = apiUrl.replace('https://https://', 'https://');
+   
    // Loại bỏ '/api' từ URL nếu có
-   return apiUrl.replace('/api', '');
+   const socketUrl = apiUrl.replace('/api', '');
+   console.log('Final Socket URL to connect:', socketUrl);
+   return socketUrl;
 };
 
 const socket = io(getSocketURL(), {
