@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
 import { GrFormPrevious } from 'react-icons/gr';
 import ProductListCart from '../../components/cart/product_list_cart';
 import Payment from '../../components/cart/payment';
