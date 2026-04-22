@@ -20,10 +20,12 @@ const setDefaultAddress = (id, userId) => {
    return axios.put(`/v1/addresses/${id}/set-default`, { user_id: userId });
 };
 
-export default {
+const addressService = {
    getUserAddresses,
    createAddress,
    updateAddress,
    deleteAddress,
    setDefaultAddress,
 };
+
+export default addressService;
