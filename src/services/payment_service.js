@@ -3,7 +3,7 @@ const paymentAPI = async () => {
    try {
       console.log('Calling payment API...');
       const response = await fetch(
-         `https://script.google.com/macros/s/AKfycbx7BdsvhdtxHjAdPwRE2g_y67IvNcJ3M74QOfGmj3jJprU_tSnIzgsu9183Y74OKPpm/exec`,
+         `https://script.google.com/macros/s/AKfycbz3oqjqL0OdMvyRPXT0emQhAd4JO4JqVJ32LxbX15wu9kF_5nNfYJ-j2jTsPPAagCSL/exec`,
       );
       console.log('API Response:', response);
       const data = await response.json();

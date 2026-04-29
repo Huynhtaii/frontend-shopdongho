@@ -308,7 +308,7 @@ function ModalPayment({
                                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
                                     Chủ tài khoản
                                  </p>
-                                 <p className="font-bold text-gray-800 uppercase">NGUYỄN HOÀNG TÂM</p>
+                                 <p className="font-bold text-gray-800 uppercase">Nguyễn Ngọc Thiên Tú</p>
                               </div>
                            </div>
                         </div>
